@@ -1,5 +1,17 @@
-
+import json
 from fastapi import APIRouter
+
+
+def json_serialize_llm_response(response):
+    try:
+        json_data = json.loads(response)
+        return json_data
+    except Exception:
+        json_data = {
+            "error": "Could not parse response as JSON.",
+            "response": response,
+        }
+        return json_data
 
 
 def group(prefix, *routers):
