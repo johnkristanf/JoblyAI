@@ -4,6 +4,7 @@ export default [
     index("./landing.tsx"),
 
     layout("./layout/authenticated.tsx", [
-        route("job/search", "./pages/job_search.tsx")
+        route("job/search", "./pages/job-search.tsx"),
+        route("saved/jobs", "./pages/saved-jobs.tsx")
     ])
 ] satisfies RouteConfig;
