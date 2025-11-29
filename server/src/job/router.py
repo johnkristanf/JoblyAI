@@ -1,10 +1,15 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from openai import OpenAI
+from sqlalchemy.ext.asyncio.session import AsyncSession
+
+from src.database import Database
 from src.utils import json_serialize_llm_response
 from src.prompt import JobSeachPrompt
-from openai import OpenAI
 
 from src.config import settings
-from src.job.schema import JobsSearchIn
+from src.job.schema import JobsSearchIn, SaveJobIn
+from src.job.models import Job
+
 from src.job.service import search_rapidapi_jobs_jsearch
 
 job_router = APIRouter()
@@ -23,6 +28,7 @@ def job_search(
         date_posted=payload.date_posted,  # all, today, 3days, week, month
         page="1",
     )
+    
     job_listings = results.get("data", [])
     print(f"job_listings: {job_listings}")
 
@@ -44,3 +50,16 @@ def job_search(
     jobs_matched = json_serialize_llm_response(response.output_text)
 
     return {"job_listings": job_listings, "jobs_matched": jobs_matched}
+
+
+@job_router.post("/save")
+async def save_job(
+    payload: SaveJobIn, 
+    session: AsyncSession = Depends(Database.get_async_session)
+):
+    new_job = Job(**payload.model_dump())
+    session.add(new_job)
+    await session.commit()
+    await session.refresh(new_job)
+    
+    return {"message": "Job saved successfully", "job": payload}
