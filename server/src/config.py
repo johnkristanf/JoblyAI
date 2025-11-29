@@ -1,0 +1,17 @@
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    ADZUNA_APP_ID: str
+    ADZUNA_APP_KEY: str
+    
+    RAPID_API_KEY: str
+    RAPID_API_HOST: str
+    
+    OPENAI_MODEL: str
+    OPENAI_API_KEY: str
+
+    class Config:
+        env_file = ".env"
+
+
+settings = Settings()
