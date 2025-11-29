@@ -28,6 +28,8 @@ class JobSeachPrompt:
                     }}
                 ]
 
+                Format your response as strict JSON (no Markdown/code block formatting, comments, or extra text).
+                
                 Please ensure that your response for each job fills out each field as accurately as possible. Leave the value None if the information is not available.
 
                 When prioritizing and extracting job listings, focus on those that are most relevant to the following candidate context, but allow for some flexibility in how closely each listing matches the details:
