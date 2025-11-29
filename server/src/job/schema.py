@@ -3,9 +3,8 @@ from pydantic import BaseModel
 
 class JobsSearchIn(BaseModel):
     job_title: str
-    location: str | None = None
-    country: str
+    experience_level: str
     date_posted: str
-    
-    experience: str
+    country: str
     professional_summary: str
+
