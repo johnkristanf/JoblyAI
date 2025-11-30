@@ -19,7 +19,7 @@ const JobSearchPage = () => {
 
     const mutation = useMutation({
         mutationFn: async (payload: JobSearchForm) => {
-            const response = await axios.post(`http://127.0.0.1:8000/api/v1/job/search`, payload)
+            const response = await axios.post(`${import.meta.env.VITE_API_V1_BASE_URL}/job/search`, payload)
             console.log('response.data: ', response.data)
 
             const undefinedValueCatcher = {
@@ -90,7 +90,7 @@ const JobSearchPage = () => {
 
             {/* NO JOB LISTING RETRIEVED */}
             {jobSearchResponse && jobSearchResponse.job_listings.length <= 0 && (
-               <NoJobsFound searchAnotherHandler={handleSearchAnother} />
+                <NoJobsFound searchAnotherHandler={handleSearchAnother} />
             )}
 
             {jobSearchResponse &&
