@@ -14,6 +14,8 @@ class JobSeachPrompt:
                         "job_apply_link": "https://jobs.ashbyhq.com/sfcompute/6fd69951...",
                         "job_apply_is_direct": true,
                         "job_is_remote": true,
+                        "job_country": "US",
+                        "job_publisher": "LinkedIn",
                         
                         "employer_name": "The San Francisco Compute Company",
                         "employer_logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnL55P3o_Ot5_9IdIIOdh-f97gNPBoo_4QcJCD&s=0",
