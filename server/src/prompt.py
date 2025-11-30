@@ -39,8 +39,6 @@ class JobSeachPrompt:
                 - Experience level: {experience_level}
                 - Professional summary: {professional_summary}
 
-                As you select and rank job listings, consider those that are a reasonable or related match to the candidate's background, not just strict matches. Accept jobs that are somewhat or generally related to the provided job title, align sufficiently with the experience level, or are relevant to the type of roles described in the professional summary—even if not an exact fit. 
-
                 For each included job, add a brief comment in the 'extraction_note' field explaining why you chose it. Specifically, mention which of the candidate's skills, experience, or background from the provided context match with the job and explain how these skills relate to the position, especially when the match is broader or less direct.
             """
         return {"role": "system", "content": content}
