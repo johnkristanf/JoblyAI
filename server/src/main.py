@@ -9,6 +9,7 @@ from src.database import Database
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Database.connect_async_session()
+    Database.connect_redis()
     yield
     await Database.close()
 
