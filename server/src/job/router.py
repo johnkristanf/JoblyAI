@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 from openai import OpenAI
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from src.database import Database
@@ -28,7 +29,7 @@ def job_search(
         date_posted=payload.date_posted,  # all, today, 3days, week, month
         page="1",
     )
-    
+
     job_listings = results.get("data", [])
     print(f"job_listings: {job_listings}")
 
@@ -54,12 +55,30 @@ def job_search(
 
 @job_router.post("/save")
 async def save_job(
-    payload: SaveJobIn, 
-    session: AsyncSession = Depends(Database.get_async_session)
+    # user_id: int,  # DAPAT PAGKUHA SA ID IS THROUGH DEPENDENCY NA get_authenticated_user
+    payload: SaveJobIn,
+    session: AsyncSession = Depends(Database.get_async_session),
 ):
-    new_job = Job(**payload.model_dump())
+    DUMMY_USER_ID = 1
+    job_data = payload.model_dump()
+    job_data["user_id"] = DUMMY_USER_ID
+
+    new_job = Job(**job_data)
     session.add(new_job)
     await session.commit()
     await session.refresh(new_job)
-    
+
     return {"message": "Job saved successfully", "job": payload}
+
+
+@job_router.get("/saved")
+async def get_saved_jobs_by_user(
+    # user_id: int,  # DAPAT PAGKUHA SA ID IS THROUGH DEPENDENCY NA get_authenticated_user
+    session: AsyncSession = Depends(Database.get_async_session),
+):
+    DUMMY_USER_ID = 1
+    result = await session.execute(
+        select(Job).where(Job.user_id == DUMMY_USER_ID).order_by(Job.id.desc())
+    )
+    jobs = result.scalars().all()
+    return jobs
