@@ -19,7 +19,10 @@ const JobSearchPage = () => {
 
     const mutation = useMutation({
         mutationFn: async (payload: JobSearchForm) => {
-            const response = await axios.post(`${import.meta.env.VITE_API_V1_BASE_URL}/job/search`, payload)
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_V1_BASE_URL}/job/search`,
+                payload,
+            )
             console.log('response.data: ', response.data)
 
             const undefinedValueCatcher = {
@@ -89,7 +92,7 @@ const JobSearchPage = () => {
             )}
 
             {/* NO JOB LISTING RETRIEVED */}
-            {jobSearchResponse && jobSearchResponse.job_listings.length <= 0 && (
+            {jobSearchResponse && jobSearchResponse.job_listings.length == 0 && (
                 <NoJobsFound searchAnotherHandler={handleSearchAnother} />
             )}
 
@@ -101,7 +104,7 @@ const JobSearchPage = () => {
                     <div className="flex justify-end">
                         <button
                             onClick={handleSearchAnother}
-                            className="text-gray-400 hover:opacity-75 hover:cursor-pointer flex items-center gap-1"
+                            className="text-gray-500 hover:opacity-75 hover:cursor-pointer flex items-center gap-1"
                         >
                             Search another
                             <ArrowRight className="size-5" />
@@ -109,16 +112,9 @@ const JobSearchPage = () => {
                     </div>
 
                     {/* Matched Jobs */}
-                    {jobSearchResponse.jobs_matched &&
-                        jobSearchResponse.jobs_matched.length > 0 && (
-                            <JobMatchedCard jobsMatched={jobSearchResponse.jobs_matched} />
-                        )}
-
-                    {/* Non-Matched Jobs */}
-                    {jobSearchResponse.job_listings &&
-                        jobSearchResponse.job_listings.length > 0 && (
-                            <OtherJobListCard jobSearchResponse={jobSearchResponse} />
-                        )}
+                    {jobSearchResponse.jobs_matched && (
+                        <JobMatchedCard jobSearchResponse={jobSearchResponse} />
+                    )}
                 </div>
             ) : (
                 // JOB SEARCH FORM

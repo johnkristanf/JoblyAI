@@ -13,7 +13,7 @@ export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: Job
 
     return (
         <div>
-            <h2 className="text-xl font-semibold text-gray-700 mt-5 mb-2">Other Job Postings</h2>
+            <h2 className="text-2xl font-semibold text-gray-700 mt-5 mb-2">Other Job Postings</h2>
 
             {/* ONLY DISPLAY JOBS THAT IS NOT IN THE MATCHED JOB LISTINGS */}
             <div className="max-h-[500px] overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6 opacity-90 ">

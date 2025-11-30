@@ -14,6 +14,8 @@ function SavedJobsPage() {
         queryKey: ['saved_jobs'],
         queryFn: async () => {
             const response = await axios.get(`${import.meta.env.VITE_API_V1_BASE_URL}/job/saved`)
+            console.log("response: ", response);
+            
             return response.data
         },
     })
