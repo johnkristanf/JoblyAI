@@ -13,6 +13,8 @@ class Job(Base):
     job_apply_link = Column(String, nullable=True)
     job_apply_is_direct = Column(Boolean, nullable=True)
     job_is_remote = Column(Boolean, nullable=True)
+    job_country = Column(String, nullable=True)
+    job_publisher = Column(String, nullable=True)
 
     employer_name = Column(String, nullable=True)
     employer_logo = Column(String, nullable=True)
@@ -23,3 +25,5 @@ class Job(Base):
     job_salary_period = Column(String, nullable=True)
 
     extraction_note = Column(String, nullable=True)
+    
+    user_id = Column(Integer, nullable=False)
