@@ -6,6 +6,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const queryClient = new QueryClient()
 
+export const meta = () => {
+    return [{ title: 'JoblyAI' }]
+}
+
 export default function AuthenticatedLayout() {
     return (
         <QueryClientProvider client={queryClient}>
