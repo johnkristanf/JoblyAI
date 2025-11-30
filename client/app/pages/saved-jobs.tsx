@@ -47,7 +47,7 @@ function SavedJobsPage() {
                 <div className="text-gray-500 mt-8">You have no saved jobs yet.</div>
             ) : (
                 <div>
-                    <div className="max-h-[500px] overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="max-h-[500px] overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6 mt-5">
                         {savedJobs.map((job, idx) => (
                             <div
                                 key={idx}
@@ -135,9 +135,10 @@ function SavedJobsPage() {
                                 )}
 
                                 <div className="grow"></div>
-                                <div className="flex items-center justify-between gap-4">
+                                
+                                <div className={`flex items-center gap-4 ${job.job_publisher ? 'justify-between' : 'justify-end'}`}>
                                     {job.job_publisher && (
-                                        <div className="w-[30%] text-center bg-blue-200 border-2 border-blue-500 text-sm text-blue-900 mb-2  px-2 py-0.5 rounded z-10">
+                                        <div className="w-[30%] text-center bg-blue-200 border-2 border-blue-500 text-sm text-blue-900 mb-2 px-2 py-0.5 rounded z-10">
                                             {job.job_publisher}
                                         </div>
                                     )}
