@@ -1,4 +1,5 @@
 import requests
+import httpx
 from src.config import settings
 
 
@@ -40,10 +41,12 @@ def search_adzuna_jobs(self, query, location, country="us"):
 
     return response.json()
 
-def search_rapidapi_jobs_jsearch(job_title, country, date_posted, page):
+
+async def search_rapidapi_jobs_jsearch(job_title, country, date_posted, page):
     """
     Free tier: 150 requests/month
     API: https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
+    Asynchronous version using httpx.AsyncClient for better performance.
     """
 
     url = "https://jsearch.p.rapidapi.com/search"
@@ -61,8 +64,15 @@ def search_rapidapi_jobs_jsearch(job_title, country, date_posted, page):
         "X-RapidAPI-Host": settings.RAPID_API_HOST,
     }
 
-    response = requests.get(url, headers=headers, params=querystring)
-    return response.json()
+    try:
+        async with httpx.AsyncClient(timeout=30, http2=True) as client:
+            response = await client.get(url, headers=headers, params=querystring)
+            response.raise_for_status()
+            return response.json()
+    except httpx.TimeoutException:
+        # log here
+        return {"data": []}
+
 
 # Example response object from job rapid API:
 # {
