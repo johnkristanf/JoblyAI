@@ -13,6 +13,7 @@ const SignupPage = () => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
@@ -38,13 +39,18 @@ const SignupPage = () => {
         setLoading(true)
 
         try {
-            const { data, error: signUpError } = await supabase.auth.signUp({
+            const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
             })
 
-            if (signUpError) {
-                setError(signUpError.message)
+            console.log("SUPABASE SIGNUP AUTH DATA: ", data);
+            
+
+            if (error) {
+            console.log("SIGNUP ERROR: ", error);
+
+                setError(error.message)
                 setLoading(false)
                 return
             }
@@ -57,6 +63,8 @@ const SignupPage = () => {
                 }, 2000)
             }
         } catch (err) {
+            console.log("SIGNUP ERROR: ", err);
+            
             setError('An unexpected error occurred. Please try again.')
             setLoading(false)
         }
