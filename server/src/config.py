@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     
     DATABASE_URL: str
     REDIS_URL: str
+    
+    SUPABASE_JWT_SECRET: str
 
     class Config:
         env_file = ".env"

@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.user.router import user_route
 from src.job.router import job_router
 from src.utils import group
 from src.database import Database
@@ -26,6 +27,7 @@ app.add_middleware(
 api_v1_router = group(
     "/api/v1",
     (job_router, "/job", ["Job"]),
+    (user_route, "/user", ["Users"]),
 )
 
 app.include_router(api_v1_router)

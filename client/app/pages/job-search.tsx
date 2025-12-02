@@ -5,7 +5,6 @@ import axios from 'axios'
 import { useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { JobMatchedCard } from '~/components/job-matched-card'
-import { OtherJobListCard } from '~/components/other-job-list-card'
 import NoJobsFound from '~/components/ui/no-jobs-found'
 
 const JobSearchPage = () => {
