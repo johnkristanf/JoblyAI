@@ -10,6 +10,7 @@ export const metadata = {
 }
 
 const SignupPage = () => {
+    const [fullName, setFullName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -23,6 +24,12 @@ const SignupPage = () => {
         e.preventDefault()
         setError(null)
         setSuccess(false)
+
+        // Validate full name
+        if (!fullName.trim()) {
+            setError('Full name is required')
+            return
+        }
 
         // Validate passwords match
         if (password !== confirmPassword) {
@@ -42,13 +49,18 @@ const SignupPage = () => {
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
+                options: {
+                    data: {
+                        full_name: fullName,
+                        avatar_url: null
+                    }
+                }
             })
 
             console.log("SUPABASE SIGNUP AUTH DATA: ", data);
-            
 
             if (error) {
-            console.log("SIGNUP ERROR: ", error);
+                console.log("SIGNUP ERROR: ", error);
 
                 setError(error.message)
                 setLoading(false)
@@ -64,7 +76,7 @@ const SignupPage = () => {
             }
         } catch (err) {
             console.log("SIGNUP ERROR: ", err);
-            
+
             setError('An unexpected error occurred. Please try again.')
             setLoading(false)
         }
@@ -100,6 +112,25 @@ const SignupPage = () => {
 
                     {/* Signup Form */}
                     <form onSubmit={handleSignup} className="space-y-6">
+                        <div>
+                            <label
+                                htmlFor="fullName"
+                                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                            >
+                                Full Name
+                            </label>
+                            <Input
+                                id="fullName"
+                                type="text"
+                                placeholder="Your full name"
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
+                                required
+                                className="w-full border-blue-300 dark:border-blue-700 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                                disabled={loading}
+                            />
+                        </div>
+
                         <div>
                             <label
                                 htmlFor="email"

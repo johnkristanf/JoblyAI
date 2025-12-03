@@ -30,8 +30,38 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['user_id'], ['auth.users.id'], ondelete="CASCADE"),
     )
+    
+    # Optional: Enable RLS and create policies
+    
+    
+    # Triggers: Create new profile record after user signup
+    op.execute("""
+        CREATE OR REPLACE FUNCTION public.handle_new_user()
+        RETURNS TRIGGER AS $$
+        BEGIN
+            INSERT INTO public.profiles (user_id, full_name, avatar_url)
+            VALUES (
+                NEW.id,
+                NEW.raw_user_meta_data->>'full_name',
+                NEW.raw_user_meta_data->>'avatar_url'
+            );
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql SECURITY DEFINER
+    """)
+    
+    op.execute("""
+        CREATE TRIGGER on_auth_user_created
+        AFTER INSERT ON auth.users
+        FOR EACH ROW EXECUTE FUNCTION public.handle_new_user()
+    """)
 
 
 def downgrade() -> None:
     """Downgrade schema."""
+    # Drop trigger and function
+    op.execute('DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users')
+    op.execute('DROP FUNCTION IF EXISTS public.handle_new_user()')
+    
+    # Drop table (RLS policies automatically drop with table)
     op.drop_table('profiles')
