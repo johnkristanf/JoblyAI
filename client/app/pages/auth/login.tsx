@@ -34,6 +34,7 @@ const LoginPage = () => {
             }
 
             if (data.user) {
+
                 // Redirect to job search page after successful login
                 navigate('/job/search')
             }

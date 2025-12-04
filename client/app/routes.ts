@@ -11,5 +11,6 @@ export default [
     layout('./layout/authenticated.tsx', [
         route('job/search', './pages/job-search.tsx'),
         route('saved/jobs', './pages/saved-jobs.tsx'),
+        route('profile', './pages/profile.tsx'),
     ]),
 ] satisfies RouteConfig
