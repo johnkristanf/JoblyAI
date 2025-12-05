@@ -1,16 +1,35 @@
 import  { useState } from 'react';
-import { Check, X, Edit2, User, Mail, Loader2 } from 'lucide-react';
+import { Check, X, Edit2, User, Mail, Loader2, Lock, Eye, EyeOff } from 'lucide-react';
 import { useUserStore } from '~/store/userStore';
+import axios from 'axios';
+import { getAccessToken, supabase } from '~/lib/supabase/client';
+import { toast } from 'sonner';
 
 
 
 const ProfilePage = () => {
-  const {user, loading, setLoading} = useUserStore();
+  const {user, setUser, loading, setLoading} = useUserStore();
 
   const [editingField, setEditingField] = useState(null);
   const [tempValue, setTempValue] = useState('');
+  
+  // Password change state
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
+  const [passwordError, setPasswordError] = useState('');
+  
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
 
-  const startEdit = (field, currentValue) => {
+  const startEdit = (field, currentValue: string) => {
     setEditingField(field);
     setTempValue(currentValue || '');
   };
@@ -20,24 +39,43 @@ const ProfilePage = () => {
     setTempValue('');
   };
 
-  const saveEdit = async (field) => {
+  const saveEditBasicInformation = async (field: 'full_name' | 'email') => {
+    if (!user) return;
     if (tempValue.trim() === user[field]) {
       cancelEdit();
       return;
     }
 
     setLoading(true);
-    
-    // Simulate API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Update user data
-      setUser(prev => ({
-        ...prev,
-        [field]: tempValue.trim()
-      }));
-      
+      const formData = new FormData();
+      formData.append(field, tempValue.trim());
+
+      const accessToken = await getAccessToken();
+
+      const response = await axios.patch(
+        `${import.meta.env.VITE_API_V1_BASE_URL}/user/profile`,
+        formData,
+        {
+          headers: { 
+            'Content-Type': 'multipart/form-data',
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+          }
+        }
+      );
+
+      if (response?.data) {
+        setUser({
+          ...user,
+          ...response.data
+        });
+      } else {
+        // fallback to optimistic update if response missing
+        setUser({
+          ...user,
+          [field]: tempValue.trim(),
+        });
+      }
       setEditingField(null);
       setTempValue('');
     } catch (error) {
@@ -68,6 +106,87 @@ const ProfilePage = () => {
       reader.readAsDataURL(file);
     } catch (error) {
       console.error('Failed to upload:', error);
+      setLoading(false);
+    }
+  };
+
+
+  // Password change handlers
+  const handlePasswordChange = (field, value) => {
+    setPasswordData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setPasswordError('');
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
+  const handlePasswordSave = async () => {
+    if (
+      !passwordData.current_password ||
+      !passwordData.new_password ||
+      !passwordData.confirm_password
+    ) {
+      setPasswordError('All password fields are required');
+      return;
+    }
+
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+
+    if (passwordData.new_password.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+
+
+      // Check if current password is correct by reauthenticating
+      if(user){
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: passwordData.current_password,
+        });
+
+        if (error) {
+          setPasswordError('Current password is incorrect');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 2. Proceed to update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: passwordData.new_password,
+      });
+
+      if (updateError) {
+        setPasswordError('Failed to update password. Please try again.');
+      } else {
+        setPasswordData({
+          current_password: '',
+          new_password: '',
+          confirm_password: '',
+        });
+        setShowPasswordSection(false);
+        setPasswordError('');
+        toast.success('Password updated successfully!');
+      }
+    } catch (err) {
+      console.error('Failed to update password:', err);
+      setPasswordError('Failed to update password. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -173,7 +292,7 @@ const ProfilePage = () => {
                     disabled={loading}
                   />
                   <button
-                    onClick={() => saveEdit('full_name')}
+                    onClick={() => saveEditBasicInformation('full_name')}
                     disabled={loading}
                     className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                   >
@@ -225,7 +344,7 @@ const ProfilePage = () => {
                     disabled={loading}
                   />
                   <button
-                    onClick={() => saveEdit('email')}
+                    onClick={() => saveEditBasicInformation('email')}
                     disabled={loading}
                     className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                   >
@@ -244,6 +363,126 @@ const ProfilePage = () => {
                   <p className="text-gray-900 text-sm">
                     {user.email || 'Not set'}
                   </p>
+                </div>
+              )}
+            </div>
+
+            {/* Change Password Section */}
+            <div className="pt-6 border-t border-gray-200">
+              <button
+                onClick={() => {
+                  setShowPasswordSection(!showPasswordSection);
+                  setPasswordError('');
+                  if (showPasswordSection) {
+                    setPasswordData({
+                      current_password: '',
+                      new_password: '',
+                      confirm_password: ''
+                    });
+                  }
+                }}
+                className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:opacity-75 hover:cursor-pointer transition-colors mb-5"
+              >
+                <Lock className={`w-4 h-4 ${showPasswordSection ? 'text-red-600' : ''}`} />
+                {showPasswordSection ? <span className='text-red-600'>Cancel Password Change</span>  : 'Change Password'}
+              </button>
+
+              {showPasswordSection && (
+                <div className="mt-4 space-y-4">
+                  {/* Current Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Current Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPasswords.current ? "text" : "password"}
+                        value={passwordData.current_password}
+                        onChange={(e) => handlePasswordChange('current_password', e.target.value)}
+                        className="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        placeholder="Enter current password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility('current')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* New Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPasswords.new ? "text" : "password"}
+                        value={passwordData.new_password}
+                        onChange={(e) => handlePasswordChange('new_password', e.target.value)}
+                        className="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        placeholder="Enter new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility('new')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Confirm New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPasswords.confirm ? "text" : "password"}
+                        value={passwordData.confirm_password}
+                        onChange={(e) => handlePasswordChange('confirm_password', e.target.value)}
+                        className="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        placeholder="Confirm new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility('confirm')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Password Error */}
+                  {passwordError && (
+                    <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                      <p className="text-xs text-red-700">{passwordError}</p>
+                    </div>
+                  )}
+
+                  {/* Password Save Button */}
+                  <button
+                    onClick={handlePasswordSave}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Updating Password...
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        Update Password
+                      </>
+                    )}
+                  </button>
                 </div>
               )}
             </div>

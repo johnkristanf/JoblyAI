@@ -19,8 +19,6 @@ export default function AuthenticatedLayout() {
     const { user, loading, error } = useAuthenticatedUser();
     const { setUser, setLoading } = useUserStore();
 
-    console.log("user na hooked: ", user);
-
     const handleLogout = async () => {
         setLoading(true);
         try {

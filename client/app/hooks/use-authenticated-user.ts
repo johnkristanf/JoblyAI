@@ -36,8 +36,6 @@ export function useAuthenticatedUser() {
           },
         })
 
-        console.log("response sa hook: ", response);
-        
 
         setUser(response.data)
       } catch (err: any) {
