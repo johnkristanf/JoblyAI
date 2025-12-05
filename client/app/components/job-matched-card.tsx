@@ -88,13 +88,13 @@ export function JobMatchedCard({ jobSearchResponse }: { jobSearchResponse: JobSe
                             </div>
 
                             {/* NOTE WHY THE JOB MATACHES */}
-                            <div className="mt-3 mb-4 text-xs text-gray-600">
+                            {/* <div className="mt-3 mb-4 text-xs text-gray-600">
                                 <span className="font-semibold text-green-600 ">
                                     Why this position is a good fit:
                                 </span>{' '}
                                 {job.extraction_note}
-                            </div>
-                            <div className="grow"></div>
+                            </div> */}
+                            {/* <div className="grow"></div> */}
 
                             <JobPublisherHeader job={job} />
                         </div>

@@ -47,7 +47,7 @@ async def job_search(
             job_title=payload.job_title,
             country=payload.country,
             date_posted=payload.date_posted,  # all, today, 3days, week, month
-            page="3",
+            page="1",
         )
 
         # Cache data
@@ -59,11 +59,6 @@ async def job_search(
 
     job_listings = job_search_results.get("data", [])
     print(f"job_listings: {job_listings}")
-
-    # Truncate the job descriptions to reduce token usage (3 sentences)
-    for job in job_listings:
-        sentences = job.get("job_description", "").split(". ")
-        job["job_description"] = ". ".join(sentences[:1])[:500]
 
     job_seach_prompt = JobSeachPrompt()
     system_prompt = job_seach_prompt.load_system_prompt(
@@ -77,8 +72,6 @@ async def job_search(
         model=settings.OPENAI_MODEL,
         input=[system_prompt, user_prompt],
     )
-
-    print(f"response.output_text: {response.output_text}")
 
     jobs_matched = json_serialize_llm_response(response.output_text)
 

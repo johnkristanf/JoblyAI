@@ -25,21 +25,28 @@ class JobSeachPrompt:
                         "job_max_salary": 230000,
                         "job_salary_period": "YEAR",
                         "job_posted_at": "13 hours ago"
-                        
-                        "extraction_note": "Included because the candidate has Python, cloud infrastructure, and distributed systems experience, which directly matches the job requirements."
                     }}
                 ]
 
                 Format your response as strict JSON (no Markdown/code block formatting, comments, or extra text).
                 
                 Please ensure that your response for each job fills out each field as accurately as possible. Leave the value None if the information is not available.
+                
+                When constructing the "job_description" field for each listing, do not simply copy or summarize the original job description. Instead, craft this field so that it clearly explains why this job is a good match for the candidate, based on their experience, skills, and the requirements in the listing. The field should have:
+                - A concise, information-rich overview sentence directly addressing why this role fits the candidate profile or background (e.g., matching skills, tools, or experience).
+                - Then, list the primary required skills and core responsibilities as bullet points, each on its own line in this format:
+                    - Skill/Responsibility 1
+                    - Skill/Responsibility 2
+                    - Skill/Responsibility 3
+                    
+                - The bullet points should focus on key skills, tools, experience, or duties that are relevant to both the job and the candidate. Use direct, specific language as much as possible.
+                - Do not include boilerplate or generic statements, company marketing language, or repeated information.
+                - If the job listing includes "job_highlights" with "Qualifications" and "Responsibilities inside it, merge these details, as relevant, into your overview and bullet points, ensuring they reflect why the job matches the candidate.
 
                 When prioritizing and extracting job listings, focus on those that are most relevant to the following candidate context, but allow for some flexibility in how closely each listing matches the details:
                 - Desired job title: {job_title}
                 - Experience level: {experience_level}
                 - Professional summary: {professional_summary}
-
-                For each included job, add a brief comment in the 'extraction_note' field explaining why you chose it. Specifically, mention which of the candidate's skills, experience, or background from the provided context match with the job and explain how these skills relate to the position, especially when the match is broader or less direct.
             """
         return {"role": "system", "content": content}
 

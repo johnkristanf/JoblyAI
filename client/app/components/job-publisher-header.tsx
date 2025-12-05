@@ -4,7 +4,7 @@ import { SaveJobBtn } from './ui/save-job-btn'
 export function JobPublisherHeader({ job }: { job: JobMatch }) {
     return (
         <div
-            className={`flex items-center ${job.job_publisher ? 'justify-between' : 'justify-end'}`}
+            className={`flex items-center mt-3 ${job.job_publisher ? 'justify-between' : 'justify-end'}`}
         >
             {job.job_publisher && (
                 <div className="w-[30%] text-center bg-blue-200 border-2 border-blue-500 text-sm text-blue-900 mb-2  px-2 py-0.5 rounded z-10">
