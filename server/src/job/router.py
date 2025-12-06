@@ -1,7 +1,7 @@
 import json
 
 from fastapi import APIRouter, Depends
-from openai import OpenAI
+from openai import AsyncOpenAI
 from redis.client import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
@@ -14,10 +14,11 @@ from src.config import settings
 from src.job.schema import JobsSearchIn, SaveJobIn
 from src.job.models import Job
 
-from src.job.service import search_rapidapi_jobs_jsearch
+from src.job.service import search_rapidapi_jobs_jsearch, truncate_job_listing_properties
 
 job_router = APIRouter()
 
+client: AsyncOpenAI = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 @job_router.post("/search")
 async def job_search(
@@ -35,8 +36,6 @@ async def job_search(
     # 8. For ultra-low latency, consider fine-tuning a smaller local model for batch inference.
     # -----
 
-    client: OpenAI = OpenAI(api_key=settings.OPENAI_API_KEY)
-
     job_search_results = None
     cache_key = f"jobsearch:{payload.job_title}:{payload.experience_level}:{payload.country}:{payload.date_posted}:{payload.professional_summary}"
 
@@ -50,14 +49,15 @@ async def job_search(
             page="1",
         )
 
-        # Cache data
         expire_seconds = 15 * 60  # 15 minutes in seconds
         redis_client.setex(cache_key, expire_seconds, json.dumps(job_search_results))
     else:
         print("CACHE HIT BOSS")
         job_search_results = json.loads(cached_results)
 
-    job_listings = job_search_results.get("data", [])
+    job_listings_raw = job_search_results.get("data", [])
+    job_listings = truncate_job_listing_properties(job_listings_raw)
+        
     print(f"job_listings: {job_listings}")
 
     job_seach_prompt = JobSeachPrompt()
