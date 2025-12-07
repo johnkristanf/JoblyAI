@@ -1,12 +1,12 @@
-import LandingPage from "~/landing/page";
+import LandingPage from './pages/landing'
 
 export function meta() {
-  return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
+    return [
+        { title: 'JoblyAI – AI-Powered Job Search Platform' },
+        { name: 'Welcome to JoblyAI, the easiest way to search, save jobs, and build a resume with AI assistance.' },
+    ]
 }
 
 export default function Landing() {
-  return <LandingPage />;
+    return <LandingPage />
 }
