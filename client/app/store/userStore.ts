@@ -1,49 +1,92 @@
-import axios from 'axios';
-import { create } from 'zustand';
-import type { User } from '~/types/user';
+import axios from 'axios'
+import { create } from 'zustand'
+import { getAccessToken } from '~/lib/supabase/client'
+import type { User } from '~/types/user'
 
 interface UserStoreState {
-    user: User | null,
-    loading: boolean,
-    setUser: (user: User | null) => void,
-    setLoading: (loading: boolean) => void,
-    refreshUser: () => Promise<void>,
+    user: User | null
+    loading: boolean
+    error: string | null
+    setUser: (user: User | null) => void
+    setLoading: (loading: boolean) => void
+    setError: (error: string | null) => void
+    fetchUser: () => Promise<void>
     updateProfile: (payload: Partial<User>) => Promise<User>
 }
 
-export const useUserStore = create<UserStoreState>((set) => ({
+export const useUserStore = create<UserStoreState>((set, get) => ({
     user: null,
     loading: false,
+    error: null,
 
     setUser: (user) => set({ user }),
 
     setLoading: (loading) => set({ loading }),
 
-    refreshUser: async () => {
-        set({ loading: true });
+    setError: (error) => set({ error }),
+
+    fetchUser: async () => {
+        const state = get()
+        if (state.loading) {
+            console.log('Fetch already in progress, skipping...')
+            return
+        }
+
+        console.log('Fetching user...')
+
+        set({ loading: true, error: null })
+
+        const accessToken = await getAccessToken()
+
+        console.log('accessToken: ', accessToken)
+
         try {
-            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user`, {
-                withCredentials: true,
-            });
-            set({ user: res.data });
+            const res = await axios.get(`${import.meta.env.VITE_API_V1_BASE_URL}/user/profile`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+                },
+            })
+            set({ user: res.data })
+        } catch (err: any) {
+            if (axios.isAxiosError(err) && err.response) {
+                if (err.response.status === 401) {
+                    window.location.href = '/'
+                } else {
+                    set({ error: `Error: ${err.response.status} ${err.response.statusText}` })
+                }
+            } else {
+                set({ error: err?.message ?? 'Failed to load user' })
+            }
+            set({ user: null })
         } finally {
-            set({ loading: false });
+            set({ loading: false })
         }
     },
 
     updateProfile: async (payload) => {
-        set({ loading: true });
+        set({ loading: true })
         try {
-            const res = await axios.patch("/users/me", payload);
+            const accessToken = await getAccessToken() // Add auth header for PATCH as well
+            const res = await axios.patch(
+                `${import.meta.env.VITE_API_V1_BASE_URL}/user/profile`,
+                payload,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+                    },
+                },
+            )
 
-            // Update UI instantly
+            // Update UI instantly -- Typescript fix for set shape
             set((state) => ({
-                user: { ...state.user, ...payload }
-            }));
+                user: state.user ? { ...state.user, ...payload } : null,
+            }))
 
-            return res.data;
+            return res.data
         } finally {
-            set({ loading: false });
+            set({ loading: false })
         }
-    }
-}));
+    },
+}))
