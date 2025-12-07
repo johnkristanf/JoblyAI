@@ -4,6 +4,9 @@ import { SalarySection } from './salary-section'
 import { DescriptionSection } from './description-section'
 import { JobPublisherHeader } from './job-publisher-header'
 import { OtherJobListingsDialog } from './other-job-listings-dialog'
+import { Globe } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
+import { JobLocationTooltip } from './job-location-tooltip'
 
 export function JobMatchedCard({ jobSearchResponse }: { jobSearchResponse: JobSearchResponse }) {
     return (
@@ -20,6 +23,15 @@ export function JobMatchedCard({ jobSearchResponse }: { jobSearchResponse: JobSe
                             key={idx}
                             className="bg-white rounded-lg shadow p-5 flex flex-col gap-4 relative"
                         >
+                            {job.job_latitude && job.job_longitude && (
+                                <div className="flex justify-end">
+                                    <JobLocationTooltip
+                                        job_latitude={job.job_latitude}
+                                        job_longitude={job.job_longitude}
+                                    />
+                                </div>
+                            )}
+
                             {/* COMPANY INFORMATION SECTION */}
                             <div className="flex items-center mb-2">
                                 {job.employer_logo ? (
@@ -105,9 +117,10 @@ export function JobMatchedCard({ jobSearchResponse }: { jobSearchResponse: JobSe
                     <p className="text-blue-800 font-medium">
                         No matched jobs were found for your search criteria.
                     </p>
-                   
+
                     <p className="text-blue-700 text-sm mt-2">
-                        However, you can still explore other available job postings that may interest you.
+                        However, you can still explore other available job postings that may
+                        interest you.
                     </p>
                 </div>
             )}
