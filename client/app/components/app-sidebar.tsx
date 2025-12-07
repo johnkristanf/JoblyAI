@@ -1,4 +1,4 @@
-import { BookmarkCheck, BriefcaseBusiness, FileUser } from 'lucide-react'
+import { BookmarkCheck, BriefcaseBusiness, FileUser, MapPin } from 'lucide-react'
 import { NavLink } from 'react-router'
 import {
     Sidebar,
@@ -17,8 +17,8 @@ export function AppSidebar() {
         <Sidebar>
             <SidebarHeader>
                 <div className="flex items-center ">
-                    <div className=" flex aspect-square size-12 items-center justify-center rounded-lg">
-                        <img src="/joblyai-logo-bg_removed.png" className="size-12" />
+                    <div className=" flex aspect-square size-8 items-center justify-center rounded-lg">
+                        <MapPin className="text-blue-600" size={25} />
                     </div>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                         <span className="truncate font-medium text-blue-600">JoblyAI</span>
@@ -47,7 +47,6 @@ export function AppSidebar() {
                                 </NavLink>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
-
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>
