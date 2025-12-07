@@ -16,6 +16,9 @@ export type JobMatch = {
     job_is_remote: boolean
     job_publisher: string
 
+    job_latitude: number
+    job_longitude: number
+
     employer_name: string
     employer_logo: string | null
     employer_website: string | null

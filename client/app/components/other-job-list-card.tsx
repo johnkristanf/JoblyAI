@@ -3,6 +3,9 @@ import { SaveJobBtn } from './ui/save-job-btn'
 import { SalarySection } from './salary-section'
 import { DescriptionSection } from './description-section'
 import { JobPublisherHeader } from './job-publisher-header'
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
+import { Globe } from 'lucide-react'
+import { JobLocationTooltip } from './job-location-tooltip'
 
 export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: JobSearchResponse }) {
     const matchedJobs = Array.isArray(jobSearchResponse.jobs_matched)
@@ -29,6 +32,14 @@ export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: Job
                                 key={idx}
                                 className="bg-gray-50 rounded-lg shadow p-5 flex flex-col gap-4 border border-gray-200"
                             >
+                                {job.job_latitude && job.job_longitude && (
+                                    <div className="flex justify-end">
+                                        <JobLocationTooltip
+                                            job_latitude={job.job_latitude}
+                                            job_longitude={job.job_longitude}
+                                        />
+                                    </div>
+                                )}
                                 {/* COMPANY INFORMATION SECTION */}
                                 <div className="flex items-center mb-2">
                                     {job.employer_logo ? (
