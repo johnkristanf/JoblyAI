@@ -17,6 +17,9 @@ class JobSeachPrompt:
                         "job_country": "US",
                         "job_publisher": "LinkedIn",
                         
+                        "job_latitude": 38.840390899999996,
+                        "job_longitude": -77.42887689999999,
+                        
                         "employer_name": "The San Francisco Compute Company",
                         "employer_logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnL55P3o_Ot5_9IdIIOdh-f97gNPBoo_4QcJCD&s=0",
                         "employer_website": "https://sfcompute.com",
@@ -37,17 +40,20 @@ class JobSeachPrompt:
                 - Then, list the primary required skills and core responsibilities as bullet points, each on its own line in this format:
                     - Skill/Responsibility 1
                     - Skill/Responsibility 2
-                    - Skill/Responsibility 3
                     
                 - The bullet points should focus on key skills, tools, experience, or duties that are relevant to both the job and the candidate. Use direct, specific language as much as possible.
                 - Do not include boilerplate or generic statements, company marketing language, or repeated information.
                 - If the job listing includes "job_highlights" with "Qualifications" and "Responsibilities inside it, merge these details, as relevant, into your overview and bullet points, ensuring they reflect why the job matches the candidate.
 
-                When prioritizing and extracting job listings, focus on those that are most relevant to the following candidate context, but allow for some flexibility in how closely each listing matches the details:
+                When prioritizing and extracting job listings, strictly match each listing to the candidate context using the following parameters. Only include job listings that closely match ALL of the criteria below, unless no such listings exist—in which case, select only those that match at least two of the three criteria:
                 - Desired job title: {job_title}
                 - Experience level: {experience_level}
                 - Professional summary: {professional_summary}
+                
+                Do NOT include jobs that only loosely relate to the job title, experience, or candidate background. Give strong preference to exact or near-exact matches on job title and experience level, and ensure the main job duties and requirements align with the candidate's professional summary. Avoid flexible interpretation unless the listing is a very close fit.
+           
             """
+            
         return {"role": "system", "content": content}
 
     def load_user_prompt(self, job_listings):
