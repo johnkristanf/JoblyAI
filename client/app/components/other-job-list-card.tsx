@@ -2,7 +2,7 @@ import type { JobMatch, JobSearchResponse } from '~/types/job_search'
 import { SaveJobBtn } from './ui/save-job-btn'
 import { SalarySection } from './salary-section'
 import { DescriptionSection } from './description-section'
-import { JobPublisherHeader } from './job-publisher-header'
+import { JobPublisherAndApply } from './publisher-and-apply'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 import { Globe } from 'lucide-react'
 import { JobLocationTooltip } from './job-location-tooltip'
@@ -108,7 +108,7 @@ export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: Job
                                     </span>
                                 </div>
                                 <div className="grow"></div>
-                                <JobPublisherHeader job={job} />
+                                <JobPublisherAndApply job={job} />
                             </div>
                         ))
                 })()}
