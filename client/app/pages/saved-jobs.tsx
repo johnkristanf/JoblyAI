@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { DescriptionSection } from '~/components/description-section'
-import { JobPublisherHeader } from '~/components/job-publisher-header'
+import { JobLocationTooltip } from '~/components/job-location-tooltip'
 import { SalarySection } from '~/components/salary-section'
+import { getSavedJobs } from '~/lib/api/get'
 import type { SavedJobs } from '~/types/job_search'
 
 function SavedJobsPage() {
@@ -12,12 +13,7 @@ function SavedJobsPage() {
         error,
     } = useQuery<SavedJobs[]>({
         queryKey: ['saved_jobs'],
-        queryFn: async () => {
-            const response = await axios.get(`${import.meta.env.VITE_API_V1_BASE_URL}/job/saved`)
-            console.log("response: ", response);
-            
-            return response.data
-        },
+        queryFn: getSavedJobs,
     })
 
     if (isLoading) {
@@ -59,7 +55,13 @@ function SavedJobsPage() {
                                         : 'bg-white'
                                 }`}
                             >
-                                {/* JOB PUBLISHER HEADER */}
+                                {/* JOB LOCATION MAP TOOLTIP */}
+                                <div className="flex justify-end">
+                                    <JobLocationTooltip
+                                        job_latitude={job.job_latitude}
+                                        job_longitude={job.job_longitude}
+                                    />
+                                </div>
 
                                 {/* COMPANY INFORMATION SECTION */}
                                 <div className="flex items-center mb-2">
@@ -137,8 +139,10 @@ function SavedJobsPage() {
                                 )}
 
                                 <div className="grow"></div>
-                                
-                                <div className={`flex items-center gap-4 ${job.job_publisher ? 'justify-between' : 'justify-end'}`}>
+
+                                <div
+                                    className={`flex items-center gap-4 ${job.job_publisher ? 'justify-between' : 'justify-end'}`}
+                                >
                                     {job.job_publisher && (
                                         <div className="w-[30%] text-center bg-blue-200 border-2 border-blue-500 text-sm text-blue-900 mb-2 px-2 py-0.5 rounded z-10">
                                             {job.job_publisher}

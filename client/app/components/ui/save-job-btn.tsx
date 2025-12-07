@@ -1,8 +1,7 @@
-import { useState } from 'react'
 import type { JobMatch } from '~/types/job_search'
 import { useMutation } from '@tanstack/react-query'
-import axios from 'axios'
 import { toast } from 'sonner'
+import { saveJob } from '~/lib/api/post'
 
 type SaveJobBtnProps = {
     job: JobMatch
@@ -10,23 +9,7 @@ type SaveJobBtnProps = {
 
 export function SaveJobBtn({ job }: SaveJobBtnProps) {
     const saveJobMutation = useMutation({
-        mutationFn: async (jobToSave: JobMatch) => {
-            // Using axios instead of fetch
-            try {
-                const response = await axios.post(
-                    'http://127.0.0.1:8000/api/v1/job/save',
-                    jobToSave,
-                    {
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                    },
-                )
-                return response.data
-            } catch (error: any) {
-                throw new Error(error.response?.data?.message || 'Failed to save job')
-            }
-        },
+        mutationFn: saveJob,
         onSuccess: () => {
             toast.success('Job saved successfully!')
         },

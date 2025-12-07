@@ -6,6 +6,8 @@ import { useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { JobMatchedCard } from '~/components/job-matched-card'
 import NoJobsFound from '~/components/ui/no-jobs-found'
+import { jobSearch } from '~/lib/api/post'
+import { toast } from 'sonner'
 
 const JobSearchPage = () => {
     const [jobSearchResponse, setJobSearchResponse] = useState<JobSearchResponse>()
@@ -17,27 +19,16 @@ const JobSearchPage = () => {
     } = useForm<JobSearchForm>()
 
     const mutation = useMutation({
-        mutationFn: async (payload: JobSearchForm) => {
-            const response = await axios.post(
-                `${import.meta.env.VITE_API_V1_BASE_URL}/job/search`,
-                payload,
-            )
-            console.log('response.data: ', response.data)
-
-            const undefinedValueCatcher = {
-                job_listings: [],
-                jobs_matched: [],
-            }
-
-            setJobSearchResponse(response.data ?? undefinedValueCatcher)
-            return response.data
+        mutationFn: jobSearch,
+        onError: (err: any) => {
+            toast.success('Error in searching job, please try again later')
         },
     })
 
     const handleSearchAnother = () => setJobSearchResponse(undefined)
 
     const onSubmit: SubmitHandler<JobSearchForm> = (data) => {
-        mutation.mutate(data)
+        mutation.mutate({ payload: data, setJobSearchResponse: setJobSearchResponse })
     }
 
     // Add fullscreen loader when mutation is in progress
@@ -64,7 +55,9 @@ const JobSearchPage = () => {
                         d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                     />
                 </svg>
-                <div className="text-lg text-blue-700 font-medium">Searching for jobs...</div>
+                <div className="text-lg text-blue-700 font-medium">
+                    Searching might take a few minute...
+                </div>
             </div>
         )
     }
