@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router'
 import { supabase } from '~/lib/supabase/client'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
+import { ArrowLeft } from 'lucide-react'
 
 export const metadata = {
     title: 'Login – JoblyAI',
@@ -34,7 +35,6 @@ const LoginPage = () => {
             }
 
             if (data.user) {
-
                 // Redirect to job search page after successful login
                 navigate('/job/search')
             }
@@ -46,6 +46,16 @@ const LoginPage = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 px-4">
+            <h1 className="absolute top-4 left-3">
+                <a
+                    href="/"
+                    className="inline-flex items-center px-3 py-2  hover:cursor-pointer hover:opacity-75 text-gray-900 "
+                >
+                    <ArrowLeft className="size-6 mr-1" />
+                    Back to landing page
+                </a>
+            </h1>
+
             <div className="w-full max-w-md">
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-blue-200 dark:border-blue-800">
                     {/* Logo/Header */}
