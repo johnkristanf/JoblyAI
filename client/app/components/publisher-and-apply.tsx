@@ -1,7 +1,7 @@
 import type { JobMatch } from '~/types/job_search'
 import { SaveJobBtn } from './ui/save-job-btn'
 
-export function JobPublisherHeader({ job }: { job: JobMatch }) {
+export function JobPublisherAndApply({ job }: { job: JobMatch }) {
     return (
         <div
             className={`flex items-center mt-3 ${job.job_publisher ? 'justify-between' : 'justify-end'}`}
