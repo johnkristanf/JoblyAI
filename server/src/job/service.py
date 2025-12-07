@@ -1,29 +1,50 @@
-import requests
 import httpx
+from src.utils import json_serialize_llm_response
+from src.prompt import JobSeachPrompt
 from src.config import settings
+from openai import AsyncOpenAI
+
+client: AsyncOpenAI = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+
+async def llm_job_extraction(job_listings, params: dict):
+    job_seach_prompt = JobSeachPrompt()
+    system_prompt = job_seach_prompt.load_system_prompt(
+        params.get("job_title"),
+        params.get("experience_level"),
+        params.get("professional_summary"),
+    )
+    user_prompt = job_seach_prompt.load_user_prompt(job_listings)
+
+    response = await client.responses.create(
+        model=settings.OPENAI_MODEL,
+        input=[system_prompt, user_prompt],
+    )
+
+    jobs_matched = json_serialize_llm_response(response.output_text)
+    return jobs_matched
 
 
 def truncate_job_listing_properties(job_listing):
     # Define properties to remove
     properties_to_remove = [
-        "job_apply_link", 
-        "job_benefits", 
-        "job_city", 
-        "job_google_link", 
-        "job_id", 
-        "job_location", 
-        "job_onet_job_zone", 
-        "job_onet_soc", 
+        "apply_options",
+        "job_benefits",
+        "job_city",
+        "job_google_link",
+        "job_id",
+        "job_location",
+        "job_onet_job_zone",
+        "job_onet_soc",
         "job_posted_at_datetime_utc",
         "job_posted_at_timestamp",
-        "job_state"
-    ] 
-    
+        "job_state",
+    ]
+
     truncated_job_listings = []
     for job in job_listing:
         job_cleaned = {k: v for k, v in job.items() if k not in properties_to_remove}
         truncated_job_listings.append(job_cleaned)
-        
+
     return truncated_job_listings
 
 
