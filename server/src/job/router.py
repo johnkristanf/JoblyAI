@@ -5,6 +5,7 @@ from redis.client import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
+from src.auth.dependencies import verify_user_from_token
 from src.database import Database
 from src.utils import extract_data_from_batch_tasks
 from src.job.schema import JobsSearchIn, SaveJobIn
@@ -21,7 +22,9 @@ job_router = APIRouter()
 
 @job_router.post("/search")
 async def job_search(
-    payload: JobsSearchIn, redis_client: Redis = Depends(Database.get_redis_client)
+    payload: JobsSearchIn,
+    user: dict = Depends(verify_user_from_token),
+    redis_client: Redis = Depends(Database.get_redis_client),
 ):
     # -----
     # LLM API (OpenAI prompts) optimizations for speed:
@@ -74,13 +77,12 @@ async def job_search(
 
 @job_router.post("/save")
 async def save_job(
-    # user_id: int,  # DAPAT PAGKUHA SA ID IS THROUGH DEPENDENCY NA get_authenticated_user
     payload: SaveJobIn,
+    user: dict = Depends(verify_user_from_token),
     session: AsyncSession = Depends(Database.get_async_session),
 ):
-    DUMMY_USER_ID = 1
     job_data = payload.model_dump()
-    job_data["user_id"] = DUMMY_USER_ID
+    job_data["user_id"] = user.get("id")
 
     new_job = Job(**job_data)
     session.add(new_job)
@@ -92,12 +94,12 @@ async def save_job(
 
 @job_router.get("/saved")
 async def get_saved_jobs_by_user(
-    # user_id: int,  # DAPAT PAGKUHA SA ID IS THROUGH DEPENDENCY NA get_authenticated_user
+    user: dict = Depends(verify_user_from_token),
     session: AsyncSession = Depends(Database.get_async_session),
 ):
-    DUMMY_USER_ID = 1
+    user_id = user.get("id")
     result = await session.execute(
-        select(Job).where(Job.user_id == DUMMY_USER_ID).order_by(Job.id.desc())
+        select(Job).where(Job.user_id == user_id).order_by(Job.id.desc())
     )
     jobs = result.scalars().all()
     return jobs

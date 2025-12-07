@@ -28,17 +28,14 @@ async def verify_user_from_token(
         # Extract user information from payload
         user_id = payload.get("sub")
         email = payload.get("email")
-        
+
         if not user_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token: missing user ID",
             )
 
-        return { 
-                "id": user_id, 
-                "email": email 
-            }
+        return {"id": user_id, "email": email}
 
     except JWTError as e:
         raise HTTPException(

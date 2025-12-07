@@ -9,12 +9,13 @@ from passlib.context import CryptContext
 
 user_route = APIRouter()
 
+
 @user_route.get(
     "/",
 )
 async def get_user(
     user: dict = Depends(verify_user_from_token),
-    session: AsyncSession = Depends(Database.get_async_session)
+    session: AsyncSession = Depends(Database.get_async_session),
 ):
     stmt = select(Profile).where(Profile.user_id == user["id"])
     result = await session.execute(stmt)
@@ -39,7 +40,7 @@ async def update_profile(
     print(f"full_name: {full_name}")
     print(f"avatar: {avatar}")
     print(f"user: {user}")
-    
+
     stmt = select(Profile).where(Profile.user_id == user["id"])
     result = await session.execute(stmt)
     profile = result.scalars().first()

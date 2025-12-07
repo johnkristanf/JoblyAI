@@ -18,6 +18,9 @@ class SaveJobIn(BaseModel):
     job_is_remote: bool | None = None
     job_country: str | None = None
     job_publisher: str | None = None
+    
+    job_latitude: float | None = None
+    job_longitude: float | None = None
 
     employer_name: str | None = None
     employer_logo: str | None = None
