@@ -36,7 +36,6 @@ export type JobSearchResponse = {
     jobs_matched: JobMatch[]
 }
 
-
 export type SavedJobs = {
     id: number
     job_title: string | null
@@ -45,7 +44,10 @@ export type SavedJobs = {
     job_apply_link: string | null
     job_apply_is_direct: boolean | null
     job_country: string
-    job_publisher: string,
+    job_publisher: string
+
+    job_latitude: number
+    job_longitude: number
 
     employer_name: string | null
     employer_logo: string | null
