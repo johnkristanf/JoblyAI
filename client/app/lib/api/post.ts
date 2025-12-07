@@ -1,7 +1,7 @@
 import axios from 'axios'
 import type { Dispatch, SetStateAction } from 'react'
 import type { JobMatch, JobSearchForm, JobSearchResponse } from '~/types/job_search'
-import { supabase } from '../supabase/client'
+import { getAccessToken, supabase } from '../supabase/client'
 
 export const jobSearch = async ({
     payload,
@@ -10,16 +10,14 @@ export const jobSearch = async ({
     payload: JobSearchForm
     setJobSearchResponse: Dispatch<SetStateAction<JobSearchResponse | undefined>>
 }) => {
-    const {
-        data: { session },
-    } = await supabase.auth.getSession()
+    const accessToken = await getAccessToken()
 
     const response = await axios.post(
         `${import.meta.env.VITE_API_V1_BASE_URL}/job/search`,
         payload,
         {
             headers: {
-                Authorization: session?.access_token ? `Bearer ${session.access_token}` : '',
+                Authorization: accessToken ? `Bearer ${accessToken}` : '',
                 'Content-Type': 'application/json',
             },
         },
@@ -35,16 +33,14 @@ export const jobSearch = async ({
 
 export const saveJob = async (jobToSave: JobMatch) => {
     try {
-        const {
-            data: { session },
-        } = await supabase.auth.getSession()
+        const accessToken = await getAccessToken()
 
         const response = await axios.post(
             `${import.meta.env.VITE_API_V1_BASE_URL}/job/save`,
             jobToSave,
             {
                 headers: {
-                    Authorization: session?.access_token ? `Bearer ${session.access_token}` : '',
+                    Authorization: accessToken ? `Bearer ${accessToken}` : '',
                     'Content-Type': 'application/json',
                 },
             },
