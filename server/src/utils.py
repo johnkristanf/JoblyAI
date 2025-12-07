@@ -36,21 +36,22 @@ async def retry(fn, retries=3, delay=0.5):
         return await retry(fn, retries-1, delay)
 
 
+async def extract_data_from_batch_tasks(list_data, awaitable, params, batch_size=10):
+    batches = list(chunk_list(list_data, batch_size))
 
-async def extract_all_listing_from_batching(listings, batch_size=10):
-    batches = list(chunk_list(listings, batch_size))
-
-    print(f"Total listings: {len(listings)}")
+    print(f"Total list_data: {len(list_data)}")
     print(f"Processing {len(batches)} batches...")
 
     tasks = []
     for i, batch in enumerate(batches):
         print(f"Scheduling batch {i+1}/{len(batches)}...")
         tasks.append(
-            retry(lambda b=batch: extract_batch(b))
+            retry(lambda b=batch: awaitable(b, params))
         )
 
     results = await asyncio.gather(*tasks)
+    
+    print(f"results: {results}")
 
     # Each result is a dict like {"listings": [...]}
     flattened = []
@@ -60,5 +61,6 @@ async def extract_all_listing_from_batching(listings, batch_size=10):
             flattened.extend(result["listings"])
         else:
             flattened.extend(result)
-
+    
+    print(f"flattened: {flattened}")
     return flattened

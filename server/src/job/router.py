@@ -1,24 +1,23 @@
 import json
 
 from fastapi import APIRouter, Depends
-from openai import AsyncOpenAI
 from redis.client import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from src.database import Database
-from src.utils import json_serialize_llm_response
-from src.prompt import JobSeachPrompt
-
-from src.config import settings
+from src.utils import extract_data_from_batch_tasks
 from src.job.schema import JobsSearchIn, SaveJobIn
 from src.job.models import Job
 
-from src.job.service import search_rapidapi_jobs_jsearch, truncate_job_listing_properties
+from src.job.service import (
+    llm_job_extraction,
+    search_rapidapi_jobs_jsearch,
+    truncate_job_listing_properties,
+)
 
 job_router = APIRouter()
 
-client: AsyncOpenAI = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 @job_router.post("/search")
 async def job_search(
@@ -46,7 +45,7 @@ async def job_search(
             job_title=payload.job_title,
             country=payload.country,
             date_posted=payload.date_posted,  # all, today, 3days, week, month
-            page="1",
+            page="4",
         )
 
         expire_seconds = 15 * 60  # 15 minutes in seconds
@@ -57,23 +56,18 @@ async def job_search(
 
     job_listings_raw = job_search_results.get("data", [])
     job_listings = truncate_job_listing_properties(job_listings_raw)
-        
+
     print(f"job_listings: {job_listings}")
 
-    job_seach_prompt = JobSeachPrompt()
-    system_prompt = job_seach_prompt.load_system_prompt(
-        payload.job_title,
-        payload.experience_level,
-        payload.professional_summary,
+    job_data = {
+        "job_title": payload.job_title,
+        "experience_level": payload.experience_level,
+        "professional_summary": payload.professional_summary,
+    }
+    jobs_matched = await extract_data_from_batch_tasks(
+        list_data=job_listings, awaitable=llm_job_extraction, params=job_data
     )
-    user_prompt = job_seach_prompt.load_user_prompt(job_listings)
-
-    response = client.responses.create(
-        model=settings.OPENAI_MODEL,
-        input=[system_prompt, user_prompt],
-    )
-
-    jobs_matched = json_serialize_llm_response(response.output_text)
+    print(f"jobs_matched: {jobs_matched}")
 
     return {"job_listings": job_listings, "jobs_matched": jobs_matched}
 
