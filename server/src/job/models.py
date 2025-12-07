@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, Float
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, Float
+from sqlalchemy.dialects.postgresql import UUID
 from src.database import Base
 
 
@@ -16,6 +17,9 @@ class Job(Base):
     job_country = Column(String, nullable=True)
     job_publisher = Column(String, nullable=True)
 
+    job_latitude = Column(Float, nullable=True)
+    job_longitude = Column(Float, nullable=True)
+
     employer_name = Column(String, nullable=True)
     employer_logo = Column(String, nullable=True)
     employer_website = Column(String, nullable=True)
@@ -25,5 +29,12 @@ class Job(Base):
     job_salary_period = Column(String, nullable=True)
 
     extraction_note = Column(String, nullable=True)
-    
-    user_id = Column(Integer, nullable=False)
+
+    user_id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        index=True,
+        nullable=False,
+        unique=True,
+        foreign_key=ForeignKey("auth.users.id", ondelete="CASCADE"),
+    )
