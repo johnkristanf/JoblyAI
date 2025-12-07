@@ -1,27 +1,29 @@
-from fastapi import APIRouter, Depends, Form, UploadFile, File
+import base64
+
+from fastapi import APIRouter, Depends, Form, UploadFile, File, HTTPException
+from imagekitio import ImageKit
+from imagekitio.file import UploadFileRequestOptions
+from src.user.dependencies import get_image_kit_method
 from src.auth.dependencies import verify_user_from_token
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import Database
 from src.user.model import Profile
 from typing import Optional
-from passlib.context import CryptContext
 
 user_route = APIRouter()
 
 
 @user_route.get(
-    "/",
+    "/profile",
 )
 async def get_user(
     user: dict = Depends(verify_user_from_token),
     session: AsyncSession = Depends(Database.get_async_session),
 ):
-    stmt = select(Profile).where(Profile.user_id == user["id"])
-    result = await session.execute(stmt)
-    profile = result.scalars().first()
+    profile = await session.get(Profile, user["id"])
     if not profile:
-        return None
+        raise HTTPException(status_code=401, detail="Profile not found.")
+
     return {
         "user_id": str(profile.user_id),
         "full_name": profile.full_name,
@@ -35,28 +37,45 @@ async def update_profile(
     full_name: Optional[str] = Form(None),
     avatar: Optional[UploadFile] = File(None),
     user: dict = Depends(verify_user_from_token),
+    imagekit: ImageKit = Depends(get_image_kit_method),
     session: AsyncSession = Depends(Database.get_async_session),
 ):
     print(f"full_name: {full_name}")
     print(f"avatar: {avatar}")
     print(f"user: {user}")
 
-    stmt = select(Profile).where(Profile.user_id == user["id"])
-    result = await session.execute(stmt)
-    profile = result.scalars().first()
-
+    profile = await session.get(Profile, user["id"])
     if not profile:
-        return {"error": "Profile not found."}
+        raise HTTPException(status_code=401, detail="Profile not found.")
 
     updated = False
     if full_name is not None:
         profile.full_name = full_name.strip()
         updated = True
     if avatar is not None:
-        contents = await avatar.read()
-        mime_type = avatar.content_type or "application/octet-stream"
-        # profile.avatar_url = data_url
-        # updated = True
+        file_content = await avatar.read()
+
+        ext = None
+        if avatar.filename and "." in avatar.filename:
+            ext = avatar.filename.rsplit(".", 1)[-1]
+        else:
+            ext = "png"
+
+        file_name = f"avatar.{ext}"
+
+        file_content_base64 = base64.b64encode(file_content).decode("utf-8")
+
+        upload_result = imagekit.upload_file(
+            file=file_content_base64,
+            file_name=file_name,
+            options=UploadFileRequestOptions(
+                response_fields=["is_private_file", "tags"],
+                tags=["joblyai", "avatar-upload"],
+            ),
+        )
+
+        profile.avatar_url = upload_result.url
+        updated = True
 
     if updated:
         await session.commit()

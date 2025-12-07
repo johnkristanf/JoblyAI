@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     REDIS_URL: str
     
     SUPABASE_JWT_SECRET: str
+    
+    IMAGE_KIT_PUBLIC_KEY: str
+    IMAGE_KIT_PRIVATE_KEY: str
+    IMAGE_KIT_URL_ENDPOINT: str
 
     class Config:
         env_file = ".env"
