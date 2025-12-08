@@ -58,8 +58,6 @@ const SignupPage = () => {
                 },
             })
 
-            console.log('SUPABASE SIGNUP AUTH DATA: ', data)
-
             if (error) {
                 console.log('SIGNUP ERROR: ', error)
 
@@ -72,7 +70,7 @@ const SignupPage = () => {
                 setSuccess(true)
                 // Redirect to verification page
                 setTimeout(() => {
-                    navigate('/job/search')
+                    navigate('/email/verification')
                 }, 2000)
             }
         } catch (err) {
