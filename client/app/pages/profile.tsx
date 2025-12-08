@@ -4,13 +4,15 @@ import { useUserStore } from '~/store/userStore'
 import axios from 'axios'
 import { getAccessToken, supabase } from '~/lib/supabase/client'
 import { toast } from 'sonner'
-import { uploadAvatar } from '~/lib/api/patch'
+import { updateUserBasicInformation, uploadAvatar } from '~/lib/api/patch'
 
 const ProfilePage = () => {
     const { user, setUser, loading, setLoading } = useUserStore()
 
     const [editingField, setEditingField] = useState(null)
     const [tempValue, setTempValue] = useState('')
+    const [isProfileUpdating, setIsProfileUpdating] = useState<boolean>(false)
+    const [isPasswordChanging, setIsPasswordChanging] = useState<boolean>(false)
 
     // Password change state
     const [showPasswordSection, setShowPasswordSection] = useState(false)
@@ -28,14 +30,21 @@ const ProfilePage = () => {
         confirm_password: '',
     })
 
+    // NEW: State to manage email confirmation message
+    const [emailConfirmation, setEmailConfirmation] = useState<any>()
+
     const startEdit = (field, currentValue: string) => {
         setEditingField(field)
         setTempValue(currentValue || '')
+        if (field === 'email') {
+            setEmailConfirmation(null)
+        }
     }
 
     const cancelEdit = () => {
         setEditingField(null)
         setTempValue('')
+        setEmailConfirmation(null)
     }
 
     const saveEditBasicInformation = async (field: 'full_name' | 'email') => {
@@ -45,34 +54,52 @@ const ProfilePage = () => {
             return
         }
 
-        setLoading(true)
+        // USE SUPABASE SDK FOR EMAIL CHANGE PROCESS
+        if (field === 'email') {
+            setIsProfileUpdating(true)
+
+            const { data, error } = await supabase.auth.updateUser({
+                email: tempValue.trim(),
+            })
+
+            if (error) {
+                alert('Failed to update email: ' + error.message)
+                setIsProfileUpdating(false)
+                return
+            }
+
+            const emailConfirmationElement = (
+                <>
+                    Confirmation email sent!
+                    <br />
+                    <br />
+                    Please check{' '}
+                    <span className="text-gray-900 font-semibold">{tempValue.trim()}</span> and
+                    click the confirmation link.
+                    <br />
+                    <br />
+                    Your email will be updated after confirmation.
+                </>
+            )
+            setEmailConfirmation(emailConfirmationElement)
+
+            setIsProfileUpdating(false)
+            setEditingField(null)
+            setTempValue('')
+            return
+        }
+
+        setIsProfileUpdating(true)
         try {
             const formData = new FormData()
             formData.append(field, tempValue.trim())
 
-            const accessToken = await getAccessToken()
+            const updateResults = await updateUserBasicInformation(formData)
 
-            const response = await axios.patch(
-                `${import.meta.env.VITE_API_V1_BASE_URL}/user/profile`,
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-                    },
-                },
-            )
-
-            if (response?.data) {
+            if (updateResults) {
                 setUser({
                     ...user,
-                    ...response.data,
-                })
-            } else {
-                // fallback to optimistic update if response missing
-                setUser({
-                    ...user,
-                    [field]: tempValue.trim(),
+                    ...updateResults,
                 })
             }
             setEditingField(null)
@@ -80,15 +107,9 @@ const ProfilePage = () => {
         } catch (error) {
             console.error('Failed to update:', error)
         } finally {
-            setLoading(false)
+            setIsProfileUpdating(false)
         }
     }
-
-    // Rewritten image upload logic to ensure the new user state triggers re-render
-    // Key reason for "user state object doesn't render anything" after upload:
-    // setUser was being called with a function using 'prev', but outside the body of ProfilePage,
-    // 'user' from closure may not update React as expected, especially if setUser is shallow compare.
-    // To solve, fetch the latest user after upload and force update, or use latest property directly.
 
     const handleAvatarUpload = async (e) => {
         const file = e.target.files?.[0]
@@ -150,12 +171,12 @@ const ProfilePage = () => {
             return
         }
 
-        if (passwordData.new_password.length < 8) {
-            setPasswordError('Password must be at least 8 characters')
+        if (passwordData.new_password.length < 6) {
+            setPasswordError('Password must be at least 6 characters')
             return
         }
 
-        setLoading(true)
+        setIsPasswordChanging(true)
 
         try {
             // Check if current password is correct by reauthenticating
@@ -167,7 +188,7 @@ const ProfilePage = () => {
 
                 if (error) {
                     setPasswordError('Current password is incorrect')
-                    setLoading(false)
+                    setIsPasswordChanging(false)
                     return
                 }
             }
@@ -193,7 +214,7 @@ const ProfilePage = () => {
             console.error('Failed to update password:', err)
             setPasswordError('Failed to update password. Please try again.')
         } finally {
-            setLoading(false)
+            setIsPasswordChanging(false)
         }
     }
 
@@ -297,10 +318,10 @@ const ProfilePage = () => {
                                     />
                                     <button
                                         onClick={() => saveEditBasicInformation('full_name')}
-                                        disabled={loading}
+                                        disabled={isProfileUpdating}
                                         className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                                     >
-                                        {loading ? (
+                                        {isProfileUpdating ? (
                                             <Loader2 className="w-4 h-4 animate-spin" />
                                         ) : (
                                             <Check className="w-4 h-4" />
@@ -308,7 +329,7 @@ const ProfilePage = () => {
                                     </button>
                                     <button
                                         onClick={cancelEdit}
-                                        disabled={loading}
+                                        disabled={isProfileUpdating}
                                         className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-colors"
                                     >
                                         <X className="w-4 h-4" />
@@ -334,7 +355,7 @@ const ProfilePage = () => {
                                     <button
                                         onClick={() => startEdit('email', user.email)}
                                         className="text-blue-600 hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        disabled={loading}
+                                        disabled={isProfileUpdating}
                                     >
                                         <Edit2 className="w-5 h-5 hover:cursor-pointer hover:opacity-75" />
                                     </button>
@@ -349,14 +370,14 @@ const ProfilePage = () => {
                                         onChange={(e) => setTempValue(e.target.value)}
                                         className="flex-1 px-3 py-2 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                         autoFocus
-                                        disabled={loading}
+                                        disabled={isProfileUpdating}
                                     />
                                     <button
                                         onClick={() => saveEditBasicInformation('email')}
-                                        disabled={loading}
+                                        disabled={isProfileUpdating}
                                         className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                                     >
-                                        {loading ? (
+                                        {isProfileUpdating ? (
                                             <Loader2 className="w-4 h-4 animate-spin" />
                                         ) : (
                                             <Check className="w-4 h-4" />
@@ -364,18 +385,26 @@ const ProfilePage = () => {
                                     </button>
                                     <button
                                         onClick={cancelEdit}
-                                        disabled={loading}
+                                        disabled={isProfileUpdating}
                                         className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-colors"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>
                                 </div>
                             ) : (
-                                <div className="px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50">
-                                    <p className="text-gray-900 text-sm">
-                                        {user.email || 'Not set'}
-                                    </p>
-                                </div>
+                                <>
+                                    <div className="px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50">
+                                        <p className="text-gray-900 text-sm">
+                                            {user.email || 'Not set'}
+                                        </p>
+                                    </div>
+                                    {/* GREEN CARD: Email sent confirmation */}
+                                    {emailConfirmation && (
+                                        <div className="mt-3 px-4 py-3 bg-green-50 border border-green-200 text-green-800 rounded-lg whitespace-pre-line">
+                                            <p className="text-xs">{emailConfirmation}</p>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
 
@@ -513,10 +542,10 @@ const ProfilePage = () => {
                                     {/* Password Save Button */}
                                     <button
                                         onClick={handlePasswordSave}
-                                        disabled={loading}
+                                        disabled={isPasswordChanging}
                                         className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
                                     >
-                                        {loading ? (
+                                        {isPasswordChanging ? (
                                             <>
                                                 <Loader2 className="w-4 h-4 animate-spin" />
                                                 Updating Password...
