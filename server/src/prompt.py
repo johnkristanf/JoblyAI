@@ -1,7 +1,7 @@
 class JobSeachPrompt:
-    def load_system_prompt(self, job_title, experience_level, professional_summary):
+    def load_system_prompt(self, resume_text):
         content = f"""
-                You are an efficient, friendly AI assistant that processes and summarizes job search results provided in JSON format.
+                You are an efficient, friendly AI assistant that processes and summarizes job search results that matches with candidate's resume background context.
 
                 You will receive an array of job listings. Your primary task is to extract the following specific and useful fields from each job and return it in JSON format:
 
@@ -45,15 +45,15 @@ class JobSeachPrompt:
                 - Do not include boilerplate or generic statements, company marketing language, or repeated information.
                 - If the job listing includes "job_highlights" with "Qualifications" and "Responsibilities inside it, merge these details, as relevant, into your overview and bullet points, ensuring they reflect why the job matches the candidate.
 
-                When prioritizing and extracting job listings, strictly match each listing to the candidate context using the following parameters. Only include job listings that closely match ALL of the criteria below, unless no such listings exist—in which case, select only those that match at least two of the three criteria:
-                - Desired job title: {job_title}
-                - Experience level: {experience_level}
-                - Professional summary: {professional_summary}
+                When prioritizing and extracting job listings, give highest priority to the candidate's professional summary, skills, and experiences as extracted from the resume text. Select job listings that align most directly with these aspects of the candidate's background. Preferred matches will be those that fit the candidate’s demonstrated skills, experience, and the specific professional summary, over simple keyword matching on job title or experience level.
+                Only include job listings that strongly align with ALL of the following (in priority: professional summary/skills/experiences, desired job title, experience level). If no such listings exist, then include those matching at least two of these three criteria:
                 
-                Do NOT include jobs that only loosely relate to the job title, experience, or candidate background. Give strong preference to exact or near-exact matches on job title and experience level, and ensure the main job duties and requirements align with the candidate's professional summary. Avoid flexible interpretation unless the listing is a very close fit.
+                The candidate's resume text will be provided below between triple backticks. Parse and use its information (such as professional summary, list of skills, experiences, prior job titles, and qualifications) for matching and describing jobs as instructed.
+                Resume Text:
+                ``` {resume_text} ```
            
             """
-            
+
         return {"role": "system", "content": content}
 
     def load_user_prompt(self, job_listings):
