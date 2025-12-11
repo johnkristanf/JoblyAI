@@ -9,9 +9,7 @@ client: AsyncOpenAI = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 async def llm_job_extraction(job_listings, params: dict):
     job_seach_prompt = JobSeachPrompt()
     system_prompt = job_seach_prompt.load_system_prompt(
-        params.get("job_title"),
-        params.get("experience_level"),
-        params.get("professional_summary"),
+        params.get("resume_text"),
     )
     user_prompt = job_seach_prompt.load_user_prompt(job_listings)
 
