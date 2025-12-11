@@ -2,7 +2,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form'
 import type { JobSearchResponse, JobSearchForm } from '~/types/job_search'
 import { useMutation } from '@tanstack/react-query'
 import axios from 'axios'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { JobMatchedCard } from '~/components/job-matched-card'
 import NoJobsFound from '~/components/ui/no-jobs-found'
@@ -12,6 +12,8 @@ import FullScreenLoader from '~/components/full-screen-loader'
 
 const JobSearchPage = () => {
     const [jobSearchResponse, setJobSearchResponse] = useState<JobSearchResponse>()
+    const [resumeName, setResumeName] = useState<string | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     const {
         register,
@@ -21,6 +23,14 @@ const JobSearchPage = () => {
 
     const mutation = useMutation({
         mutationFn: jobSearch,
+        onSuccess: (response: JobSearchResponse) => {
+            const undefinedValueCatcher = {
+                job_listings: [],
+                jobs_matched: [],
+            }
+
+            setJobSearchResponse(response ?? undefinedValueCatcher)
+        },
         onError: (err: any) => {
             toast.success('Error in searching job, please try again later')
         },
@@ -29,7 +39,79 @@ const JobSearchPage = () => {
     const handleSearchAnother = () => setJobSearchResponse(undefined)
 
     const onSubmit: SubmitHandler<JobSearchForm> = (data) => {
-        mutation.mutate({ payload: data, setJobSearchResponse: setJobSearchResponse })
+        const formData = new FormData();
+
+        // Append all primitive fields (except file input)
+        Object.entries(data).forEach(([key, value]) => {
+            if (key !== 'resume' && value !== undefined && value !== null) {
+                formData.append(key, value as string);
+            }
+        });
+
+        // Validate file input to only accept pdf and docs
+        if (
+            fileInputRef.current &&
+            fileInputRef.current.files &&
+            fileInputRef.current.files.length > 0
+        ) {
+            const file = fileInputRef.current.files[0];
+            const allowedTypes = [
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ];
+            const allowedExtensions = ['pdf', 'doc', 'docx'];
+            const fileTypeValid = allowedTypes.includes(file.type);
+            const ext = file.name.split('.').pop()?.toLowerCase();
+            const extValid = ext ? allowedExtensions.includes(ext) : false;
+
+            if (!fileTypeValid && !extValid) {
+                toast.error(
+                    'Invalid file type. Only PDF and DOC/DOCX files are allowed.'
+                );
+                return;
+            }
+
+            formData.append('resume', file);
+        }
+
+        // Loop over formData and log key-value pairs for debugging
+        for (let pair of formData.entries()) {
+            console.log(`${pair[0]}:`, pair[1]);
+        }
+
+        mutation.mutate(formData);
+    }
+
+    // Handler for file drop and click
+    const triggerFileInput = () => {
+        if (fileInputRef.current) fileInputRef.current.click()
+    }
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files?.length) {
+            setResumeName(e.target.files[0].name)
+        } else {
+            setResumeName(null)
+        }
+    }
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        const files = e.dataTransfer.files
+        if (fileInputRef.current && files.length) {
+            // Create a DataTransfer to set value (not directly allowed, workaround hack follows)
+            const dt = new DataTransfer()
+            Array.from(files).forEach((file) => dt.items.add(file))
+            fileInputRef.current.files = dt.files
+
+            // Notify form that file input changed
+            const event = new Event('change', { bubbles: true })
+            fileInputRef.current.dispatchEvent(event)
+
+            // For UI feedback
+            setResumeName(files[0].name)
+        }
     }
 
     // Add fullscreen loader when mutation is in progress
@@ -146,8 +228,63 @@ const JobSearchPage = () => {
                             </div>
                         </div>
 
-                        {/* Experience Level */}
                         <div className="flex flex-col">
+                            <label className="mb-1 text-gray-700 font-medium">Upload Resume </label>
+                            <p className="text-blue-600 text-xs">
+                                Resume includes relevant skills, experience, and summaries. 
+                                Our AI will analyze your background to find and match you with the
+                                best job opportunities.
+                            </p>
+
+                            <div
+                                className="mt-3 relative flex flex-col items-center justify-center border-2 border-dashed border-indigo-400 rounded-lg bg-white px-6 py-8 transition hover:bg-indigo-50 cursor-pointer"
+                                onClick={triggerFileInput}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={handleDrop}
+                            >
+                                <input
+                                    type="file"
+                                    accept=".pdf,.doc,.docx"
+                                    id="resume-upload"
+                                    className="hidden"
+                                    // @ts-ignore
+                                    {...register('resume' as any)}
+                                    ref={fileInputRef}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={handleFileChange}
+                                />
+                                <div className="flex flex-col items-center pointer-events-none select-none">
+                                    <svg
+                                        className="w-12 h-12 text-indigo-400 mb-3"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"
+                                        />
+                                    </svg>
+                                    <span className="text-blue-600 font-semibold text-lg">
+                                        Click to Upload or Drag &amp; Drop
+                                    </span>
+                                    <span className="text-gray-500 text-sm mt-1">
+                                        PDF, DOC, or DOCX (Max 5MB)
+                                    </span>
+                                </div>
+                                <span
+                                    className="mt-3 text-gray-600 text-sm truncate text-center"
+                                    id="resume-filename"
+                                >
+                                    {resumeName || ''}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Experience Level */}
+                        {/* <div className="flex flex-col">
                             <label className="mb-1 text-gray-700 font-medium">
                                 Your Experience Level
                             </label>
@@ -164,10 +301,10 @@ const JobSearchPage = () => {
                                 <option value="3 - 5 years">3 - 5 years</option>
                                 <option value="More than 5 years">More than 5 years</option>
                             </select>
-                        </div>
+                        </div> */}
 
                         {/* Professional Summary */}
-                        <div className="flex flex-col">
+                        {/* <div className="flex flex-col">
                             <label className="mb-1 text-gray-700 font-medium">
                                 Your Professional Summary
                             </label>
@@ -177,7 +314,7 @@ const JobSearchPage = () => {
                                 className="rounded border border-gray-300 px-3 py-2 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-400"
                                 {...register('professional_summary')}
                             />
-                        </div>
+                        </div> */}
 
                         <div className="flex justify-end">
                             <button
