@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     IMAGE_KIT_PUBLIC_KEY: str
     IMAGE_KIT_PRIVATE_KEY: str
     IMAGE_KIT_URL_ENDPOINT: str
+    
+    AWS_REGION: str
+    AWS_S3_BUCKET_NAME: str
 
     class Config:
         env_file = ".env"
