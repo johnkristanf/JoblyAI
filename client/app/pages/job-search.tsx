@@ -1,7 +1,6 @@
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import type { JobSearchResponse, JobSearchForm } from '~/types/job_search'
 import { useMutation } from '@tanstack/react-query'
-import axios from 'axios'
 import { useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { JobMatchedCard } from '~/components/job-matched-card'
@@ -116,7 +115,7 @@ const JobSearchPage = () => {
 
     // Add fullscreen loader when mutation is in progress
     if (mutation.isPending) {
-        return <FullScreenLoader message="Screening might take a few minutes" />
+        return <FullScreenLoader message="Searching might take a few minutes" />
     }
 
     return (
@@ -231,7 +230,7 @@ const JobSearchPage = () => {
                         <div className="flex flex-col">
                             <label className="mb-1 text-gray-700 font-medium">Upload Resume </label>
                             <p className="text-blue-600 text-xs">
-                                Resume includes relevant skills, experience, and summaries. 
+                                Resume includes relevant professional summary, skills, and experience. 
                                 Our AI will analyze your background to find and match you with the
                                 best job opportunities.
                             </p>
