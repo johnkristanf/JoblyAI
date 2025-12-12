@@ -31,7 +31,7 @@ const JobSearchPage = () => {
             setJobSearchResponse(response ?? undefinedValueCatcher)
         },
         onError: (err: any) => {
-            toast.success('Error in searching job, please try again later')
+            toast.error('Error in searching job, please try again later')
         },
     })
 
@@ -72,11 +72,6 @@ const JobSearchPage = () => {
             }
 
             formData.append('resume', file);
-        }
-
-        // Loop over formData and log key-value pairs for debugging
-        for (let pair of formData.entries()) {
-            console.log(`${pair[0]}:`, pair[1]);
         }
 
         mutation.mutate(formData);

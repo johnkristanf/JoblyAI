@@ -32,13 +32,9 @@ export const useUserStore = create<UserStoreState>((set, get) => ({
             return
         }
 
-        console.log('Fetching user...')
-
         set({ loading: true, error: null })
 
         const accessToken = await getAccessToken()
-
-        console.log('accessToken: ', accessToken)
 
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_V1_BASE_URL}/user/profile`, {
