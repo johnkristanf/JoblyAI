@@ -47,6 +47,15 @@ export function AppSidebar() {
                                 </NavLink>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+
+                        <SidebarMenuItem>
+                            <SidebarMenuButton>
+                                <NavLink to="/resume" className="flex items-center gap-1">
+                                    <FileUser className="size-4" />{' '}
+                                    <span className="text-xs">Resume</span>
+                                </NavLink>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>
