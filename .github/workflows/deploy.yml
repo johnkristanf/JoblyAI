@@ -1,4 +1,4 @@
-name: FastAPI Deploy
+name: joblyai_deploy
 
 on:
   workflow_run:
@@ -15,15 +15,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-    #   - name: Set up SSH key for deployment
-    #     uses: webfactory/ssh-agent@v0.8.0
-    #     with:
-    #       ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+      - name: Set up SSH key for deployment
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
 
-    #   - name: Execute deployment script
-    #     run: |
-    #       ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
-    #         cd ${{ secrets.DEPLOY_PATH }}
-    #         docker-compose pull
-    #         docker-compose up -d
-    #       '
+      - name: Execute deployment script
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
+            cd ${{ secrets.DEPLOY_PATH }}
+            docker-compose pull
+            docker-compose up -d
+          '
