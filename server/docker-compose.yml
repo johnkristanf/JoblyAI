@@ -9,31 +9,5 @@ services:
     volumes:
       - redis-data:/data
 
-  redisinsight:
-    image: redis/redisinsight:latest
-    container_name: redisinsight
-    restart: always
-    ports:
-      - "5540:5540"
-    volumes:
-      - redisinsight-data:/data
-    depends_on:
-      - redis-server
-
-  postgres:
-    image: postgres:latest
-    container_name: postgres
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin123
-      POSTGRES_DB: joblyai
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-
 volumes:
   redis-data:
-  redisinsight-data:
-  postgres-data:
