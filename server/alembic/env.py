@@ -5,7 +5,7 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 from src.config import settings
-    
+
 from alembic import context
 
 from src.job.models import Job
@@ -69,9 +69,7 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
     """
     connectable = create_async_engine(
-        settings.DATABASE_URL,
-        echo=False,
-        poolclass=pool.NullPool
+        settings.DATABASE_URL, echo=False, poolclass=pool.NullPool
     )
 
     async with connectable.connect() as connection:
