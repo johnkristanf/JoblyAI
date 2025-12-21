@@ -2,6 +2,7 @@ import { type RouteConfig, index, layout, prefix, route } from '@react-router/de
 
 export default [
     index('./pages/landing.tsx'),
+    route('email/verification', './pages/email-verification.tsx'),
 
     ...prefix('auth', [
         route('login', './pages/auth/login.tsx'),

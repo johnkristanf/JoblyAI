@@ -1,18 +1,29 @@
-import os
 import boto3
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi import UploadFile, File
+from sqlalchemy.ext.asyncio.session import AsyncSession
+from src.auth.dependencies import verify_user_from_token
+from src.database import Database
+from src.resume.model import Resume
 from src.config import settings
 
 
 resume_router = APIRouter()
-s3 = boto3.client("s3", region_name=settings.AWS_REGION)
+session = boto3.Session(profile_name=settings.AWS_PROFILE)
+s3 = session.client("s3", region_name=settings.AWS_REGION)
+
 
 @resume_router.post("/upload")
-async def upload_resume(resume: list[UploadFile] = File(...)):
+async def upload_resume(
+    resume: list[UploadFile] = File(...),
+    session: AsyncSession = Depends(Database.get_async_session),
+    user: dict = Depends(verify_user_from_token)
+):
     print(f"resume: {resume}")
+    print(f"user: {user}")
+    
     uploaded_files = []
     for file in resume:
         object_key = f"resumes/{uuid.uuid4()}_{file.filename}"
@@ -24,13 +35,21 @@ async def upload_resume(resume: list[UploadFile] = File(...)):
                 Body=file_content,
                 ContentType=file.content_type,
             )
-            resume_url = (
-                f"https://{settings.AWS_S3_BUCKET_NAME}.s3.{settings.AWS_REGION}.amazonaws.com/{object_key}"
+
+            # Insert resume details in database
+            db_resume = Resume(
+                filename=file.filename,
+                object_key=object_key,
+                user_id=user.get("id")
             )
+            
+            session.add(db_resume)
+            await session.commit()
+            await session.refresh(db_resume)
+
             uploaded_files.append(
                 {
                     "filename": file.filename,
-                    "url": resume_url,
                     "content_type": file.content_type,
                 }
             )
@@ -45,4 +64,3 @@ async def upload_resume(resume: list[UploadFile] = File(...)):
         "message": "Resume(s) uploaded",
         "files": uploaded_files,
     }
-

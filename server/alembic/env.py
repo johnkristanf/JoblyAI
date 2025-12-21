@@ -9,6 +9,7 @@ from src.config import settings
 from alembic import context
 
 from src.job.models import Job
+from src.resume.model import Resume
 from src.config import settings
 from src.database import Base
 
