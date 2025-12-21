@@ -4,14 +4,7 @@ on:
   push:
     branches: [main]
 
-env:
-  ECR_REPOSITORY: fastapi-app
-  AWS_REGION: ap-southeast-1
-
 jobs:
-  ci:
-    runs-on: ubuntu-latest
-
   build-and-push:
     runs-on: ubuntu-latest
     steps:
