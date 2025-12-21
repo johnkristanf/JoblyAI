@@ -1,0 +1,25 @@
+name: joblyai_build
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build, tag, and push image to Docker Hub
+        run: |
+          IMAGE_TAG='latest'
+          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/joblyai
+
+          docker build -t $IMAGE_NAME:$IMAGE_TAG -f server/Dockerfile ./server
+          docker push $IMAGE_NAME:$IMAGE_TAG
