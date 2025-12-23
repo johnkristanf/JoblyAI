@@ -35,6 +35,5 @@ class Job(Base):
         primary_key=True,
         index=True,
         nullable=False,
-        unique=True,
         foreign_key=ForeignKey("auth.users.id", ondelete="CASCADE"),
     )
