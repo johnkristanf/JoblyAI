@@ -70,7 +70,13 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
     """
     connectable = create_async_engine(
-        settings.DATABASE_URL, echo=False, poolclass=pool.NullPool
+        settings.DATABASE_URL,
+        echo=False,
+        poolclass=pool.NullPool,
+        connect_args={
+            "ssl": "require",
+            "statement_cache_size": 0,  # 🔥 CRITICAL FIX
+        },
     )
 
     async with connectable.connect() as connection:

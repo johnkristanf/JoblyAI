@@ -23,6 +23,10 @@ class Database:
             pool_recycle=3600,  # Recycle connections after 1 hour
             pool_timeout=30,  # Timeout after 30 seconds waiting for connection
             future=True,
+            connect_args={
+                "ssl": "require",
+                "statement_cache_size": 0,
+            },
         )
 
         cls.async_session = sessionmaker(
