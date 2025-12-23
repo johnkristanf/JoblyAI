@@ -12,12 +12,14 @@ export const getSavedJobs = async () => {
     return response.data
 }
 
-export const getResumes = async () => {
+export const getAllResumes = async () => {
     const accessToken = await getAccessToken()
-    const response = await axios.get(`${import.meta.env.VITE_API_V1_BASE_URL}/resumes`, {
+    const response = await axios.get(`${import.meta.env.VITE_API_V1_BASE_URL}/resume/get/all`, {
         headers: {
             Authorization: accessToken ? `Bearer ${accessToken}` : '',
         },
     })
+    console.log("response.data: ", response.data);
+    
     return response.data
 }
