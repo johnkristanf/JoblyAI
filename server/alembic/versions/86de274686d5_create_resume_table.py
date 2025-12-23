@@ -32,7 +32,7 @@ def upgrade() -> None:
             sa.ForeignKey("auth.users.id", ondelete="CASCADE"),
             index=True,
             nullable=False,
-            unique=True,
+            unique=False
         ),
     )
 

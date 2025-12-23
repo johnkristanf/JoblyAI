@@ -27,6 +27,7 @@ def upgrade() -> None:
             'user_id',
             sa.dialects.postgresql.UUID(as_uuid=True),
             nullable=False,
+            unique=False
         )
     )
     # ### end Alembic commands ###
