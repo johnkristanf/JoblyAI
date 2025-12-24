@@ -1,5 +1,5 @@
 import httpx
-from src.utils import json_serialize_llm_response
+from src.utils import json_decode
 from src.prompt import JobSeachPrompt
 from src.config import settings
 from openai import AsyncOpenAI
@@ -18,7 +18,7 @@ async def llm_job_extraction(job_listings, params: dict):
         input=[system_prompt, user_prompt],
     )
 
-    jobs_matched = json_serialize_llm_response(response.output_text)
+    jobs_matched = json_decode(response.output_text)
     return jobs_matched
 
 

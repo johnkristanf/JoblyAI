@@ -1,5 +1,5 @@
 import json
-import pymupdf
+import httpx
 
 from fastapi import APIRouter, Depends, File, UploadFile, Form
 from redis.client import Redis
@@ -8,7 +8,11 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from src.auth.dependencies import verify_user_from_token
 from src.database import Database
-from src.utils import extract_data_from_batch_tasks
+from src.utils import (
+    extract_data_from_batch_tasks,
+    json_decode,
+    read_return_pdf_content_stream,
+)
 from src.job.schema import JobsSearchIn, SaveJobIn
 from src.job.models import Job
 
@@ -26,14 +30,16 @@ async def job_search(
     job_title: str = Form(...),
     date_posted: str = Form(...),
     country: str = Form(...),
-    resume: UploadFile = File(None),
+    new_resume: UploadFile = File(None),
+    existing_resume: str = Form(None),
     user: dict = Depends(verify_user_from_token),
     redis_client: Redis = Depends(Database.get_redis_client),
 ):
     print(
         f"job_title: {job_title}, date_posted: {date_posted}, country: {country}, user: {user}"
     )
-    print(f"resume: {resume}")
+    print(f"new_resume: {new_resume}")
+    print(f"existing_resume: {existing_resume}")
 
     job_search_results = None
     cache_key = f"jobsearch:{job_title}:{country}:{date_posted}"
@@ -54,22 +60,38 @@ async def job_search(
         print("CACHE HIT ")
         job_search_results = json.loads(cached_results)
 
-    # Scrape text data out of a resume PDF using pymupdf (fitz)
+    # Read uploaded resume data from the memory
     resume_text = ""
-    if resume is not None:
+    if new_resume is not None:
         try:
-            resume_content = await resume.read()
-            doc = pymupdf.open(stream=resume_content, filetype="pdf")
-            for page in doc:
-                resume_text += page.get_text()
+            resume_content = await new_resume.read()
+            resume_text = read_return_pdf_content_stream(resume_content)
         except Exception as e:
             print(f"Error extracting text from resume: {e}")
             resume_text = ""
 
+    # Read existing resume data from object storage source
+    if existing_resume is not None:
+        resume_data = json_decode(existing_resume)
+        resume_source_url = resume_data.get("resume_source_url")
+        if resume_source_url:
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(resume_source_url)
+                    if response.status_code == 200:
+                        resume_content = response.content
+                        resume_text = read_return_pdf_content_stream(resume_content)
+                    else:
+                        print(
+                            f"Failed to fetch resume from {resume_source_url}: {response.status_code}"
+                        )
+            except Exception as e:
+                print(f"Error fetching or reading the resume from URL: {e}")
+
     print(f"resume_text: {resume_text}")
 
-    job_listings_raw = job_search_results.get("data", [])
-    job_listings = truncate_job_listing_properties(job_listings_raw)
+    raw_job_listings = job_search_results.get("data", [])
+    job_listings = truncate_job_listing_properties(raw_job_listings)
 
     print(f"job_listings: {job_listings}")
 

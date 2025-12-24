@@ -15,7 +15,7 @@ async def verify_user_from_token(
     This function decodes the token and validates it using Supabase's JWT secret.
     """
     token = credentials.credentials
-
+    
     try:
         # Decode the JWT token
         payload = jwt.decode(

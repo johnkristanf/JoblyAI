@@ -1,314 +1,165 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { PlusIcon } from 'lucide-react'
-import React, { useRef, useState, useEffect } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Plus, FileText, Calendar } from 'lucide-react'
+import React, { useRef, useState } from 'react'
 import { toast } from 'sonner'
+import FullScreenLoader from '~/components/full-screen-loader'
+import { ResumeCard } from '~/components/resume-card'
+import { UploadNewResumeCard } from '~/components/upload-new-resume-card'
+import { getAllResumes } from '~/lib/api/get'
 import { uploadResume } from '~/lib/api/post'
-import type { ResumeFile } from '~/types/resume'
-
-function getPDFPageAsImage(file: File): Promise<string | null> {
-    // Load PDF.js dynamically to avoid import trouble
-    return new Promise((resolve) => {
-        if (!file.name.endsWith('.pdf')) {
-            resolve(null)
-            return
-        }
-
-        const reader = new FileReader()
-        reader.onload = async function (e) {
-            // @ts-ignore
-            const pdfjsLib = window['pdfjsLib']
-            if (!pdfjsLib) {
-                resolve(null)
-                return
-            }
-            try {
-                // @ts-ignore
-                const pdf = await pdfjsLib.getDocument({ data: e.target.result }).promise
-                const page = await pdf.getPage(1)
-
-                // Render page to canvas
-                const viewport = page.getViewport({ scale: 1.2 })
-                const canvas = document.createElement('canvas')
-                const context = canvas.getContext('2d')
-                canvas.width = viewport.width
-                canvas.height = viewport.height
-
-                await page.render({ canvasContext: context, viewport }).promise
-                const dataUrl = canvas.toDataURL('image/png')
-                resolve(dataUrl)
-            } catch {
-                resolve(null)
-            }
-        }
-        reader.onerror = function () {
-            resolve(null)
-        }
-        reader.readAsArrayBuffer(file)
-    })
-}
-
-function ResumeCard({
-    resume,
-    onPreview,
-}: {
-    resume: ResumeFile
-    onPreview: (file: File) => void
-}) {
-    return (
-        <div className="border border-gray-200 rounded-lg mb-8 p-6 shadow-sm bg-white max-w-xl flex flex-col items-start gap-6 w-full">
-            <div className="bg-gray-100 flex items-center justify-center rounded-md overflow-hidden">
-                {resume.previewImgUrl ? (
-                    <img
-                        src={resume.previewImgUrl}
-                        alt="Resume first page"
-                        className="w-full h-full object-cover"
-                    />
-                ) : (
-                    <span className="text-gray-300 text-sm text-center">
-                        {resume.fileName.endsWith('.pdf') ? 'Loading preview...' : 'No preview'}
-                    </span>
-                )}
-            </div>
-            <div className="w-full flex flex-col justify-center">
-                <h2 className="text-lg font-medium mb-2 text-center">{resume.fileName}</h2>
-                <button
-                    className="px-4 py-2 rounded bg-blue-600 text-white cursor-pointer font-bold mt-4 hover:bg-blue-700 transition"
-                    onClick={() => onPreview(resume.file)}
-                >
-                    Preview
-                </button>
-            </div>
-        </div>
-    )
-}
-
-declare global {
-    interface Window {
-        pdfjsLib?: any
-    }
-}
-function usePDFJS() {
-    // Attach PDF.js to window if not loaded
-    useEffect(() => {
-        if (!window.pdfjsLib) {
-            const script = document.createElement('script')
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.111/pdf.min.js'
-            script.async = true
-            script.onload = function () {
-                // Set workerSrc for PDF.js
-                // @ts-ignore
-                if (window['pdfjsLib']) {
-                    // @ts-ignore
-                    window['pdfjsLib'].GlobalWorkerOptions.workerSrc =
-                        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.111/pdf.worker.min.js'
-                }
-            }
-            document.body.appendChild(script)
-        }
-    }, [])
-}
-
-// Upload Card component
-function UploadCard({
-    onClick,
-    inputRef,
-    onChange,
-}: {
-    onClick: () => void
-    inputRef: React.RefObject<HTMLInputElement | null>
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-}) {
-    return (
-        <div
-            role="button"
-            tabIndex={0}
-            onClick={onClick}
-            className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-blue-50 cursor-pointer min-h-[240px] p-8 w-full transition"
-            aria-label="Upload new resume"
-        >
-            <PlusIcon className="w-12 h-12 text-blue-500 mb-3" />
-            <span className="text-blue-600 font-semibold">Add Resume</span>
-            {/* Visually hidden file input */}
-            <input
-                type="file"
-                accept="application/pdf,.doc,.docx"
-                multiple
-                ref={inputRef}
-                onChange={onChange}
-                className="hidden"
-                tabIndex={-1}
-                aria-label="Upload resume file input"
-            />
-        </div>
-    )
-}
+import type { ResumeData, ResumeFile } from '~/types/resume'
 
 export default function ResumeCardsPage() {
-    usePDFJS()
-
-    const [resumes, setResumes] = useState<ResumeFile[]>([])
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
     const [previewName, setPreviewName] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
-
-    // Generate image preview for new PDF files
-    useEffect(() => {
-        resumes.forEach((resume, idx) => {
-            if (resume.file.name.endsWith('.pdf') && resume.previewImgUrl === undefined) {
-                getPDFPageAsImage(resume.file).then((imgUrl) => {
-                    setResumes((existing) => {
-                        const newArr = [...existing]
-                        if (newArr[idx] && newArr[idx].previewImgUrl === undefined) {
-                            // Use undefined instead of null to match the type
-                            newArr[idx] = { ...newArr[idx], previewImgUrl: imgUrl ?? undefined }
-                        }
-                        return newArr
-                    })
-                })
-            }
-        })
-        // eslint-disable-next-line
-    }, [resumes])
+    const queryClient = useQueryClient()
 
     const {
-        data: fetchedResumes,
-        isLoading,
-        error,
-        refetch,
-    } = useQuery({
-        queryKey: ['resumes'],
-        queryFn: async () => {
-            const res = await fetch('/api/resumes')
-            if (!res.ok) throw new Error('Failed to fetch resumes')
-            return res.json()
-        },
+        data: resumesData,
+        isLoading: resumesLoading,
+        error: resumesError,
+        refetch: refetchResumes,
+    } = useQuery<ResumeData[]>({
+        queryKey: ['resumes', 'all'],
+        queryFn: getAllResumes,
     })
-
-    useEffect(() => {
-        if (fetchedResumes && Array.isArray(fetchedResumes)) {
-            // Adapt the fetched data to ResumeFile[] format if needed
-            setResumes(
-                fetchedResumes.map((r: any) => ({
-                    id: r.id || r.object_key || r.filename || Math.random(), // Fallback to unique value
-                    fileName: r.filename,
-                    file: undefined, // Server resumes won't have File instance
-                    previewImgUrl: undefined, // Can be set if you want to display previews for remote PDFs
-                    // ...other mapped data
-                })),
-            )
-        }
-        // eslint-disable-next-line
-    }, [fetchedResumes])
 
     const mutation = useMutation({
         mutationFn: uploadResume,
         onSuccess: (response) => {
-            console.log('response: ', response)
+            toast.success('Resume(s) uploaded successfully!')
+            queryClient.invalidateQueries({ queryKey: ['resumes', 'all'] })
         },
         onError: (err: any) => {
-            toast.error('Error in searching job, please try again later')
+            toast.error('Error uploading resume, please try again later')
         },
     })
 
     const handleFilesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || [])
+
+        if (files.length === 0) return
+
         const mapped: ResumeFile[] = files.map((file, idx) => ({
             id: Date.now() + Math.random() + idx,
             fileName: file.name,
             file,
+            previewUrl: '', // No in
         }))
 
         mutation.mutate(mapped)
 
-        setResumes((existing) => [...existing, ...mapped])
         if (fileInputRef.current) fileInputRef.current.value = ''
     }
 
-    const handlePreview = (file: File) => {
-        const url = URL.createObjectURL(file)
+    const handlePreview = (url: string, name: string) => {
         setPreviewUrl(url)
-        setPreviewName(file.name)
+        setPreviewName(name)
     }
 
     const handleClosePreview = () => {
-        if (previewUrl) URL.revokeObjectURL(previewUrl)
         setPreviewUrl(null)
         setPreviewName(null)
     }
 
-    // Handle upload card click
     const triggerFileInput = () => {
         if (fileInputRef.current) fileInputRef.current.click()
     }
 
+    if (resumesLoading) {
+        return <FullScreenLoader message="Loading resume(s)..." />
+    }
+
+    if (resumesError) {
+        return (
+            <div className="w-full min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-600 mb-4">Error loading resumes</p>
+                    <button
+                        onClick={() => refetchResumes()}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
+    const resumes = resumesData || []
+
     return (
         <div className="w-full min-h-screen flex flex-col p-10">
-            <div>
+            <div className="mb-10">
                 <h1 className="text-2xl font-bold text-gray-900">Resume</h1>
                 <h3 className="text-md text-blue-600 font-normal">
                     Upload and manage your resumes below.
                 </h3>
             </div>
-            <div className="w-full flex flex-col items-center justify-center mt-10">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-12 w-full">
-                    {/* Render resume cards */}
-                    {resumes.map((resume, idx) => (
-                        <React.Fragment key={resume.id}>
-                            <ResumeCard resume={resume} onPreview={handlePreview} />
-                            {/* Insert upload button next to the latest (last) uploaded resume */}
-                            {idx === resumes.length - 1 && (
-                                <UploadCard
-                                    onClick={triggerFileInput}
-                                    inputRef={fileInputRef}
-                                    onChange={handleFilesUpload}
-                                />
-                            )}
-                        </React.Fragment>
-                    ))}
 
-                    {/* If no resume exists, show only the upload card */}
-                    {resumes.length === 0 && (
-                        <UploadCard
-                            onClick={triggerFileInput}
-                            inputRef={fileInputRef}
-                            onChange={handleFilesUpload}
-                        />
-                    )}
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {/* Render resume cards */}
+                {resumes && resumes.map((resume) => (
+                    <ResumeCard key={resume.id} resume={resume} onPreview={handlePreview} />
+                ))}
+
+                {/* Upload card - always visible */}
+                <UploadNewResumeCard
+                    onClick={triggerFileInput}
+                    inputRef={fileInputRef}
+                    onChange={handleFilesUpload}
+                />
             </div>
+
+            {/* Empty state when no resumes */}
+            {resumes.length === 0 && !mutation.isPending && (
+                <div className="text-center mt-8 text-gray-500">
+                    <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg mb-2">No resumes yet</p>
+                    <p className="text-sm">Upload your first resume to get started</p>
+                </div>
+            )}
+
+            {/* Loading state during upload */}
+            {mutation.isPending && <FullScreenLoader message="Uploading resume(s)..." />}
+
+            {/* Preview Modal */}
             {previewUrl && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
                     onClick={handleClosePreview}
                 >
                     <div
-                        className="bg-white rounded-lg p-8 min-w-[320px] max-w-[80vw] max-h-[80vh] overflow-auto relative shadow-lg"
+                        className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <button
-                            className="absolute top-3 right-3 bg-red-700 text-white border-none rounded px-3 py-1 text-sm cursor-pointer hover:bg-red-800"
-                            onClick={handleClosePreview}
-                        >
-                            Close
-                        </button>
-                        <h2 className="text-lg font-semibold mb-4">Preview: {previewName}</h2>
-                        {previewUrl.endsWith('.pdf') ? (
-                            <embed
-                                src={previewUrl}
-                                type="application/pdf"
-                                width="100%"
-                                height="500px"
-                                className="border border-gray-200 rounded"
-                            />
-                        ) : (
-                            <iframe
-                                src={previewUrl}
-                                title={previewName ?? 'Resume preview'}
-                                width="100%"
-                                height="500px"
-                                className="border border-gray-200 rounded"
-                            />
-                        )}
+                        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                            <h2 className="text-lg font-semibold text-gray-800 truncate">
+                                {previewName}
+                            </h2>
+                            <button
+                                className="bg-red-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-700 transition-colors"
+                                onClick={handleClosePreview}
+                            >
+                                Close
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-auto p-4 bg-gray-50">
+                            {previewUrl.toLowerCase().endsWith('.pdf') ? (
+                                <iframe
+                                    src={previewUrl}
+                                    title={previewName ?? 'Resume preview'}
+                                    className="w-full h-full min-h-[600px] border-0 rounded-lg bg-white"
+                                />
+                            ) : (
+                                <iframe
+                                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewUrl)}&embedded=true`}
+                                    title={previewName ?? 'Resume preview'}
+                                    className="w-full h-full min-h-[600px] border-0 rounded-lg bg-white"
+                                />
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

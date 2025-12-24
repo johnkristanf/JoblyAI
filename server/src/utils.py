@@ -1,9 +1,10 @@
 import asyncio
 import json
 from fastapi import APIRouter
+import pymupdf
 
 
-def json_serialize_llm_response(response):
+def json_decode(response):
     try:
         json_data = json.loads(response)
         return json_data
@@ -49,14 +50,13 @@ async def extract_data_from_batch_tasks(list_data, awaitable, params, batch_size
             retry(lambda b=batch: awaitable(b, params))
         )
 
+    # This line asynchronously runs all batch tasks in parallel inside the event loop and collects 
+    # their results into the `results` list; it allows efficient concurrent I/O processing of the batches.
     results = await asyncio.gather(*tasks)
-    
     print(f"results: {results}")
 
-    # Each result is a dict like {"listings": [...]}
     flattened = []
     for result in results:
-        # supports either {"listings": [...]} or a raw list
         if "listings" in result:
             flattened.extend(result["listings"])
         else:
@@ -64,3 +64,12 @@ async def extract_data_from_batch_tasks(list_data, awaitable, params, batch_size
     
     print(f"flattened: {flattened}")
     return flattened
+
+
+def read_return_pdf_content_stream(stream_content):
+    extracted_content_text = ""
+    doc = pymupdf.open(stream=stream_content, filetype="pdf")
+    for page in doc:
+        extracted_content_text += page.get_text()
+        
+    return extracted_content_text

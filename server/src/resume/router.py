@@ -1,10 +1,12 @@
 import boto3
 import uuid
 
-from fastapi import APIRouter, Depends
+from botocore.exceptions import ClientError
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi import UploadFile, File
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
+from src.resume.schema import RemoveResumeIn
 from src.auth.dependencies import verify_user_from_token
 from src.database import Database
 from src.resume.model import Resume
@@ -45,8 +47,6 @@ async def upload_resume(
             session.add(db_resume)
             await session.commit()
             await session.refresh(db_resume)
-            
-            print("Inserted resume ID:", db_resume.id)
 
             uploaded_files.append(
                 {
@@ -79,7 +79,9 @@ async def get_all_resume_urls(
     and return an array of objects with filename, upload date, S3 temp URL, and object key.
     """
     result = await session.execute(
-        select(Resume).where(Resume.user_id == user.get("id"))
+        select(Resume)
+        .where(Resume.user_id == user.get("id"))
+        .order_by(Resume.created_at.desc())
     )
     all_resumes = result.scalars().all()
 
@@ -98,11 +100,7 @@ async def get_all_resume_urls(
                 {
                     "id": resume.id,
                     "name": resume.filename,
-                    "uploadDate": (
-                        resume.created_at.isoformat()
-                        if hasattr(resume, "created_at")
-                        else None
-                    ),
+                    "upload_date": resume.created_at,
                     "url": temp_url,
                     "objectKey": resume.object_key,
                 }
@@ -112,7 +110,7 @@ async def get_all_resume_urls(
                 {
                     "id": resume.id,
                     "name": resume.filename,
-                    "uploadDate": (
+                    "upload_date": (
                         resume.created_at.isoformat()
                         if hasattr(resume, "created_at")
                         else None
@@ -123,3 +121,44 @@ async def get_all_resume_urls(
             )
 
     return resumes
+
+
+@resume_router.post("/remove")
+async def remove_resume(
+    payload: RemoveResumeIn,
+    session: AsyncSession = Depends(Database.get_async_session),
+    user: dict = Depends(verify_user_from_token),
+):
+    print(f"payload: {payload}")
+    resume_id = payload.id
+    object_key = payload.object_key
+    if not resume_id or not object_key:
+        raise HTTPException(
+            detail="resume_id and object_key required",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Get the resume for the current user
+    result = await session.execute(
+        select(Resume).where(Resume.id == resume_id, Resume.user_id == user.get("id"))
+    )
+    resume = result.scalar_one_or_none()
+    if not resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found"
+        )
+
+    # Remove from S3
+    try:
+        s3.delete_object(Bucket=settings.AWS_S3_BUCKET_NAME, Key=object_key)
+    except ClientError as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to remove from S3: {str(e)}",
+        )
+
+    # Remove from database
+    await session.delete(resume)
+    await session.commit()
+
+    return {"success": True, "message": "Resume removed."}

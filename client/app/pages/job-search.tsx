@@ -9,21 +9,17 @@ import { jobSearch } from '~/lib/api/post'
 import { toast } from 'sonner'
 import FullScreenLoader from '~/components/full-screen-loader'
 import { getAllResumes } from '~/lib/api/get'
-import type { ResumeData } from '~/types/resume'
+import type { ResumeData, SelectedResume } from '~/types/resume'
+import { formatDate } from '~/lib/utils'
 
 const JobSearchPage = () => {
     const [jobSearchResponse, setJobSearchResponse] = useState<JobSearchResponse>()
     const [resumeName, setResumeName] = useState<string | null>(null)
     const [selectedResumeMode, setSelectedResumeMode] = useState<'upload' | 'select'>('upload')
-    const [selectedExistingResume, setSelectedExistingResume] = useState<string | null>(null)
+    const [selectedExistingResume, setSelectedExistingResume] = useState<SelectedResume | null>(
+        null,
+    )
     const fileInputRef = useRef<HTMLInputElement>(null)
-
-    // Mock data - replace with actual API call to fetch user's uploaded resumes
-    const existingResumes = [
-        { id: '1', name: 'Software_Engineer_Resume_2024.pdf', uploadDate: '2024-12-01' },
-        { id: '2', name: 'Full_Stack_Developer_CV.docx', uploadDate: '2024-11-15' },
-        { id: '3', name: 'Senior_Developer_Resume.pdf', uploadDate: '2024-10-20' },
-    ]
 
     const {
         data: resumesData,
@@ -91,11 +87,11 @@ const JobSearchPage = () => {
                     return
                 }
 
-                formData.append('resume', file)
+                formData.append('new_resume', file)
             }
         } else if (selectedResumeMode === 'select' && selectedExistingResume) {
             // Append the selected existing resume ID
-            formData.append('existing_resume_id', selectedExistingResume)
+            formData.append('existing_resume', JSON.stringify(selectedExistingResume))
         }
 
         mutation.mutate(formData)
@@ -131,8 +127,8 @@ const JobSearchPage = () => {
         }
     }
 
-    const handleExistingResumeSelect = (resumeId: string) => {
-        setSelectedExistingResume(resumeId)
+    const handleExistingResumeSelect = (resumeId: string, resumeSourceURL: string) => {
+        setSelectedExistingResume({ resume_id: resumeId, resume_source_url: resumeSourceURL })
         setResumeName(null) // Clear uploaded file
         if (fileInputRef.current) {
             fileInputRef.current.value = '' // Clear file input
@@ -141,7 +137,7 @@ const JobSearchPage = () => {
 
     // Add fullscreen loader when mutation is in progress
     if (mutation.isPending) {
-        return <FullScreenLoader message="Searching might take a few minutes" />
+        return <FullScreenLoader message="Searching might take a few minutes..." />
     }
 
     return (
@@ -204,7 +200,7 @@ const JobSearchPage = () => {
                                 <input
                                     type="text"
                                     placeholder="e.g. Software Engineer"
-                                    className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                    className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                                     {...register('job_title')}
                                 />
                             </div>
@@ -215,7 +211,7 @@ const JobSearchPage = () => {
                                     Date Posted
                                 </label>
                                 <select
-                                    className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                    className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                                     defaultValue=""
                                     {...register('date_posted')}
                                 >
@@ -234,7 +230,7 @@ const JobSearchPage = () => {
                             <div className="flex flex-col">
                                 <label className="mb-1 text-gray-700 font-medium">Country</label>
                                 <select
-                                    className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                    className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                                     defaultValue=""
                                     {...register('country')}
                                 >
@@ -256,9 +252,9 @@ const JobSearchPage = () => {
                         <div className="flex flex-col">
                             <label className="mb-1 text-gray-700 font-medium">Resume</label>
                             <p className="text-blue-600 text-xs mb-4">
-                                Resume includes relevant professional summary, skills, and
-                                experience. Our AI will analyze your background to find and match
-                                you with the best job opportunities.
+                                Must include relevant professional summary, skills, and experience.
+                                Our AI will analyze your background to find and match you with the
+                                best job opportunities.
                             </p>
 
                             {/* Toggle Buttons */}
@@ -268,19 +264,19 @@ const JobSearchPage = () => {
                                     onClick={() => setSelectedResumeMode('upload')}
                                     className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
                                         selectedResumeMode === 'upload'
-                                            ? 'bg-indigo-600 text-white shadow-md'
+                                            ? 'bg-blue-600 text-white shadow-md'
                                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
                                 >
                                     <Upload className="inline-block w-4 h-4 mr-2" />
-                                    Upload New Resume
+                                    Use New Resume
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setSelectedResumeMode('select')}
                                     className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
                                         selectedResumeMode === 'select'
-                                            ? 'bg-indigo-600 text-white shadow-md'
+                                            ? 'bg-blue-600 text-white shadow-md'
                                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
                                 >
@@ -292,7 +288,7 @@ const JobSearchPage = () => {
                             {/* Upload Mode */}
                             {selectedResumeMode === 'upload' && (
                                 <div
-                                    className="relative flex flex-col items-center justify-center border-2 border-dashed border-indigo-400 rounded-lg bg-white px-6 py-8 transition hover:bg-indigo-50 cursor-pointer"
+                                    className="relative flex flex-col items-center justify-center border-2 border-dashed border-blue-400 rounded-lg bg-white px-6 py-8 transition hover:bg-blue-50 cursor-pointer"
                                     onClick={triggerFileInput}
                                     onDragOver={(e) => e.preventDefault()}
                                     onDrop={handleDrop}
@@ -310,7 +306,7 @@ const JobSearchPage = () => {
                                     />
                                     <div className="flex flex-col items-center pointer-events-none select-none">
                                         <svg
-                                            className="w-12 h-12 text-indigo-400 mb-3"
+                                            className="w-12 h-12 text-blue-400 mb-3"
                                             fill="none"
                                             stroke="currentColor"
                                             strokeWidth="2"
@@ -330,8 +326,8 @@ const JobSearchPage = () => {
                                         </span>
                                     </div>
                                     {resumeName && (
-                                        <div className="mt-4 flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-md">
-                                            <FileText className="w-5 h-5 text-indigo-600" />
+                                        <div className="mt-4 flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-md">
+                                            <FileText className="w-5 h-5 text-blue-600" />
                                             <span className="text-gray-700 text-sm font-medium truncate max-w-xs">
                                                 {resumeName}
                                             </span>
@@ -344,7 +340,39 @@ const JobSearchPage = () => {
                             {/* Select Mode */}
                             {selectedResumeMode === 'select' && (
                                 <div className="border border-gray-300 rounded-lg bg-gray-50 p-4">
-                                    {resumesData && resumesData.length > 0 ? (
+                                    {resumesLoading ? (
+                                        <div className="flex justify-center py-8">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <svg
+                                                    className="animate-spin h-8 w-8 text-blue-500"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <circle
+                                                        className="opacity-25"
+                                                        cx="12"
+                                                        cy="12"
+                                                        r="10"
+                                                        stroke="currentColor"
+                                                        strokeWidth="4"
+                                                    ></circle>
+                                                    <path
+                                                        className="opacity-75"
+                                                        fill="currentColor"
+                                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                                    ></path>
+                                                </svg>
+                                                <span className="text-sm text-gray-500">
+                                                    Loading resumes...
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ) : resumesError ? (
+                                        <div className="text-center py-8 text-red-500">
+                                            Failed to load resumes. Please try again.
+                                        </div>
+                                    ) : resumesData && resumesData.length > 0 ? (
                                         <div className="space-y-2">
                                             <p className="text-sm text-gray-600 mb-3">
                                                 Select from your previously uploaded resumes:
@@ -353,19 +381,24 @@ const JobSearchPage = () => {
                                                 <div
                                                     key={resume.id}
                                                     onClick={() =>
-                                                        handleExistingResumeSelect(resume.id)
+                                                        handleExistingResumeSelect(
+                                                            resume.id,
+                                                            resume.url,
+                                                        )
                                                     }
                                                     className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
-                                                        selectedExistingResume === resume.id
-                                                            ? 'bg-indigo-100 border-2 border-indigo-500'
-                                                            : 'bg-white border border-gray-200 hover:border-indigo-300 hover:shadow-sm'
+                                                        selectedExistingResume?.resume_id ===
+                                                        resume.id
+                                                            ? 'bg-blue-100 border-2 border-blue-500'
+                                                            : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-sm'
                                                     }`}
                                                 >
                                                     <div className="flex items-center gap-3">
                                                         <FileText
                                                             className={`w-5 h-5 ${
-                                                                selectedExistingResume === resume.id
-                                                                    ? 'text-indigo-600'
+                                                                selectedExistingResume?.resume_id ===
+                                                                resume.id
+                                                                    ? 'text-blue-600'
                                                                     : 'text-gray-400'
                                                             }`}
                                                         />
@@ -374,12 +407,13 @@ const JobSearchPage = () => {
                                                                 {resume.name}
                                                             </p>
                                                             <p className="text-xs text-gray-500">
-                                                                Uploaded: {resume.uploadDate}
+                                                                Uploaded: {resume.upload_date ? formatDate(resume.upload_date) : 'Unknown'}
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    {selectedExistingResume === resume.id && (
-                                                        <Check className="w-5 h-5 text-indigo-600" />
+                                                    {selectedExistingResume?.resume_id ===
+                                                        resume.id && (
+                                                        <Check className="w-5 h-5 text-blue-600" />
                                                     )}
                                                 </div>
                                             ))}
@@ -400,7 +434,7 @@ const JobSearchPage = () => {
                         <div className="flex justify-end">
                             <button
                                 type="submit"
-                                className="bg-blue-600 hover:cursor-pointer hover:opacity-75 text-white rounded px-6 py-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                                className="bg-blue-600 hover:cursor-pointer hover:opacity-75 text-white rounded px-6 py-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                             >
                                 Search Jobs
                             </button>

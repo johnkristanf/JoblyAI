@@ -2,7 +2,7 @@ import React from 'react'
 
 export default function FullScreenLoader({ message = 'Loading...' }: { message?: string }) {
     return (
-        <div className="fixed inset-0 bg-white bg-opacity-75 flex flex-col items-center justify-center z-50">
+        <div className="fixed inset-0 bg-gray-600/20 flex flex-col items-center justify-center z-50">
             <svg
                 className="animate-spin h-16 w-16 text-blue-600 mb-4"
                 xmlns="http://www.w3.org/2000/svg"
