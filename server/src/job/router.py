@@ -51,7 +51,7 @@ async def job_search(
             job_title=job_title,
             country=country,
             date_posted=date_posted,  # all, today, 3days, week, month
-            page="4",
+            page="2",
         )
 
         expire_seconds = 15 * 60  # 15 minutes in seconds
