@@ -18,7 +18,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def get_env_param(name, param_store_path):
-    APP_ENV = os.getenv("APP_ENV").lower()
+    APP_ENV = os.getenv("APP_ENV")
     
     logger.info("=" * 60)
     logger.info(f"🔍 Getting parameter: {name}")
