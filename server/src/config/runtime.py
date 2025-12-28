@@ -1,13 +1,11 @@
-from dotenv import load_dotenv
-
-load_dotenv()
-
 import os
-from src.aws.ssm import get_ssm_parameter
-
-
 import logging
 import sys
+
+from src.aws.ssm import get_ssm_parameter
+from dotenv import load_dotenv
+load_dotenv()
+
 
 # Setup logger
 logging.basicConfig(
@@ -43,7 +41,6 @@ def get_env_param(name, param_store_path):
         logger.error(f"   ❌ CRITICAL ERROR: {str(e)}")
         import traceback
         logger.error(traceback.format_exc())
-        sys.exit(1)
 
 
 params = {
@@ -65,7 +62,6 @@ params = {
     "IMAGE_KIT_URL_ENDPOINT": get_env_param(
         "IMAGE_KIT_URL_ENDPOINT", "/joblyai/prod/IMAGE_KIT_URL_ENDPOINT"
     ),
-    "AWS_PROFILE": get_env_param("AWS_PROFILE", "/joblyai/prod/AWS_PROFILE"),
     "AWS_REGION": get_env_param("AWS_REGION", "/joblyai/prod/AWS_REGION"),
     "AWS_S3_BUCKET_NAME": get_env_param(
         "AWS_S3_BUCKET_NAME", "/joblyai/prod/AWS_S3_BUCKET_NAME"

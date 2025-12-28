@@ -2,12 +2,9 @@ import httpx
 from src.config.runtime import params
 from src.utils import json_decode, read_return_pdf_content_stream
 from src.prompt import JobSeachPrompt
-
 # from src.config import settings
 
 from openai import AsyncOpenAI
-
-
 
 async def llm_job_extraction(job_listings, job_params: dict):
     
