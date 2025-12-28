@@ -1,13 +1,15 @@
-name: joblyai-server-build
+name: joblyai-ci-cd
 
 on:
   push:
     branches:
       - production
+  workflow_dispatch:  # Allow manual triggers
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
@@ -32,3 +34,39 @@ jobs:
       - name: Logout from DockerHub
         if: always()
         run: docker logout
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: View docker-compose.yml contents
+        run: |
+          echo "=== START docker-compose.yml ==="
+          cat server/docker-compose.yml
+          echo "=== END docker-compose.yml ==="
+
+      - name: Deploy to EC2 using in-memory SSH key
+        run: |
+          # Start a temporary SSH agent
+          eval "$(ssh-agent -s)"
+
+          # Add the SSH key from the GitHub secret
+          echo "${{ secrets.EC2_SSH_KEY }}" | ssh-add - >/dev/null
+
+          # Copy docker-compose.yml to EC2
+          scp -o StrictHostKeyChecking=no server/docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/docker-compose.yml
+
+          # Connect via SSH and deploy
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cd /home/${{ secrets.EC2_USER }}
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker system prune -f
+          EOF
+
+          # Kill the temporary SSH agent
+          ssh-agent -k
