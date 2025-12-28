@@ -1,29 +1,37 @@
-name: joblyai_deploy
+name: joblyai-server-deploy
 
 on:
   workflow_run:
-    workflows: ["joblyai_build"]
+    workflows: ["joblyai-server-build"]
     types:
       - completed
-
 jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v3
 
-      - name: Set up SSH key for deployment
-        uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-
-      - name: Execute deployment script
+      - name: Deploy to EC2 using in-memory SSH key
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
-            cd ${{ secrets.DEPLOY_PATH }}
-            docker-compose pull
-            docker-compose up -d
-          '
+          # Start a temporary SSH agent
+          eval "$(ssh-agent -s)"
+
+          # Add the SSH key from the GitHub secret
+          echo "${{ secrets.EC2_SSH_KEY }}" | ssh-add - >/dev/null
+
+          # Copy docker-compose.yml to EC2
+          scp -o StrictHostKeyChecking=no server/docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/docker-compose.yml
+
+          # Connect via SSH and deploy
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cd /home/${{ secrets.EC2_USER }}
+            docker compose pull
+            docker compose up -d --remove-orphans
+          EOF
+
+          # Kill the temporary SSH agent
+          ssh-agent -k
+
