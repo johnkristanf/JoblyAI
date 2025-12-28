@@ -7,10 +7,12 @@ from src.prompt import JobSeachPrompt
 
 from openai import AsyncOpenAI
 
-client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
 
 
 async def llm_job_extraction(job_listings, job_params: dict):
+    
+    client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
+    
     job_seach_prompt = JobSeachPrompt()
     system_prompt = job_seach_prompt.load_system_prompt(
         job_params.get("resume_text"),
