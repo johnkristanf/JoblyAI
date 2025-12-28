@@ -2,7 +2,7 @@ version: "3"
 services:
   app:
     image: johnkristan/joblyai:latest
-    container_name: joblyai
+    container_name: joblyai-server
     restart: always
     ports:
       - "8000:8000"
