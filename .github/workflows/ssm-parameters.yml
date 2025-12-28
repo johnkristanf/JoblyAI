@@ -1,11 +1,7 @@
 name: Sync secrets to AWS SSM
 
 on:
-  workflow_dispatch: # manual trigger
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/ssm-parameters.yml"
+  workflow_dispatch: # manual trigger only
 
 permissions:
   id-token: write # required for OIDC
@@ -28,73 +24,73 @@ jobs:
       - name: Create / Update SSM parameters
         run: |
           aws ssm put-parameter \
-            --name "/myapp/prod/RAPID_API_KEY" \
+            --name "/joblyai/prod/RAPID_API_KEY" \
             --value "${{ secrets.RAPID_API_KEY }}" \
             --type SecureString \
             --overwrite
 
           aws ssm put-parameter \
-            --name "/myapp/prod/RAPID_API_HOST" \
+            --name "/joblyai/prod/RAPID_API_HOST" \
             --value "${{ secrets.RAPID_API_HOST }}" \
             --type SecureString \
             --overwrite
 
           aws ssm put-parameter \
-            --name "/myapp/prod/OPENAI_MODEL" \
+            --name "/joblyai/prod/OPENAI_MODEL" \
             --value "${{ secrets.OPENAI_MODEL }}" \
             --type SecureString \
             --overwrite
 
           aws ssm put-parameter \
-            --name "/myapp/prod/OPENAI_API_KEY" \
+            --name "/joblyai/prod/OPENAI_API_KEY" \
             --value "${{ secrets.OPENAI_API_KEY }}" \
             --type SecureString \
             --overwrite
 
           aws ssm put-parameter \
-            --name "/myapp/prod/DATABASE_URL" \
+            --name "/joblyai/prod/DATABASE_URL" \
             --value "${{ secrets.DATABASE_URL }}" \
             --type SecureString \
             --overwrite
 
           aws ssm put-parameter \
-            --name "/myapp/prod/REDIS_URL" \
+            --name "/joblyai/prod/REDIS_URL" \
             --value "${{ secrets.REDIS_URL }}" \
             --type SecureString \
             --overwrite
 
           aws ssm put-parameter \
-            --name "/myapp/prod/SUPABASE_JWT_SECRET" \
+            --name "/joblyai/prod/SUPABASE_JWT_SECRET" \
             --value "${{ secrets.SUPABASE_JWT_SECRET }}" \
             --type SecureString \
             --overwrite
 
           aws ssm put-parameter \
-            --name "/myapp/prod/AWS_REGION" \
+            --name "/joblyai/prod/AWS_REGION" \
             --value "${{ secrets.AWS_REGION }}" \
             --type SecureString \
             --overwrite
 
           aws ssm put-parameter \
-            --name "/myapp/prod/AWS_S3_BUCKET_NAME" \
+            --name "/joblyai/prod/AWS_S3_BUCKET_NAME" \
             --value "${{ secrets.AWS_S3_BUCKET_NAME }}" \
             --type SecureString \
             --overwrite
             
           aws ssm put-parameter \
-            --name "/myapp/prod/IMAGE_KIT_PUBLIC_KEY" \
+            --name "/joblyai/prod/IMAGE_KIT_PUBLIC_KEY" \
             --value "${{ secrets.IMAGE_KIT_PUBLIC_KEY }}" \
             --type SecureString \
             --overwrite
 
           aws ssm put-parameter \
-            --name "/myapp/prod/IMAGE_KIT_PRIVATE_KEY" \
+            --name "/joblyai/prod/IMAGE_KIT_PRIVATE_KEY" \
             --value "${{ secrets.IMAGE_KIT_PRIVATE_KEY }}" \
             --type SecureString \
             --overwrite
 
           aws ssm put-parameter \
-            --name "/myapp/prod/IMAGE_KIT_URL_ENDPOINT" \
+            --name "/joblyai/prod/IMAGE_KIT_URL_ENDPOINT" \
             --value "${{ secrets.IMAGE_KIT_URL_ENDPOINT }}" \
             --type SecureString \
             --overwrite
