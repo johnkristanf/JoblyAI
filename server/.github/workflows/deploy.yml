@@ -14,15 +14,24 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: Copy docker-compose.yml to EC2
+      - name: Deploy to EC2 using in-memory SSH key
         run: |
-          scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY_PATH }} server/docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/docker-compose.yml
+          # Start a temporary SSH agent
+          eval "$(ssh-agent -s)"
 
-      - name: Deploy on EC2
-        run: |
+          # Add the SSH key from the GitHub secret
+          echo "${{ secrets.EC2_SSH_KEY }}" | ssh-add - >/dev/null
+
+          # Copy docker-compose.yml to EC2
+          scp -o StrictHostKeyChecking=no server/docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/docker-compose.yml
+
+          # Connect via SSH and deploy
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             cd /home/${{ secrets.EC2_USER }}
             docker compose pull
             docker compose up -d --remove-orphans
           EOF
+
+          # Kill the temporary SSH agent
+          ssh-agent -k
 
