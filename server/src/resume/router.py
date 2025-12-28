@@ -6,16 +6,17 @@ from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi import UploadFile, File
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
+from src.config.runtime import params
 from src.resume.schema import RemoveResumeIn
 from src.auth.dependencies import verify_user_from_token
 from src.database import Database
 from src.resume.model import Resume
-from src.config import settings
+# from src.config import settings
 
 
 resume_router = APIRouter()
-session = boto3.Session(profile_name=settings.AWS_PROFILE)
-s3 = session.client("s3", region_name=settings.AWS_REGION)
+session = boto3.Session(profile_name=params["AWS_PROFILE"])
+s3 = session.client("s3", region_name=params["AWS_REGION"])
 
 
 @resume_router.post("/upload")
@@ -33,7 +34,7 @@ async def upload_resume(
         file_content = await file.read()
         try:
             s3.put_object(
-                Bucket=settings.AWS_S3_BUCKET_NAME,
+                Bucket=params["AWS_S3_BUCKET_NAME"],
                 Key=object_key,
                 Body=file_content,
                 ContentType=file.content_type,
@@ -91,7 +92,7 @@ async def get_all_resume_urls(
             temp_url = s3.generate_presigned_url(
                 ClientMethod="get_object",
                 Params={
-                    "Bucket": settings.AWS_S3_BUCKET_NAME,
+                    "Bucket": params["AWS_S3_BUCKET_NAME"],
                     "Key": resume.object_key,
                 },
                 ExpiresIn=60 * 30,  # 30 minutes
@@ -150,7 +151,7 @@ async def remove_resume(
 
     # Remove from S3
     try:
-        s3.delete_object(Bucket=settings.AWS_S3_BUCKET_NAME, Key=object_key)
+        s3.delete_object(Bucket=params["AWS_S3_BUCKET_NAME"], Key=object_key)
     except ClientError as e:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,

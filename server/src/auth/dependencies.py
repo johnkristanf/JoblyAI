@@ -2,7 +2,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 
-from src.config import settings
+from src.config.runtime import params
+# from src.config import settings
 
 security = HTTPBearer()
 
@@ -15,12 +16,12 @@ async def verify_user_from_token(
     This function decodes the token and validates it using Supabase's JWT secret.
     """
     token = credentials.credentials
-    
+
     try:
         # Decode the JWT token
         payload = jwt.decode(
             token,
-            settings.SUPABASE_JWT_SECRET,
+            params["SUPABASE_JWT_SECRET"],
             algorithms=["HS256"],
             audience="authenticated",  # Supabase uses 'authenticated' as audience
         )

@@ -3,7 +3,8 @@ import redis
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, declarative_base, sessionmaker
-from src.config import settings
+from src.config.runtime import params
+# from src.config import settings
 
 Base: DeclarativeBase = declarative_base()
 
@@ -16,7 +17,7 @@ class Database:
     @classmethod
     def connect_async_session(cls):
         cls.engine = create_async_engine(
-            settings.DATABASE_URL,
+            params["DATABASE_URL"],
             echo=False,
             pool_size=3,
             pool_pre_ping=True,
@@ -54,7 +55,7 @@ class Database:
     @classmethod
     def connect_redis(cls):
         cls.redis_client = redis.Redis.from_url(
-            settings.REDIS_URL, decode_responses=True, socket_timeout=5
+            params["REDIS_URL"], decode_responses=True, socket_timeout=5
         )
 
     @classmethod

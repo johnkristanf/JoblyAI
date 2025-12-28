@@ -1,20 +1,24 @@
 import httpx
-from src.utils import json_decode
+from src.config.runtime import params
+from src.utils import json_decode, read_return_pdf_content_stream
 from src.prompt import JobSeachPrompt
-from src.config import settings
+
+# from src.config import settings
+
 from openai import AsyncOpenAI
 
-client: AsyncOpenAI = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
 
-async def llm_job_extraction(job_listings, params: dict):
+
+async def llm_job_extraction(job_listings, job_params: dict):
     job_seach_prompt = JobSeachPrompt()
     system_prompt = job_seach_prompt.load_system_prompt(
-        params.get("resume_text"),
+        job_params.get("resume_text"),
     )
     user_prompt = job_seach_prompt.load_user_prompt(job_listings)
 
     response = await client.responses.create(
-        model=settings.OPENAI_MODEL,
+        model=params["OPENAI_MODEL"],
         input=[system_prompt, user_prompt],
     )
 
@@ -64,8 +68,8 @@ async def search_rapidapi_jobs_jsearch(job_title, country, date_posted, page):
     }
 
     headers = {
-        "X-RapidAPI-Key": settings.RAPID_API_KEY,
-        "X-RapidAPI-Host": settings.RAPID_API_HOST,
+        "X-RapidAPI-Key": params["RAPID_API_KEY"],
+        "X-RapidAPI-Host": params["RAPID_API_HOST"],
     }
 
     try:
@@ -76,6 +80,21 @@ async def search_rapidapi_jobs_jsearch(job_title, country, date_posted, page):
     except httpx.TimeoutException:
         # log here
         return {"data": []}
+
+
+async def extract_resume_from_source(source):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(source)
+            if response.status_code == 200:
+                resume_content = response.content
+                return read_return_pdf_content_stream(resume_content)
+            else:
+                print(
+                    f"Failed to fetch resume from {source}: {response.status_code}"
+                )
+    except Exception as e:
+        print(f"Error fetching or reading the resume PDF from URL: {e}")
 
 
 # Example response object from job rapid API:

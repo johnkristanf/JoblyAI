@@ -2,6 +2,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    APP_ENV: str
+    
     RAPID_API_KEY: str
     RAPID_API_HOST: str
 

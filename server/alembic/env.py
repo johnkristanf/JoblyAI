@@ -4,13 +4,14 @@ from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
-from src.config import settings
+from src.config.runtime import params
+# from src.config import settings
 
 from alembic import context
 
 from src.job.models import Job
 from src.resume.model import Resume
-from src.config import settings
+# from src.config import settings
 from src.database import Base
 
 # this is the Alembic Config object, which provides
@@ -46,7 +47,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = settings.DATABASE_URL
+    url = params['DATABASE_URL']
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -70,7 +71,7 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
     """
     connectable = create_async_engine(
-        settings.DATABASE_URL,
+        params['DATABASE_URL'],
         echo=False,
         poolclass=pool.NullPool,
         connect_args={

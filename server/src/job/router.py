@@ -17,6 +17,7 @@ from src.job.schema import JobsSearchIn, SaveJobIn
 from src.job.models import Job
 
 from src.job.service import (
+    extract_resume_from_source,
     llm_job_extraction,
     search_rapidapi_jobs_jsearch,
     truncate_job_listing_properties,
@@ -46,18 +47,16 @@ async def job_search(
 
     cached_results = redis_client.get(cache_key)
     if cached_results is None:
-        print("NO CACHE")
         job_search_results = await search_rapidapi_jobs_jsearch(
             job_title=job_title,
             country=country,
             date_posted=date_posted,  # all, today, 3days, week, month
-            page="2",
+            page="4",
         )
 
         expire_seconds = 15 * 60  # 15 minutes in seconds
         redis_client.setex(cache_key, expire_seconds, json.dumps(job_search_results))
     else:
-        print("CACHE HIT ")
         job_search_results = json.loads(cached_results)
 
     # Read uploaded resume data from the memory
@@ -67,7 +66,7 @@ async def job_search(
             resume_content = await new_resume.read()
             resume_text = read_return_pdf_content_stream(resume_content)
         except Exception as e:
-            print(f"Error extracting text from resume: {e}")
+            print(f"Error extracting text from resume PDF: {e}")
             resume_text = ""
 
     # Read existing resume data from object storage source
@@ -75,33 +74,20 @@ async def job_search(
         resume_data = json_decode(existing_resume)
         resume_source_url = resume_data.get("resume_source_url")
         if resume_source_url:
-            try:
-                async with httpx.AsyncClient() as client:
-                    response = await client.get(resume_source_url)
-                    if response.status_code == 200:
-                        resume_content = response.content
-                        resume_text = read_return_pdf_content_stream(resume_content)
-                    else:
-                        print(
-                            f"Failed to fetch resume from {resume_source_url}: {response.status_code}"
-                        )
-            except Exception as e:
-                print(f"Error fetching or reading the resume from URL: {e}")
+            resume_text = extract_resume_from_source(resume_source_url)
 
-    print(f"resume_text: {resume_text}")
-
+    # Pre-process job listing before feeding to LLM
     raw_job_listings = job_search_results.get("data", [])
     job_listings = truncate_job_listing_properties(raw_job_listings)
 
-    print(f"job_listings: {job_listings}")
-
-    job_data = {
-        "resume_text": resume_text,
-    }
+    # Process llm job in batch parallel
     jobs_matched = await extract_data_from_batch_tasks(
-        list_data=job_listings, awaitable=llm_job_extraction, params=job_data
+        list_data=job_listings,
+        awaitable=llm_job_extraction,
+        params={
+            "resume_text": resume_text,
+        },
     )
-    print(f"jobs_matched: {jobs_matched}")
 
     return {"job_listings": job_listings, "jobs_matched": jobs_matched}
 
