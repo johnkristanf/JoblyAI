@@ -5,6 +5,9 @@ on:
     workflows: ["joblyai-server-build"]
     types:
       - completed
+
+    branches:
+      - production
 jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -13,7 +16,9 @@ jobs:
     steps:
       - name: Checkout source code 
         uses: actions/checkout@v3
-
+        with:
+          ref: production
+          
       - name: View docker-compose.yml contents
         run: |
           echo "=== START docker-compose.yml ==="
