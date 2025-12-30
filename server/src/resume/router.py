@@ -1,6 +1,11 @@
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import boto3
 import uuid
 import os
+import logging
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Body, Depends, HTTPException, status
@@ -14,9 +19,6 @@ from src.database import Database
 from src.resume.model import Resume
 from src.pydantic_config import settings
 
-from dotenv import load_dotenv
-load_dotenv()
-
 
 if os.getenv("APP_ENV") == "development":
     session = boto3.Session(profile_name=settings.AWS_PROFILE)
@@ -25,7 +27,9 @@ else:
     s3 = boto3.client("s3", region_name=params["AWS_REGION"])
 
 
+logger = logging.getLogger("resume")
 resume_router = APIRouter()
+
 
 @resume_router.post("/upload")
 async def upload_resume(
@@ -87,15 +91,47 @@ async def get_all_resume_urls(
     Fetch all resumes for the current user, generate temp URLs for each file in S3,
     and return an array of objects with filename, upload date, S3 temp URL, and object key.
     """
-    result = await session.execute(
-        select(Resume)
-        .where(Resume.user_id == user.get("id"))
-        .order_by(Resume.created_at.desc())
+    user_id = user.get("id")
+    logger.info(
+        "Fetching all resumes",
+        extra={
+            "endpoint": "/resume/get/all",
+            "user_id": user_id,
+        },
     )
-    all_resumes = result.scalars().all()
+
+    try:
+        result = await session.execute(
+            select(Resume)
+            .where(Resume.user_id == user_id)
+            .order_by(Resume.created_at.desc())
+        )
+        all_resumes = result.scalars().all()
+    except Exception as e:
+        logger.error(
+            "Database error while fetching resumes",
+            extra={
+                "endpoint": "/resume/get/all",
+                "user_id": user_id,
+                "error": str(e),
+            },
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch resumes",
+        )
 
     resumes = []
     for resume in all_resumes:
+        resume_dict = {
+            "id": resume.id,
+            "name": resume.filename,
+            "upload_date": getattr(resume, "created_at", None),
+            "objectKey": resume.object_key,
+            "url": None,
+        }
+
         try:
             temp_url = s3.generate_presigned_url(
                 ClientMethod="get_object",
@@ -105,29 +141,21 @@ async def get_all_resume_urls(
                 },
                 ExpiresIn=60 * 30,  # 30 minutes
             )
-            resumes.append(
-                {
-                    "id": resume.id,
-                    "name": resume.filename,
-                    "upload_date": resume.created_at,
-                    "url": temp_url,
-                    "objectKey": resume.object_key,
-                }
-            )
+            resume_dict["url"] = temp_url
         except Exception as e:
-            resumes.append(
-                {
-                    "id": resume.id,
-                    "name": resume.filename,
-                    "upload_date": (
-                        resume.created_at.isoformat()
-                        if hasattr(resume, "created_at")
-                        else None
-                    ),
+            logger.error(
+                "Failed to generate S3 presigned URL",
+                extra={
+                    "endpoint": "/resume/get/all",
+                    "user_id": user_id,
+                    "resume_id": resume.id,
                     "error": str(e),
-                    "objectKey": resume.object_key,
-                }
+                },
+                exc_info=True,
             )
+            resume_dict["error"] = str(e)
+
+        resumes.append(resume_dict)
 
     return resumes
 
