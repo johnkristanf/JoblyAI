@@ -1,3 +1,7 @@
+from dotenv import load_dotenv
+load_dotenv()
+
+import os
 from pydantic_settings import BaseSettings
 
 
@@ -26,5 +30,6 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
 
-
-settings = Settings()
+settings = None
+if os.getenv("APP_ENV") == "development":
+    settings = Settings()

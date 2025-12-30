@@ -1,17 +1,46 @@
-from dotenv import load_dotenv
+import os
+import logging
+import sys
 
+from src.aws.ssm import get_ssm_parameter
+from dotenv import load_dotenv
 load_dotenv()
 
-import os
-from src.aws.ssm import get_ssm_parameter
 
+# Setup logger
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger(__name__)
 
 def get_env_param(name, param_store_path):
-    APP_ENV = os.getenv("APP_ENV", "development").lower()
+    APP_ENV = os.getenv("APP_ENV")
+    
+    logger.info("=" * 60)
+    logger.info(f"🔍 Getting parameter: {name}")
+    logger.info(f"   APP_ENV: {APP_ENV}")
+    logger.info(f"   SSM Path: {param_store_path}")
+    
     if APP_ENV == "development":
-        return os.getenv(name)
+        value = os.getenv(name)
+        logger.info(f"   Mode: DEVELOPMENT")
+        if value:
+            logger.info(f"   ✅ Value found in .env")
+        else:
+            logger.warning(f"   ⚠️  Value NOT found in .env")
+        return value
 
-    return get_ssm_parameter(param_store_path)
+    logger.info(f"   Mode: PRODUCTION - Fetching from SSM...")
+    try:
+        value = get_ssm_parameter(param_store_path)
+        logger.info(f"   ✅ Successfully retrieved from SSM")
+        return value
+    except Exception as e:
+        logger.error(f"   ❌ CRITICAL ERROR: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
 
 
 params = {
@@ -33,7 +62,6 @@ params = {
     "IMAGE_KIT_URL_ENDPOINT": get_env_param(
         "IMAGE_KIT_URL_ENDPOINT", "/joblyai/prod/IMAGE_KIT_URL_ENDPOINT"
     ),
-    "AWS_PROFILE": get_env_param("AWS_PROFILE", "/joblyai/prod/AWS_PROFILE"),
     "AWS_REGION": get_env_param("AWS_REGION", "/joblyai/prod/AWS_REGION"),
     "AWS_S3_BUCKET_NAME": get_env_param(
         "AWS_S3_BUCKET_NAME", "/joblyai/prod/AWS_S3_BUCKET_NAME"

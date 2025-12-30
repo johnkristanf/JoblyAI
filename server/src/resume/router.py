@@ -1,5 +1,6 @@
 import boto3
 import uuid
+import os
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, Body, Depends, HTTPException, status
@@ -11,13 +12,20 @@ from src.resume.schema import RemoveResumeIn
 from src.auth.dependencies import verify_user_from_token
 from src.database import Database
 from src.resume.model import Resume
-# from src.config import settings
+from src.pydantic_config import settings
+
+from dotenv import load_dotenv
+load_dotenv()
+
+
+if os.getenv("APP_ENV") == "development":
+    session = boto3.Session(profile_name=settings.AWS_PROFILE)
+    s3 = session.client("s3", region_name=settings.AWS_REGION)
+else:
+    s3 = boto3.client("s3", region_name=params["AWS_REGION"])
 
 
 resume_router = APIRouter()
-session = boto3.Session(profile_name=params["AWS_PROFILE"])
-s3 = session.client("s3", region_name=params["AWS_REGION"])
-
 
 @resume_router.post("/upload")
 async def upload_resume(

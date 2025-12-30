@@ -1,4 +1,3 @@
-# src/aws/ssm.py
 import boto3
 from functools import lru_cache
 
