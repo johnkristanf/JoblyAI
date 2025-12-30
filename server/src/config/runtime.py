@@ -30,13 +30,13 @@ def get_env_param(name, param_store_path):
             logger.info(f"   ✅ Value found in .env")
         else:
             logger.warning(f"   ⚠️  Value NOT found in .env")
-        return value
+        return value.strip()
 
     logger.info(f"   Mode: PRODUCTION - Fetching from SSM...")
     try:
         value = get_ssm_parameter(param_store_path)
         logger.info(f"   ✅ Successfully retrieved from SSM")
-        return value
+        return value.strip()
     except Exception as e:
         logger.error(f"   ❌ CRITICAL ERROR: {str(e)}")
         import traceback
