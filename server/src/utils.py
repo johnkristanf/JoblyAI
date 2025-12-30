@@ -26,7 +26,8 @@ def group(prefix, *routers):
 def chunk_list(items, size):
     for i in range(0, len(items), size):
         yield items[i : i + size]
-       
+
+
 async def retry(fn, retries=3, delay=0.5):
     try:
         return await fn()
@@ -34,7 +35,7 @@ async def retry(fn, retries=3, delay=0.5):
         if retries <= 0:
             raise
         await asyncio.sleep(delay)
-        return await retry(fn, retries-1, delay)
+        return await retry(fn, retries - 1, delay)
 
 
 async def extract_data_from_batch_tasks(list_data, awaitable, params, batch_size=10):
@@ -46,11 +47,9 @@ async def extract_data_from_batch_tasks(list_data, awaitable, params, batch_size
     tasks = []
     for i, batch in enumerate(batches):
         print(f"Scheduling batch {i+1}/{len(batches)}...")
-        tasks.append(
-            retry(lambda b=batch: awaitable(b, params))
-        )
+        tasks.append(retry(lambda b=batch: awaitable(b, params)))
 
-    # This line asynchronously runs all batch tasks in parallel inside the event loop and collects 
+    # This line asynchronously runs all batch tasks in parallel inside the event loop and collects
     # their results into the `results` list; it allows efficient concurrent I/O processing of the batches.
     results = await asyncio.gather(*tasks)
     print(f"results: {results}")
@@ -61,7 +60,7 @@ async def extract_data_from_batch_tasks(list_data, awaitable, params, batch_size
             flattened.extend(result["listings"])
         else:
             flattened.extend(result)
-    
+
     print(f"flattened: {flattened}")
     return flattened
 
@@ -71,5 +70,5 @@ def read_return_pdf_content_stream(stream_content):
     doc = pymupdf.open(stream=stream_content, filetype="pdf")
     for page in doc:
         extracted_content_text += page.get_text()
-        
+
     return extracted_content_text
