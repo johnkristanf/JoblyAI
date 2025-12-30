@@ -1,4 +1,4 @@
-name: joblyai-ci-cd
+name: JoblyAI CI/CD Pipeline
 
 on:
   push:
