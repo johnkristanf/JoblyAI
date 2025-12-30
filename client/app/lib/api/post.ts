@@ -64,10 +64,7 @@ export const uploadResume = async (files: ResumeFile[]) => {
 
 export const removeResume = async (remove_resume_data: RemoveResumeData) => {
     try {
-        const accessToken = await getAccessToken()
-
-        console.log("remove_resume_data: ", remove_resume_data);
-        
+        const accessToken = await getAccessToken()        
 
         const response = await axios.post(
             `${import.meta.env.VITE_API_V1_BASE_URL}/resume/remove`,

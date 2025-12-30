@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import axios from 'axios'
 import { DescriptionSection } from '~/components/description-section'
 import { JobLocationTooltip } from '~/components/job-location-tooltip'
 import { SalarySection } from '~/components/salary-section'
