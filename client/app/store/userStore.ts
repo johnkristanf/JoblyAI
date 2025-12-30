@@ -39,8 +39,7 @@ export const useUserStore = create<UserStoreState>((set, get) => ({
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_V1_BASE_URL}/user/profile`, {
                 headers: {
-                    'Content-Type': 'application/json',
-                    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+                    Authorization: accessToken ? `Bearer ${accessToken}` : '',
                 },
             })
             set({ user: res.data })
