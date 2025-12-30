@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Check, X, Edit2, User, Mail, Loader2, Lock, Eye, EyeOff } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
-import axios from 'axios'
 import { getAccessToken, supabase } from '~/lib/supabase/client'
 import { toast } from 'sonner'
 import { updateUserBasicInformation, uploadAvatar } from '~/lib/api/patch'
@@ -9,7 +8,7 @@ import { updateUserBasicInformation, uploadAvatar } from '~/lib/api/patch'
 const ProfilePage = () => {
     const { user, setUser, loading, setLoading } = useUserStore()
 
-    const [editingField, setEditingField] = useState(null)
+    const [editingField, setEditingField] = useState<string | null>(null)
     const [tempValue, setTempValue] = useState('')
     const [isProfileUpdating, setIsProfileUpdating] = useState<boolean>(false)
     const [isPasswordChanging, setIsPasswordChanging] = useState<boolean>(false)
@@ -33,7 +32,7 @@ const ProfilePage = () => {
     // NEW: State to manage email confirmation message
     const [emailConfirmation, setEmailConfirmation] = useState<any>()
 
-    const startEdit = (field, currentValue: string) => {
+    const startEdit = (field: string, currentValue?: string) => {
         setEditingField(field)
         setTempValue(currentValue || '')
         if (field === 'email') {
@@ -49,7 +48,7 @@ const ProfilePage = () => {
 
     const saveEditBasicInformation = async (field: 'full_name' | 'email') => {
         if (!user) return
-        if (tempValue.trim() === user[field]) {
+        if (tempValue.trim() === user?.[field]) {
             cancelEdit()
             return
         }
@@ -98,7 +97,7 @@ const ProfilePage = () => {
 
             if (updateResults) {
                 setUser({
-                    ...user,
+                    ...user!,
                     ...updateResults,
                 })
             }
@@ -111,7 +110,7 @@ const ProfilePage = () => {
         }
     }
 
-    const handleAvatarUpload = async (e) => {
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
 
@@ -127,7 +126,7 @@ const ProfilePage = () => {
                 // Make sure to create a new object reference for setUser
                 // fetch latest user state for safety, or explicitly update avatar_url
                 setUser({
-                    ...user,
+                    ...user!,
                     ...(uploadResult.avatar_url
                         ? { avatar_url: uploadResult.avatar_url }
                         : uploadResult),
@@ -141,7 +140,7 @@ const ProfilePage = () => {
     }
 
     // Password change handlers
-    const handlePasswordChange = (field, value) => {
+    const handlePasswordChange = (field: string, value: string) => {
         setPasswordData((prev) => ({
             ...prev,
             [field]: value,
@@ -149,10 +148,10 @@ const ProfilePage = () => {
         setPasswordError('')
     }
 
-    const togglePasswordVisibility = (field) => {
+    const togglePasswordVisibility = (field: string) => {
         setShowPasswords((prev) => ({
             ...prev,
-            [field]: !prev[field],
+            [field as keyof typeof prev]: !prev[field as keyof typeof prev],
         }))
     }
 
@@ -191,6 +190,10 @@ const ProfilePage = () => {
                     setIsPasswordChanging(false)
                     return
                 }
+            } else {
+                setPasswordError('User not found.')
+                setIsPasswordChanging(false)
+                return
             }
 
             // 2. Proceed to update password
@@ -235,6 +238,7 @@ const ProfilePage = () => {
         )
     }
 
+    // At this point, user is defined (not null)
     return (
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="w-full mx-auto px-4">
@@ -253,7 +257,7 @@ const ProfilePage = () => {
                     <div className="px-6 sm:px-8 pb-5">
                         <div className="flex flex-col items-center -mt-12">
                             <div className="relative group">
-                                {user.avatar_url ? (
+                                {user?.avatar_url ? (
                                     <img
                                         src={user.avatar_url}
                                         alt={user.full_name || 'User'}
@@ -261,7 +265,7 @@ const ProfilePage = () => {
                                     />
                                 ) : (
                                     <div className="w-24 h-24 flex items-center justify-center rounded-full bg-blue-600 text-white font-bold text-3xl border-4 border-white shadow-lg">
-                                        {user.full_name?.[0]?.toUpperCase() || 'U'}
+                                        {(user?.full_name?.[0]?.toUpperCase()) || 'U'}
                                     </div>
                                 )}
 
@@ -297,7 +301,7 @@ const ProfilePage = () => {
                                 </label>
                                 {editingField !== 'full_name' && (
                                     <button
-                                        onClick={() => startEdit('full_name', user.full_name)}
+                                        onClick={() => startEdit('full_name', user?.full_name)}
                                         className="text-blue-600 hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"
                                         disabled={loading}
                                     >
@@ -338,7 +342,7 @@ const ProfilePage = () => {
                             ) : (
                                 <div className="px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50">
                                     <p className="text-gray-900 text-sm">
-                                        {user.full_name || 'Not set'}
+                                        {user?.full_name || 'Not set'}
                                     </p>
                                 </div>
                             )}
@@ -353,7 +357,7 @@ const ProfilePage = () => {
                                 </label>
                                 {editingField !== 'email' && (
                                     <button
-                                        onClick={() => startEdit('email', user.email)}
+                                        onClick={() => startEdit('email', user?.email)}
                                         className="text-blue-600 hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"
                                         disabled={isProfileUpdating}
                                     >
@@ -395,7 +399,7 @@ const ProfilePage = () => {
                                 <>
                                     <div className="px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50">
                                         <p className="text-gray-900 text-sm">
-                                            {user.email || 'Not set'}
+                                            {user?.email || 'Not set'}
                                         </p>
                                     </div>
                                     {/* GREEN CARD: Email sent confirmation */}
