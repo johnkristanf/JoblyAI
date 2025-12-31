@@ -36,12 +36,7 @@ async def job_search(
     user: dict = Depends(verify_user_from_token),
     redis_client: Redis = Depends(Database.get_redis_client),
 ):
-    print(
-        f"job_title: {job_title}, date_posted: {date_posted}, country: {country}, user: {user}"
-    )
-    print(f"new_resume: {new_resume}")
-    print(f"existing_resume: {existing_resume}")
-
+    job_list_page_length = "3"
     job_search_results = None
     cache_key = f"jobsearch:{job_title}:{country}:{date_posted}"
 
@@ -51,7 +46,7 @@ async def job_search(
             job_title=job_title,
             country=country,
             date_posted=date_posted,  # all, today, 3days, week, month
-            page="3",
+            page=job_list_page_length,
         )
 
         expire_seconds = 15 * 60  # 15 minutes in seconds
