@@ -69,9 +69,9 @@ async def upload_resume(
 
 @resume_router.get("/get/all")
 async def get_all_resume_urls(
-    resume_service: ResumeService = Depends(get_resume_service),
     session: AsyncSession = Depends(Database.get_async_session),
     user: dict = Depends(verify_user_from_token),
+    resume_service: ResumeService = Depends(get_resume_service),
 ):
     user_id = user.get("id")
     logger.info(
