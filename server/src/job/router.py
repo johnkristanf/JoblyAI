@@ -117,3 +117,22 @@ async def get_saved_jobs_by_user(
     )
     jobs = result.scalars().all()
     return jobs
+
+
+@job_router.delete("/saved/{job_id}")
+async def delete_saved_job_by_id(
+    job_id: int,
+    user: dict = Depends(verify_user_from_token),
+    session: AsyncSession = Depends(Database.get_async_session),
+):
+    user_id = user.get("id")
+    result = await session.execute(
+        select(Job).where(Job.id == job_id, Job.user_id == user_id)
+    )
+    job = result.scalar_one_or_none()
+    if not job:
+        return {"error": "Saved job not found"}, 404
+
+    await session.delete(job)
+    await session.commit()
+    return {"message": "Saved job deleted successfully"}
