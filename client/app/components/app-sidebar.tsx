@@ -31,30 +31,30 @@ export function AppSidebar() {
 
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <SidebarMenuButton>
-                                <NavLink to="/job/search" className="flex items-center gap-1 ">
+                            <NavLink to="/job/search" className="flex items-center gap-1">
+                                <SidebarMenuButton>
                                     <BriefcaseBusiness className="size-4" />{' '}
                                     <span className="text-xs">Job Search</span>
-                                </NavLink>
-                            </SidebarMenuButton>
+                                </SidebarMenuButton>
+                            </NavLink>
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>
-                            <SidebarMenuButton>
-                                <NavLink to="/saved/jobs" className="flex items-center gap-1">
+                            <NavLink to="/saved/jobs" className="flex items-center gap-1 ">
+                                <SidebarMenuButton>
                                     <BookmarkCheck className="size-4" />{' '}
                                     <span className="text-xs">Saved Jobs</span>
-                                </NavLink>
-                            </SidebarMenuButton>
+                                </SidebarMenuButton>
+                            </NavLink>
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>
-                            <SidebarMenuButton>
-                                <NavLink to="/resume" className="flex items-center gap-1">
+                            <NavLink to="/resume" className="flex items-center gap-1">
+                                <SidebarMenuButton>
                                     <FileUser className="size-4" />{' '}
                                     <span className="text-xs">Resume</span>
-                                </NavLink>
-                            </SidebarMenuButton>
+                                </SidebarMenuButton>
+                            </NavLink>
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroup>
