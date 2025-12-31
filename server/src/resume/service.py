@@ -109,7 +109,7 @@ class ResumeService:
 
         await session.delete(resume)
         await session.commit()
-        
+
         return resume
 
     # ---------------------------------- AWS S3 RELATED METHODS ---------------------------------------

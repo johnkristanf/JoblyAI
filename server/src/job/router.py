@@ -39,6 +39,7 @@ async def job_search(
     job_list_page_length = "3"
     job_search_results = None
     cache_key = f"jobsearch:{job_title}:{country}:{date_posted}"
+    
 
     cached_results = redis_client.get(cache_key)
     if cached_results is None:
@@ -69,7 +70,8 @@ async def job_search(
         resume_data = json_decode(existing_resume)
         resume_source_url = resume_data.get("resume_source_url")
         if resume_source_url:
-            resume_text = extract_resume_from_source(resume_source_url)
+            resume_text = await extract_resume_from_source(resume_source_url)
+            
 
     # Pre-process job listing before feeding to LLM
     raw_job_listings = job_search_results.get("data", [])
