@@ -2,7 +2,9 @@ import asyncio
 import json
 from fastapi import APIRouter
 import pymupdf
+import logging
 
+logger = logging.getLogger("utils")
 
 def json_decode(response):
     try:
@@ -41,18 +43,15 @@ async def retry(fn, retries=3, delay=0.5):
 async def extract_data_from_batch_tasks(list_data, awaitable, params, batch_size=10):
     batches = list(chunk_list(list_data, batch_size))
 
-    print(f"Total list_data: {len(list_data)}")
-    print(f"Processing {len(batches)} batches...")
+    logger.info(f"Total list_data: {len(list_data)}")
+    logger.info(f"Processing {len(batches)} batches...")
 
     tasks = []
     for i, batch in enumerate(batches):
-        print(f"Scheduling batch {i+1}/{len(batches)}...")
+        logger.info(f"Scheduling batch {i+1}/{len(batches)}...")
         tasks.append(retry(lambda b=batch: awaitable(b, params)))
 
-    # This line asynchronously runs all batch tasks in parallel inside the event loop and collects
-    # their results into the `results` list; it allows efficient concurrent I/O processing of the batches.
     results = await asyncio.gather(*tasks)
-    print(f"results: {results}")
 
     flattened = []
     for result in results:
@@ -61,7 +60,6 @@ async def extract_data_from_batch_tasks(list_data, awaitable, params, batch_size
         else:
             flattened.extend(result)
 
-    print(f"flattened: {flattened}")
     return flattened
 
 
