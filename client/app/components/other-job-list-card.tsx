@@ -1,11 +1,11 @@
 import type { JobMatch, JobSearchResponse } from '~/types/job_search'
 import { SaveJobBtn } from './ui/save-job-btn'
 import { SalarySection } from './salary-section'
-import { DescriptionSection } from './description-section'
 import { JobPublisherAndApply } from './publisher-and-apply'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 import { Globe } from 'lucide-react'
 import { JobLocationTooltip } from './job-location-tooltip'
+import { DescriptionSection } from './description-section'
 
 export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: JobSearchResponse }) {
     const matchedJobs = Array.isArray(jobSearchResponse.jobs_matched)
@@ -17,9 +17,8 @@ export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: Job
     return (
         <div>
             <h2 className="text-2xl font-semibold text-gray-700 mt-5 mb-2">Other Job Postings</h2>
-
             {/* ONLY DISPLAY JOBS THAT IS NOT IN THE MATCHED JOB LISTINGS */}
-            <div className="max-h-[500px] overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6 opacity-90 ">
+            <div className="max-h-[500px] grid grid-cols-1 md:grid-cols-2 gap-6 opacity-90 ">
                 {(() => {
                     return jobSearchResponse.job_listings
                         .filter(
