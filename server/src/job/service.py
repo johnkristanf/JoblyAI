@@ -1,11 +1,13 @@
+import logging
 import httpx
+from openai import AsyncOpenAI
+
 from src.config.runtime import params
 from src.utils import json_decode, read_return_pdf_content_stream
 from src.prompt import JobSeachPrompt
-# from src.config import settings
 
-from openai import AsyncOpenAI
 
+logger = logging.getLogger("job")
 async def llm_job_extraction(job_listings, job_params: dict):
     
     client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
@@ -89,11 +91,11 @@ async def extract_resume_from_source(source):
                 resume_content = response.content
                 return read_return_pdf_content_stream(resume_content)
             else:
-                print(
+                logger.error(
                     f"Failed to fetch resume from {source}: {response.status_code}"
                 )
     except Exception as e:
-        print(f"Error fetching or reading the resume PDF from URL: {e}")
+        logger.error(f"Error fetching or reading the resume PDF from URL: {e}", exc_info=True)
 
 
 # Example response object from job rapid API:
