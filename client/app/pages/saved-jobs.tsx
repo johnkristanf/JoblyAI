@@ -1,11 +1,15 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DescriptionSection } from '~/components/description-section'
 import { JobLocationTooltip } from '~/components/job-location-tooltip'
 import { SalarySection } from '~/components/salary-section'
 import { getSavedJobs } from '~/lib/api/get'
 import type { SavedJobs } from '~/types/job_search'
+import { Trash2 } from 'lucide-react'
+import { deleteSavedJobs } from '~/lib/api/delete'
+import FullScreenLoader from '~/components/full-screen-loader'
 
 function SavedJobsPage() {
+    const queryClient = useQueryClient()
     const {
         data: savedJobs = [],
         isLoading,
@@ -15,11 +19,23 @@ function SavedJobsPage() {
         queryFn: getSavedJobs,
     })
 
+    // Instead of isLoading/variables, use standard mutation
+    const removeJobMutation = useMutation({
+        mutationFn: (jobId: number) => deleteSavedJobs(jobId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['saved_jobs'] })
+        },
+    })
+
+    if (removeJobMutation.isPending) {
+        return (
+           <FullScreenLoader message='Deleting saved job...' />
+        )
+    }
+
     if (isLoading) {
         return (
-            <div className="w-full min-h-screen flex flex-col items-center justify-center">
-                <div className="text-gray-500">Loading saved jobs...</div>
-            </div>
+           <FullScreenLoader message='Loading saved jobs...' />
         )
     }
 
@@ -47,19 +63,27 @@ function SavedJobsPage() {
                     <div className="max-h-[500px] overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6 mt-5">
                         {savedJobs.map((job, idx) => (
                             <div
-                                key={idx}
+                                key={job.id ?? idx}
                                 className={`rounded-lg shadow p-5 flex flex-col gap-4 ${
                                     job.extraction_note
                                         ? 'bg-green-50 border-2 border-green-400'
                                         : 'bg-white'
                                 }`}
                             >
-                                {/* JOB LOCATION MAP TOOLTIP */}
-                                <div className="flex justify-end">
+                                {/* JOB LOCATION MAP TOOLTIP & DELETE BTN */}
+                                <div className="flex justify-end items-center gap-2">
                                     <JobLocationTooltip
                                         job_latitude={job.job_latitude}
                                         job_longitude={job.job_longitude}
                                     />
+                                    <button
+                                        title="Delete saved job"
+                                        className="ml-1  text-red-600 hover:cursor-pointer hover:opacity-75 transition-colors"
+                                        onClick={() => removeJobMutation.mutate(job.id)}
+                                        disabled={removeJobMutation.isPending}
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </button>
                                 </div>
 
                                 {/* COMPANY INFORMATION SECTION */}
