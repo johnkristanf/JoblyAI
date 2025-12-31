@@ -1,30 +1,18 @@
-from dotenv import load_dotenv
-
-load_dotenv()
-
-import boto3
 import uuid
-import os
 import logging
 
-from botocore.exceptions import ClientError
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi import UploadFile, File
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
+from src.resume.dependencies import get_resume_service
+from src.resume.service import ResumeService
 from src.config.runtime import params
 from src.resume.schema import RemoveResumeIn
 from src.auth.dependencies import verify_user_from_token
 from src.database import Database
 from src.resume.model import Resume
 from src.pydantic_config import settings
-
-
-if os.getenv("APP_ENV") == "development":
-    session = boto3.Session(profile_name=settings.AWS_PROFILE)
-    s3 = session.client("s3", region_name=settings.AWS_REGION)
-else:
-    s3 = boto3.client("s3", region_name=params["AWS_REGION"])
 
 
 logger = logging.getLogger("resume")
@@ -34,32 +22,29 @@ resume_router = APIRouter()
 @resume_router.post("/upload")
 async def upload_resume(
     resume: list[UploadFile] = File(...),
+    resume_service: ResumeService = Depends(get_resume_service),
     session: AsyncSession = Depends(Database.get_async_session),
     user: dict = Depends(verify_user_from_token),
 ):
-    print(f"resume 123: {resume}")
-    print(f"user 123: {user}")
+    user_id = user.get("id")
 
     uploaded_files = []
     for file in resume:
-        object_key = f"resumes/{user.get('id')}/{uuid.uuid4()}_{file.filename}"
+        object_key = f"resumes/{user_id}/{uuid.uuid4()}_{file.filename}"
+
         file_content = await file.read()
+        file_name = file.filename
+        file_content_type = file.content_type
+
         try:
-            s3.put_object(
-                Bucket=params["AWS_S3_BUCKET_NAME"],
-                Key=object_key,
-                Body=file_content,
-                ContentType=file.content_type,
+            resume_service.put_s3_object(
+                params["AWS_S3_BUCKET_NAME"],
+                object_key,
+                file_content,
+                file_content_type,
             )
 
-            # Insert resume details in database
-            db_resume = Resume(
-                filename=file.filename, object_key=object_key, user_id=user.get("id")
-            )
-
-            session.add(db_resume)
-            await session.commit()
-            await session.refresh(db_resume)
+            resume_service.create_db_resume(session, file_name, object_key, user_id)
 
             uploaded_files.append(
                 {
@@ -68,7 +53,7 @@ async def upload_resume(
                 }
             )
         except Exception as e:
-            print(f"Error uploading {file.filename}: {e}")
+            logger.error(f"Error uploading {file.filename}: {e}", exc_info=True)
             await session.rollback()
             uploaded_files.append(
                 {
@@ -84,13 +69,10 @@ async def upload_resume(
 
 @resume_router.get("/get/all")
 async def get_all_resume_urls(
+    resume_service: ResumeService = Depends(get_resume_service),
     session: AsyncSession = Depends(Database.get_async_session),
     user: dict = Depends(verify_user_from_token),
 ):
-    """
-    Fetch all resumes for the current user, generate temp URLs for each file in S3,
-    and return an array of objects with filename, upload date, S3 temp URL, and object key.
-    """
     user_id = user.get("id")
     logger.info(
         "Fetching all resumes",
@@ -100,29 +82,11 @@ async def get_all_resume_urls(
         },
     )
 
-    try:
-        result = await session.execute(
-            select(Resume)
-            .where(Resume.user_id == user_id)
-            .order_by(Resume.created_at.desc())
-        )
-        all_resumes = result.scalars().all()
-    except Exception as e:
-        logger.error(
-            "Database error while fetching resumes",
-            extra={
-                "endpoint": "/resume/get/all",
-                "user_id": user_id,
-                "error": str(e),
-            },
-            exc_info=True,
-        )
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to fetch resumes",
-        )
+    all_resumes = await resume_service.get_all_resume(session, user_id)
 
     resumes = []
+    errors = []
+
     for resume in all_resumes:
         resume_dict = {
             "id": resume.id,
@@ -133,29 +97,31 @@ async def get_all_resume_urls(
         }
 
         try:
-            temp_url = s3.generate_presigned_url(
-                ClientMethod="get_object",
-                Params={
-                    "Bucket": params["AWS_S3_BUCKET_NAME"],
-                    "Key": resume.object_key,
-                },
-                ExpiresIn=60 * 30,  # 30 minutes
+            resume_dict["url"] = await resume_service.get_presigned_url_safe(
+                params["AWS_S3_BUCKET_NAME"],
+                resume.object_key,
             )
-            resume_dict["url"] = temp_url
+
         except Exception as e:
-            logger.error(
-                "Failed to generate S3 presigned URL",
-                extra={
-                    "endpoint": "/resume/get/all",
-                    "user_id": user_id,
+            errors.append(
+                {
                     "resume_id": resume.id,
-                    "error": str(e),
-                },
-                exc_info=True,
+                    "message": f"Failed to generate presigned URL for resume ID {resume.id}: {str(e)}",
+                }
             )
-            resume_dict["error"] = str(e)
 
         resumes.append(resume_dict)
+
+    if errors:
+        logger.info(
+            "Partial resume URL generation",
+            extra={
+                "endpoint": "/resume/get/all",
+                "user_id": user_id,
+                "failed_count": len(errors),
+                "error_details": errors,
+            },
+        )
 
     return resumes
 
@@ -163,12 +129,14 @@ async def get_all_resume_urls(
 @resume_router.post("/remove")
 async def remove_resume(
     payload: RemoveResumeIn,
+    resume_service: ResumeService = Depends(get_resume_service),
     session: AsyncSession = Depends(Database.get_async_session),
     user: dict = Depends(verify_user_from_token),
 ):
-    print(f"payload: {payload}")
+    user_id = user.get("id")
     resume_id = payload.id
     object_key = payload.object_key
+
     if not resume_id or not object_key:
         raise HTTPException(
             detail="resume_id and object_key required",
@@ -176,25 +144,13 @@ async def remove_resume(
         )
 
     # Get the resume for the current user
-    result = await session.execute(
-        select(Resume).where(Resume.id == resume_id, Resume.user_id == user.get("id"))
-    )
-    resume = result.scalar_one_or_none()
-    if not resume:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found"
-        )
+    resume = await resume_service.get_user_resume_by_id(session, resume_id, user_id)
 
     # Remove from S3
-    try:
-        s3.delete_object(Bucket=params["AWS_S3_BUCKET_NAME"], Key=object_key)
-    except ClientError as e:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to remove from S3: {str(e)}",
-        )
-
-    # Remove from database
+    resume_service.remove_object_from_s3(
+        params["AWS_S3_BUCKET_NAME"], resume.object_key, user_id
+    )
+    
     await session.delete(resume)
     await session.commit()
 
