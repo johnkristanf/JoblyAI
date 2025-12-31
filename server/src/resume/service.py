@@ -29,7 +29,6 @@ s3_semaphore = asyncio.Semaphore(5)
 
 
 class ResumeService:
-
     async def create_db_resume(
         self, session: AsyncSession, filename: str, object_key: str, user_id: int
     ):
@@ -97,7 +96,7 @@ class ResumeService:
             raise HTTPException(status_code=500, detail="Failed to fetch resumes")
 
     async def remove_resume_for_user(
-        session: AsyncSession, resume_id: int, user_id: int
+        self, session: AsyncSession, resume_id: int, user_id: int
     ):
         result = await session.execute(
             select(Resume).where(Resume.id == resume_id, Resume.user_id == user_id)
