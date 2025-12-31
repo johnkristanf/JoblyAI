@@ -72,18 +72,14 @@ const JobSearchPage = () => {
                 fileInputRef.current.files.length > 0
             ) {
                 const file = fileInputRef.current.files[0]
-                const allowedTypes = [
-                    'application/pdf',
-                    'application/msword',
-                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                ]
-                const allowedExtensions = ['pdf', 'doc', 'docx']
+                const allowedTypes = ['application/pdf']
+                const allowedExtensions = ['pdf']
                 const fileTypeValid = allowedTypes.includes(file.type)
                 const ext = file.name.split('.').pop()?.toLowerCase()
                 const extValid = ext ? allowedExtensions.includes(ext) : false
 
                 if (!fileTypeValid && !extValid) {
-                    toast.error('Invalid file type. Only PDF and DOC/DOCX files are allowed.')
+                    toast.error('Invalid file type. Only PDF files are allowed.')
                     return
                 }
 
@@ -407,7 +403,10 @@ const JobSearchPage = () => {
                                                                 {resume.name}
                                                             </p>
                                                             <p className="text-xs text-gray-500">
-                                                                Uploaded: {resume.upload_date ? formatDate(resume.upload_date) : 'Unknown'}
+                                                                Uploaded:{' '}
+                                                                {resume.upload_date
+                                                                    ? formatDate(resume.upload_date)
+                                                                    : 'Unknown'}
                                                             </p>
                                                         </div>
                                                     </div>
