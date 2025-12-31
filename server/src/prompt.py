@@ -35,7 +35,7 @@ class JobSeachPrompt:
                 
                 Please ensure that your response for each job fills out each field as accurately as possible. Leave the value None if the information is not available.
                 
-                When constructing the "job_description" field for each listing, do not simply copy or summarize the original job description. Instead, craft this field so that it clearly explains why this job is a good match for the candidate, based on their experience, skills, and the requirements in the listing. The field should have:
+                When constructing the "job_description" field for each listing, do not simply copy or summarize the original job description. Instead, craft this field so that it clearly explains why this job is a good match for the candidate, based on their resume's professional summary, experience, skills, and the requirements in the listing. The field should have:
                 - A concise, information-rich overview sentence directly addressing why this role fits the candidate profile or background (e.g., matching skills, tools, or experience).
                 - Then, list the primary required skills and core responsibilities as bullet points, each on its own line in this format:
                     - Skill/Responsibility 1
