@@ -19,6 +19,5 @@ export const getAllResumes = async () => {
             Authorization: accessToken ? `Bearer ${accessToken}` : '',
         },
     })
-    console.log("response.data: ", response.data);
     return response.data
 }
