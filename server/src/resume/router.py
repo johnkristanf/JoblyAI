@@ -44,7 +44,7 @@ async def upload_resume(
                 file_content_type,
             )
 
-            resume_service.create_db_resume(session, file_name, object_key, user_id)
+            await resume_service.create_db_resume(session, file_name, object_key, user_id)
 
             uploaded_files.append(
                 {
