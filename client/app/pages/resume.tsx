@@ -32,6 +32,8 @@ export default function ResumeCardsPage() {
             queryClient.invalidateQueries({ queryKey: ['resumes', 'all'] })
         },
         onError: (err: any) => {
+            console.log("err sa upload resume: ", err);
+            
             toast.error('Error uploading resume, please try again later')
         },
     })
