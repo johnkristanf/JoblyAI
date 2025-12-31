@@ -19,7 +19,7 @@ class Database:
         cls.engine = create_async_engine(
             params["DATABASE_URL"],
             echo=False,
-            pool_size=3,
+            pool_size=10,
             pool_pre_ping=True,
             pool_recycle=3600,  # Recycle connections after 1 hour
             pool_timeout=30,  # Timeout after 30 seconds waiting for connection
