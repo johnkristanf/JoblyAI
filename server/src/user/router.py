@@ -63,6 +63,11 @@ async def update_profile(
     updated = False
     if full_name is not None:
         profile.full_name = full_name.strip()
+
+        # For realtime avatar state update in the FE
+        avatar_presigned_url = await resume_service.get_presigned_url_safe(
+            bucket, object_key
+        )
         updated = True
     if avatar is not None:
         file_content = await avatar.read()
@@ -79,6 +84,7 @@ async def update_profile(
             bucket, object_key, file_content, file_content_type
         )
 
+        # For realtime avatar state update in the FE
         avatar_presigned_url = await resume_service.get_presigned_url_safe(
             bucket, object_key
         )
