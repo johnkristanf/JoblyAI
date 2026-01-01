@@ -12,6 +12,7 @@ const ProfilePage = () => {
     const [tempValue, setTempValue] = useState('')
     const [isProfileUpdating, setIsProfileUpdating] = useState<boolean>(false)
     const [isPasswordChanging, setIsPasswordChanging] = useState<boolean>(false)
+    const [isAvatarUploading, setIsAvatarUploading] = useState<boolean>(false)
 
     // Password change state
     const [showPasswordSection, setShowPasswordSection] = useState(false)
@@ -114,17 +115,13 @@ const ProfilePage = () => {
         const file = e.target.files?.[0]
         if (!file) return
 
-        setLoading(true)
+        setIsAvatarUploading(true)
         try {
             const formData = new FormData()
             formData.append('avatar', file)
 
             const uploadResult = await uploadAvatar(formData)
-            // Optionally add toast feedback:
-            // toast.success('Avatar uploaded successfully!')
             if (uploadResult && typeof uploadResult === 'object') {
-                // Make sure to create a new object reference for setUser
-                // fetch latest user state for safety, or explicitly update avatar_url
                 setUser({
                     ...user!,
                     ...(uploadResult.avatar_url
@@ -135,7 +132,7 @@ const ProfilePage = () => {
         } catch (error) {
             console.error('Failed to upload:', error)
         } finally {
-            setLoading(false)
+            setIsAvatarUploading(false)
         }
     }
 
@@ -257,7 +254,11 @@ const ProfilePage = () => {
                     <div className="px-6 sm:px-8 pb-5">
                         <div className="flex flex-col items-center -mt-12">
                             <div className="relative group">
-                                {user?.avatar_url ? (
+                                {isAvatarUploading ? (
+                                    <div className="w-24 h-24 flex items-center justify-center rounded-full bg-gray-200 border-4 border-white shadow-lg">
+                                        <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+                                    </div>
+                                ) : user?.avatar_url ? (
                                     <img
                                         src={user.avatar_url}
                                         alt={user.full_name || 'User'}
@@ -265,24 +266,24 @@ const ProfilePage = () => {
                                     />
                                 ) : (
                                     <div className="w-24 h-24 flex items-center justify-center rounded-full bg-blue-600 text-white font-bold text-3xl border-4 border-white shadow-lg">
-                                        {(user?.full_name?.[0]?.toUpperCase()) || 'U'}
+                                        {user?.full_name?.[0]?.toUpperCase() || 'U'}
                                     </div>
                                 )}
 
                                 {/* Upload overlay */}
-                                <label className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                <label
+                                    className={`absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full transition-opacity cursor-pointer 
+                                        ${isAvatarUploading ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100'}
+                                    `}
+                                >
                                     <input
                                         type="file"
                                         accept="image/*"
                                         onChange={handleAvatarUpload}
                                         className="hidden"
-                                        disabled={loading}
+                                        disabled={isAvatarUploading}
                                     />
-                                    {loading ? (
-                                        <Loader2 className="w-6 h-6 text-white animate-spin" />
-                                    ) : (
-                                        <Edit2 className="w-6 h-6 text-white" />
-                                    )}
+                                    <Edit2 className="w-6 h-6 text-white" />
                                 </label>
                             </div>
 

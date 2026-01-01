@@ -1,8 +1,12 @@
 import base64
+import uuid
 
 from fastapi import APIRouter, Depends, Form, UploadFile, File, HTTPException
 from imagekitio import ImageKit
 from imagekitio.file import UploadFileRequestOptions
+from src.config.runtime import params
+from src.resume.dependencies import get_resume_service
+from src.resume.service import ResumeService
 from src.user.dependencies import get_image_kit_method
 from src.auth.dependencies import verify_user_from_token
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,22 +16,31 @@ from typing import Optional
 
 user_route = APIRouter()
 
+
 @user_route.get(
     "/profile",
 )
 async def get_user(
     user: dict = Depends(verify_user_from_token),
     session: AsyncSession = Depends(Database.get_async_session),
+    resume_service: ResumeService = Depends(get_resume_service),
 ):
     profile = await session.get(Profile, user["id"])
     if not profile:
         raise HTTPException(status_code=401, detail="Profile not found.")
 
+    # Generate a presigned avatar URL if avatar_url is set
+    avatar_url = None
+    if profile.avatar_url:
+        avatar_url = await resume_service.get_presigned_url_safe(
+            params["AWS_S3_BUCKET_NAME"], profile.avatar_url
+        )
+
     return {
         "user_id": str(profile.user_id),
         "full_name": profile.full_name,
         "email": user["email"],
-        "avatar_url": profile.avatar_url,
+        "avatar_url": avatar_url,
     }
 
 
@@ -36,17 +49,17 @@ async def update_profile(
     full_name: Optional[str] = Form(None),
     avatar: Optional[UploadFile] = File(None),
     user: dict = Depends(verify_user_from_token),
+    resume_service: ResumeService = Depends(get_resume_service),
     imagekit: ImageKit = Depends(get_image_kit_method),
     session: AsyncSession = Depends(Database.get_async_session),
 ):
-    print(f"full_name: {full_name}")
-    print(f"avatar: {avatar}")
-    print(f"user: {user}")
+    user_id = user.get("id")
 
-    profile = await session.get(Profile, user["id"])
+    profile = await session.get(Profile, user_id)
     if not profile:
         raise HTTPException(status_code=401, detail="Profile not found.")
 
+    avatar_presigned_url = None
     updated = False
     if full_name is not None:
         profile.full_name = full_name.strip()
@@ -54,26 +67,23 @@ async def update_profile(
     if avatar is not None:
         file_content = await avatar.read()
 
-        ext = None
-        if avatar.filename and "." in avatar.filename:
-            ext = avatar.filename.rsplit(".", 1)[-1]
-        else:
-            ext = "png"
+        bucket = params["AWS_S3_BUCKET_NAME"]
+        file_name = avatar.filename
+        object_key = f"avatar/{user_id}/{uuid.uuid4()}_{file_name}"
+        file_content_type = avatar.content_type
 
-        file_name = f"avatar.{ext}"
+        if profile.avatar_url:
+            resume_service.remove_object_from_s3(bucket, profile.avatar_url, user_id)
 
-        file_content_base64 = base64.b64encode(file_content).decode("utf-8")
-
-        upload_result = imagekit.upload_file(
-            file=file_content_base64,
-            file_name=file_name,
-            options=UploadFileRequestOptions(
-                response_fields=["is_private_file", "tags"],
-                tags=["joblyai", "avatar-upload"],
-            ),
+        resume_service.put_s3_object(
+            bucket, object_key, file_content, file_content_type
         )
 
-        profile.avatar_url = upload_result.url
+        avatar_presigned_url = await resume_service.get_presigned_url_safe(
+            bucket, object_key
+        )
+
+        profile.avatar_url = object_key
         updated = True
 
     if updated:
@@ -83,7 +93,7 @@ async def update_profile(
     return {
         "user_id": str(profile.user_id),
         "full_name": profile.full_name,
-        "avatar_url": profile.avatar_url,
+        "avatar_url": avatar_presigned_url,
     }
 
 
