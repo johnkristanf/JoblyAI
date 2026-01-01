@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from src.resume.router import resume_router
 from src.user.router import user_route
@@ -26,6 +27,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(rest_of_path: str):
+    return JSONResponse(
+        status_code=204,
+        headers={
+            "Access-Control-Allow-Origin": "https://jobly-ai-weld.vercel.app",
+            "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization,Content-Type",
+            "Access-Control-Allow-Credentials": "true",
+        },
+    )
+
 
 api_v1_router = group(
     "/api/v1",
