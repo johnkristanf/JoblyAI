@@ -29,6 +29,7 @@ export default function AuthenticatedLayout() {
         }
     }
 
+    // Fetch user on mount
     useEffect(() => {
         if (!user) {
             fetchUser()
