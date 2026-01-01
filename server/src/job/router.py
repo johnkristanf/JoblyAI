@@ -41,7 +41,7 @@ async def job_search(
     cache_key = f"jobsearch:{job_title}:{country}:{date_posted}"
     
 
-    cached_results = redis_client.get(cache_key)
+    cached_results = await redis_client.get(cache_key)
     if cached_results is None:
         job_search_results = await search_rapidapi_jobs_jsearch(
             job_title=job_title,
@@ -51,9 +51,9 @@ async def job_search(
         )
 
         expire_seconds = 15 * 60  # 15 minutes in seconds
-        redis_client.setex(cache_key, expire_seconds, json.dumps(job_search_results))
+        await redis_client.setex(cache_key, expire_seconds, json.dumps(job_search_results))
     else:
-        job_search_results = json.loads(cached_results)
+        job_search_results = json_decode(cached_results)
 
     # Read uploaded resume data from the memory
     resume_text = ""
