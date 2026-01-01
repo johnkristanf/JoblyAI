@@ -67,7 +67,7 @@ async def update_profile(
 
         # For realtime avatar state update in the FE
         avatar_presigned_url = await resume_service.get_presigned_url_safe(
-            bucket, object_key
+            bucket, profile.avatar_url
         )
         updated = True
     if avatar is not None:
