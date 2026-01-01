@@ -1,4 +1,4 @@
-import redis
+import redis.asyncio as redis
 
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -12,7 +12,7 @@ Base: DeclarativeBase = declarative_base()
 class Database:
     engine = None
     async_session = None
-    redis_client = None
+    redis_client: redis.Redis = None
 
     @classmethod
     def connect_async_session(cls):

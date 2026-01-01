@@ -12,7 +12,6 @@ from typing import Optional
 
 user_route = APIRouter()
 
-
 @user_route.get(
     "/profile",
 )

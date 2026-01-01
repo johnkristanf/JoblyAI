@@ -1,8 +1,10 @@
 from fastapi import Depends, HTTPException, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 
 from src.config.runtime import params
+
 # from src.config import settings
 
 security = HTTPBearer()
@@ -19,7 +21,7 @@ async def verify_user_from_token(
 
     try:
         # Decode the JWT token
-        payload = jwt.decode(
+        payload = await run_in_threadpool(jwt.decode,
             token,
             params["SUPABASE_JWT_SECRET"],
             algorithms=["HS256"],
