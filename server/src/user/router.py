@@ -54,6 +54,7 @@ async def update_profile(
     session: AsyncSession = Depends(Database.get_async_session),
 ):
     user_id = user.get("id")
+    bucket = params["AWS_S3_BUCKET_NAME"]
 
     profile = await session.get(Profile, user_id)
     if not profile:
@@ -72,7 +73,6 @@ async def update_profile(
     if avatar is not None:
         file_content = await avatar.read()
 
-        bucket = params["AWS_S3_BUCKET_NAME"]
         file_name = avatar.filename
         object_key = f"avatar/{user_id}/{uuid.uuid4()}_{file_name}"
         file_content_type = avatar.content_type
