@@ -4,7 +4,6 @@ load_dotenv()
 import os
 from pydantic_settings import BaseSettings
 
-
 class Settings(BaseSettings):
     APP_ENV: str
     
@@ -26,6 +25,9 @@ class Settings(BaseSettings):
     AWS_REGION: str
     AWS_PROFILE: str
     AWS_S3_BUCKET_NAME: str
+    
+    CELERY_BROKER_URL: str
+    CELERY_BACKEND_URL: str
 
     class Config:
         env_file = ".env"

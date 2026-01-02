@@ -1,11 +1,11 @@
 import json
-import httpx
 
 from fastapi import APIRouter, Depends, File, UploadFile, Form
 from redis.client import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
+from src.tasks.job_matching import job_matching
 from src.auth.dependencies import verify_user_from_token
 from src.database import Database
 from src.utils import (
@@ -39,7 +39,7 @@ async def job_search(
     job_list_page_length = "3"
     job_search_results = None
     cache_key = f"jobsearch:{job_title}:{country}:{date_posted}"
-    
+
 
     cached_results = await redis_client.get(cache_key)
     if cached_results is None:
@@ -50,8 +50,8 @@ async def job_search(
             page=job_list_page_length,
         )
 
-        expire_seconds = 15 * 60  # 15 minutes in seconds
-        await redis_client.setex(cache_key, expire_seconds, json.dumps(job_search_results))
+        ttl = 15 * 60  # 15 minutes in seconds
+        await redis_client.setex(cache_key, ttl, json.dumps(job_search_results))
     else:
         job_search_results = json_decode(cached_results)
 
@@ -77,16 +77,11 @@ async def job_search(
     raw_job_listings = job_search_results.get("data", [])
     job_listings = truncate_job_listing_properties(raw_job_listings)
 
-    # Process llm job in batch parallel
-    jobs_matched = await extract_data_from_batch_tasks(
-        list_data=job_listings,
-        awaitable=llm_job_extraction,
-        params={
-            "resume_text": resume_text,
-        },
-    )
+    # Process llm job in the background
+    task = job_matching.delay(job_listings, resume_text)
+    print(f"task LLM: {task}")
 
-    return {"job_listings": job_listings, "jobs_matched": jobs_matched}
+    return {"job_listings": job_listings, "task_id": task.id}
 
 
 @job_router.post("/save")

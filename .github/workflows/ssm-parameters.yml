@@ -94,3 +94,16 @@ jobs:
             --value "${{ secrets.IMAGE_KIT_URL_ENDPOINT }}" \
             --type SecureString \
             --overwrite
+
+
+          aws ssm put-parameter \
+            --name "/joblyai/prod/CELERY_BROKER_URL" \
+            --value "${{ secrets.CELERY_BROKER_URL }}" \
+            --type SecureString \
+            --overwrite
+
+          aws ssm put-parameter \
+            --name "/joblyai/prod/CELERY_BACKEND_URL" \
+            --value "${{ secrets.CELERY_BACKEND_URL }}" \
+            --type SecureString \
+            --overwrite
