@@ -44,7 +44,7 @@ MarkupSafe==3.0.3
 mdurl==0.1.2
 openai==2.8.1
 packaging==25.0
-passlib==1.7.4
+passlib==1.7.45000w
 prompt_toolkit==3.0.52
 pyasn1==0.6.1
 pydantic==2.12.5

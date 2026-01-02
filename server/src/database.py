@@ -1,4 +1,5 @@
-import redis.asyncio as redis
+import redis.asyncio as redis_async
+import redis as redis_sync
 
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -12,7 +13,8 @@ Base: DeclarativeBase = declarative_base()
 class Database:
     engine = None
     async_session = None
-    redis_client: redis.Redis = None
+    redis_client_async: redis_async.Redis = None
+    redis_client_sync: redis_sync.Redis = None
 
     @classmethod
     def connect_async_session(cls):
@@ -54,12 +56,22 @@ class Database:
 
     @classmethod
     def connect_redis(cls):
-        cls.redis_client = redis.Redis.from_url(
+        # Async Redis client
+        cls.redis_client_async = redis_async.Redis.from_url(
+            params["REDIS_URL"], decode_responses=True, socket_timeout=5
+        )
+        # Sync Redis client
+        cls.redis_client_sync = redis_sync.Redis.from_url(
             params["REDIS_URL"], decode_responses=True, socket_timeout=5
         )
 
     @classmethod
-    def get_redis_client(cls):
-        if not hasattr(cls, "redis_client") or cls.redis_client is None:
-            cls.connect_redis()
-        return cls.redis_client
+    def get_redis_client(cls, async_client: bool = True):
+        if async_client:
+            if not hasattr(cls, "redis_client_async") or cls.redis_client_async is None:
+                cls.connect_redis()
+            return cls.redis_client_async
+        else:
+            if not hasattr(cls, "redis_client_sync") or cls.redis_client_sync is None:
+                cls.connect_redis()
+            return cls.redis_client_sync

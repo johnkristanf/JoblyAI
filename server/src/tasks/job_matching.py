@@ -1,3 +1,4 @@
+import asyncio
 from src.core.redis import RedisInstance
 from src.job.service import llm_job_extraction
 from src.utils import extract_data_from_batch_tasks
@@ -14,34 +15,39 @@ def job_matching(self, job_listings: list, resume_text: str):
 
     logger.info(f"Task {task_id} started: matching jobs with resume.")
 
-    await RedisInstance.set_task_state(task_id, {
-        "status": "RUNNING",
-        "progress": 0,
-        "result": None,
-        "error": None
-    })
+    redis_instance = RedisInstance()
+    
+    redis_instance.set_task_state(
+        task_id, {"status": "RUNNING", "progress": 0, "result": None, "error": None}
+    )
 
     try:
-        task_results = await extract_data_from_batch_tasks(job_listings, awaitable=llm_job_extraction, params={
-            "resume_text": resume_text
-        })
+        task_results = asyncio.run(
+            extract_data_from_batch_tasks(
+                job_listings,
+                awaitable=llm_job_extraction,
+                params={"resume_text": resume_text},
+            )
+        )
 
         logger.info(f"Task {task_id} succeeded, updating task state.")
 
-        await RedisInstance.set_task_state(task_id, {
-            "status": "SUCCESS",
-            "progress": 100,
-            "result": task_results,
-            "error": None
-        })
-
+        redis_instance.set_task_state(
+            task_id,
+            {
+                "status": "SUCCESS",
+                "progress": 100,
+                "result": task_results,
+                "error": None,
+            },
+        )
+        
+        logger.info(f"Job matching finished: {task_results}")
         return task_results
 
     except Exception as e:
         logger.error(f"Task {task_id} failed: {e}")
-        await RedisInstance.set_task_state(task_id, {
-            "status": "FAILURE",
-            "progress": 100,
-            "result": None,
-            "error": str(e)
-        })
+        redis_instance.set_task_state(
+            task_id,
+            {"status": "FAILURE", "progress": 100, "result": None, "error": str(e)},
+        )
