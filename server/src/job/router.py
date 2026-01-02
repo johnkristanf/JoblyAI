@@ -79,7 +79,7 @@ async def job_search(
     task = job_matching.delay(job_listings, resume_text)
     print(f"task LLM: {task}")
 
-    return {"job_listings": job_listings, "task_id": task.id}
+    return {"message": "Job matching task submitted successfully", "task_id": task.id}
 
 
 @job_router.post("/save")
