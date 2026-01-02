@@ -18,11 +18,6 @@ logger = logging.getLogger(__name__)
 def get_env_param(name, param_store_path):
     APP_ENV = os.getenv("APP_ENV")
     
-    logger.info("=" * 60)
-    logger.info(f"🔍 Getting parameter: {name}")
-    logger.info(f"   APP_ENV: {APP_ENV}")
-    logger.info(f"   SSM Path: {param_store_path}")
-    
     if APP_ENV == "development":
         value = os.getenv(name)
         logger.info(f"   Mode: DEVELOPMENT")
@@ -65,5 +60,10 @@ params = {
     "AWS_REGION": get_env_param("AWS_REGION", "/joblyai/prod/AWS_REGION"),
     "AWS_S3_BUCKET_NAME": get_env_param(
         "AWS_S3_BUCKET_NAME", "/joblyai/prod/AWS_S3_BUCKET_NAME"
+    ),
+    
+    "CELERY_BROKER_URL": get_env_param("CELERY_BROKER_URL", "/joblyai/prod/CELERY_BROKER_URL"),
+    "CELERY_BACKEND_URL": get_env_param(
+        "CELERY_BACKEND_URL", "/joblyai/prod/CELERY_BACKEND_URL"
     ),
 }
