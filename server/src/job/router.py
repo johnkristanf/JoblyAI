@@ -40,7 +40,6 @@ async def job_search(
     job_search_results = None
     cache_key = f"jobsearch:{job_title}:{country}:{date_posted}"
 
-
     cached_results = await redis_client.get(cache_key)
     if cached_results is None:
         job_search_results = await search_rapidapi_jobs_jsearch(
@@ -71,7 +70,6 @@ async def job_search(
         resume_source_url = resume_data.get("resume_source_url")
         if resume_source_url:
             resume_text = await extract_resume_from_source(resume_source_url)
-            
 
     # Pre-process job listing before feeding to LLM
     raw_job_listings = job_search_results.get("data", [])

@@ -6,6 +6,7 @@ import logging
 
 logger = logging.getLogger("utils")
 
+
 def json_decode(response):
     try:
         json_data = json.loads(response)
