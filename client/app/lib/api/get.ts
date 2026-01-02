@@ -21,3 +21,15 @@ export const getAllResumes = async () => {
     })
     return response.data
 }
+
+
+export const getJobSearchResponse = async () => {
+    const accessToken = await getAccessToken()
+
+    const response = await axios.get(`${import.meta.env.VITE_API_V1_BASE_URL}/job/saved`, {
+        headers: {
+            Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+    })
+    return response.data
+}

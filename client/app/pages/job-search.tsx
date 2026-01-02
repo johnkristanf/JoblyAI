@@ -13,6 +13,7 @@ import type { ResumeData, SelectedResume } from '~/types/resume'
 import { formatDate } from '~/lib/utils'
 
 const JobSearchPage = () => {
+    const [jobSearchTaskID, setJobSearchTaskID] = useState<string>()
     const [jobSearchResponse, setJobSearchResponse] = useState<JobSearchResponse>()
     const [resumeName, setResumeName] = useState<string | null>(null)
     const [selectedResumeMode, setSelectedResumeMode] = useState<'upload' | 'select'>('upload')
@@ -36,20 +37,68 @@ const JobSearchPage = () => {
         formState: { errors },
     } = useForm<JobSearchForm>()
 
-    const mutation = useMutation({
-        mutationFn: jobSearch,
-        onSuccess: (response: JobSearchResponse) => {
-            const undefinedValueCatcher = {
-                job_listings: [],
-                jobs_matched: [],
-            }
+    // const mutation = useMutation({
+    //     mutationFn: jobSearch,
+    //     onSuccess: (response: JobSearchResponse) => {
+    //         const undefinedValueCatcher = {
+    //             job_listings: [],
+    //             jobs_matched: [],
+    //         }
 
-            setJobSearchResponse(response ?? undefinedValueCatcher)
+    //         setJobSearchResponse(response ?? undefinedValueCatcher)
+    //     },
+    //     onError: (err: any) => {
+    //         toast.error('Error in searching job, please try again later')
+    //     },
+    // })
+
+    const jobSearchMutation = useMutation({
+        mutationFn: jobSearch,
+        onSuccess: (response) => {
+            console.log("response: ", response);
+            setJobSearchTaskID(response.task_id)
         },
         onError: (err: any) => {
             toast.error('Error in searching job, please try again later')
         },
     })
+
+    const {
+        data: jobSearchStatus,
+        isLoading: jobSearchStatusLoading,
+        error: jobSearchStatusError,
+        refetch: refetchJobSearchStatus,
+    } = useQuery(
+        ['job-search-status', jobSearchTaskID],
+        async () => {
+            if (!jobSearchTaskID) return null
+            const response = await fetch(`${import.meta.env.VITE_API_V1_BASE_URL}/task/${jobSearchTaskID}/state`, {
+                headers: {
+                    Authorization: (await getAccessToken()) ? `Bearer ${await getAccessToken()}` : '',
+                },
+            })
+            if (!response.ok) {
+                throw new Error('Failed to fetch job search task status')
+            }
+            return response.json()
+        },
+        {
+            enabled: !!jobSearchTaskID,
+            refetchInterval: !!jobSearchTaskID ? 2000 : false,
+            onSuccess: (status) => {
+                if (status && status.status === 'SUCCESS' && status.jobs_matched) {
+                    setJobSearchResponse({
+                        job_listings: status.job_listings,
+                        jobs_matched: status.jobs_matched,
+                    })
+                    setJobSearchTaskID(undefined)
+                } else if (status && status.status === 'FAILURE') {
+                    toast.error(status.error || 'Job search failed.');
+                    setJobSearchTaskID(undefined);
+                }
+            },
+        }
+    )
 
     const handleSearchAnother = () => setJobSearchResponse(undefined)
 
@@ -90,7 +139,7 @@ const JobSearchPage = () => {
             formData.append('existing_resume', JSON.stringify(selectedExistingResume))
         }
 
-        mutation.mutate(formData)
+        jobSearchMutation.mutate(formData)
     }
 
     // Handler for file drop and click
@@ -132,8 +181,8 @@ const JobSearchPage = () => {
     }
 
     // Add fullscreen loader when mutation is in progress
-    if (mutation.isPending) {
-        return <FullScreenLoader message="Searching might take a few minutes..." />
+    if (jobSearchMutation.isPending) {
+        return <FullScreenLoader message="Submitting search request..." />
     }
 
     return (
@@ -435,7 +484,7 @@ const JobSearchPage = () => {
                                 type="submit"
                                 className="bg-blue-600 hover:cursor-pointer hover:opacity-75 text-white rounded px-6 py-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                             >
-                                Search Jobs
+                                Submit
                             </button>
                         </div>
                     </form>

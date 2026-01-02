@@ -16,13 +16,22 @@ def job_matching(self, job_listings: list, resume_text: str):
     logger.info(f"Task {task_id} started: matching jobs with resume.")
 
     redis_instance = RedisInstance()
-    
+
+    cache_ttl = 15 * 60  # 15 minutes
     redis_instance.set_task_state(
-        task_id, {"status": "RUNNING", "progress": 0, "result": None, "error": None}
+        task_id,
+        {
+            "status": "RUNNING",
+            "progress": 0,
+            "job_listings": None,
+            "jobs_matched": None,
+            "error": None,
+        },
+        ttl=cache_ttl,  
     )
 
     try:
-        task_results = asyncio.run(
+        jobs_matched = asyncio.run(
             extract_data_from_batch_tasks(
                 job_listings,
                 awaitable=llm_job_extraction,
@@ -37,13 +46,15 @@ def job_matching(self, job_listings: list, resume_text: str):
             {
                 "status": "SUCCESS",
                 "progress": 100,
-                "result": task_results,
+                "job_listings": job_listings,
+                "jobs_matched": jobs_matched,
                 "error": None,
             },
+            ttl=cache_ttl,
         )
-        
-        logger.info(f"Job matching finished: {task_results}")
-        return task_results
+
+        logger.info(f"Job matching finished: {jobs_matched}")
+        return jobs_matched
 
     except Exception as e:
         logger.error(f"Task {task_id} failed: {e}")
