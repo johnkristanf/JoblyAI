@@ -1,14 +1,14 @@
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import type { JobSearchResponse, JobSearchForm } from '~/types/job_search'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, Upload, FileText, Check } from 'lucide-react'
 import { JobMatchedCard } from '~/components/job-matched-card'
 import NoJobsFound from '~/components/ui/no-jobs-found'
 import { jobSearch } from '~/lib/api/post'
 import { toast } from 'sonner'
 import FullScreenLoader from '~/components/full-screen-loader'
-import { getAllResumes } from '~/lib/api/get'
+import { getAllResumes, getJobSearchResponse } from '~/lib/api/get'
 import type { ResumeData, SelectedResume } from '~/types/resume'
 import { formatDate } from '~/lib/utils'
 
@@ -21,6 +21,7 @@ const JobSearchPage = () => {
         null,
     )
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const [isJobSearchPolling, setIsJobSearchPolling] = useState<boolean>(false)
 
     const {
         data: resumesData,
@@ -55,7 +56,8 @@ const JobSearchPage = () => {
     const jobSearchMutation = useMutation({
         mutationFn: jobSearch,
         onSuccess: (response) => {
-            console.log("response: ", response);
+            console.log('response: ', response)
+            setIsJobSearchPolling(true)
             setJobSearchTaskID(response.task_id)
         },
         onError: (err: any) => {
@@ -63,42 +65,31 @@ const JobSearchPage = () => {
         },
     })
 
-    const {
-        data: jobSearchStatus,
-        isLoading: jobSearchStatusLoading,
-        error: jobSearchStatusError,
-        refetch: refetchJobSearchStatus,
-    } = useQuery(
-        ['job-search-status', jobSearchTaskID],
-        async () => {
-            if (!jobSearchTaskID) return null
-            const response = await fetch(`${import.meta.env.VITE_API_V1_BASE_URL}/task/${jobSearchTaskID}/state`, {
-                headers: {
-                    Authorization: (await getAccessToken()) ? `Bearer ${await getAccessToken()}` : '',
-                },
-            })
-            if (!response.ok) {
-                throw new Error('Failed to fetch job search task status')
-            }
-            return response.json()
+    const { data: jobSearchStatus } = useQuery({
+        queryKey: ['job_search_response', jobSearchTaskID],
+        queryFn: getJobSearchResponse,
+        enabled: !!jobSearchTaskID,
+        refetchInterval: (query) => {
+            const status = query.state.data?.status
+            return status === 'SUCCESS' || status === 'FAILURE' ? false : 2000
         },
-        {
-            enabled: !!jobSearchTaskID,
-            refetchInterval: !!jobSearchTaskID ? 2000 : false,
-            onSuccess: (status) => {
-                if (status && status.status === 'SUCCESS' && status.jobs_matched) {
-                    setJobSearchResponse({
-                        job_listings: status.job_listings,
-                        jobs_matched: status.jobs_matched,
-                    })
-                    setJobSearchTaskID(undefined)
-                } else if (status && status.status === 'FAILURE') {
-                    toast.error(status.error || 'Job search failed.');
-                    setJobSearchTaskID(undefined);
-                }
-            },
+    })
+
+    useEffect(() => {
+        if (jobSearchStatus?.status === 'SUCCESS') {
+            setJobSearchResponse({
+                job_listings: jobSearchStatus.job_listings ?? [],
+                jobs_matched: jobSearchStatus.jobs_matched ?? [],
+            })
+
+            setIsJobSearchPolling(false)
         }
-    )
+
+        if (jobSearchStatus?.status === 'FAILURE') {
+            setIsJobSearchPolling(false)
+            toast.error('Job search failed.')
+        }
+    }, [jobSearchStatus])
 
     const handleSearchAnother = () => setJobSearchResponse(undefined)
 
@@ -180,11 +171,6 @@ const JobSearchPage = () => {
         }
     }
 
-    // Add fullscreen loader when mutation is in progress
-    if (jobSearchMutation.isPending) {
-        return <FullScreenLoader message="Submitting search request..." />
-    }
-
     return (
         <div className="w-full min-h-screen flex flex-col p-10">
             {/* DYNAMIC PAGE TITLE */}
@@ -211,6 +197,35 @@ const JobSearchPage = () => {
                 <NoJobsFound searchAnotherHandler={handleSearchAnother} />
             )}
 
+            {/* JOB SEARCH POLLING LOADER */}
+            {!jobSearchResponse && isJobSearchPolling && (
+                <div className="flex flex-col items-center justify-center py-12">
+                    <svg
+                        className="animate-spin h-8 w-8 text-blue-500 mb-3"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                        />
+                        <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        />
+                    </svg>
+                    <span className="text-gray-700 text-md font-medium">
+                        Searching may take a few moments...
+                    </span>
+                </div>
+            )}
+
             {jobSearchResponse &&
             ((jobSearchResponse.jobs_matched && jobSearchResponse.jobs_matched.length > 0) ||
                 (jobSearchResponse.job_listings && jobSearchResponse.job_listings.length > 0)) ? (
@@ -233,7 +248,8 @@ const JobSearchPage = () => {
                 </div>
             ) : (
                 // JOB SEARCH FORM
-                !jobSearchResponse && (
+                !jobSearchResponse &&
+                !isJobSearchPolling && (
                     <form
                         className="mb-8 bg-white rounded-lg shadow p-6 space-y-6"
                         onSubmit={handleSubmit(onSubmit)}
@@ -247,6 +263,7 @@ const JobSearchPage = () => {
                                     placeholder="e.g. Software Engineer"
                                     className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                                     {...register('job_title')}
+                                    disabled={jobSearchMutation.isPending}
                                 />
                             </div>
 
@@ -259,6 +276,7 @@ const JobSearchPage = () => {
                                     className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                                     defaultValue=""
                                     {...register('date_posted')}
+                                    disabled={jobSearchMutation.isPending}
                                 >
                                     <option value="" disabled>
                                         Select date posted
@@ -278,6 +296,7 @@ const JobSearchPage = () => {
                                     className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                                     defaultValue=""
                                     {...register('country')}
+                                    disabled={jobSearchMutation.isPending}
                                 >
                                     <option value="" disabled>
                                         Select country
@@ -312,6 +331,7 @@ const JobSearchPage = () => {
                                             ? 'bg-blue-600 text-white shadow-md'
                                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
+                                    disabled={jobSearchMutation.isPending}
                                 >
                                     <Upload className="inline-block w-4 h-4 mr-2" />
                                     Use New Resume
@@ -324,6 +344,7 @@ const JobSearchPage = () => {
                                             ? 'bg-blue-600 text-white shadow-md'
                                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                     }`}
+                                    disabled={jobSearchMutation.isPending}
                                 >
                                     <FileText className="inline-block w-4 h-4 mr-2" />
                                     Select Existing Resume
@@ -333,10 +354,21 @@ const JobSearchPage = () => {
                             {/* Upload Mode */}
                             {selectedResumeMode === 'upload' && (
                                 <div
-                                    className="relative flex flex-col items-center justify-center border-2 border-dashed border-blue-400 rounded-lg bg-white px-6 py-8 transition hover:bg-blue-50 cursor-pointer"
-                                    onClick={triggerFileInput}
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onDrop={handleDrop}
+                                    className={`relative flex flex-col items-center justify-center border-2 border-dashed border-blue-400 rounded-lg bg-white px-6 py-8 transition ${jobSearchMutation.isPending ? 'bg-gray-100 cursor-not-allowed' : 'hover:bg-blue-50 cursor-pointer'}`}
+                                    onClick={
+                                        jobSearchMutation.isPending ? undefined : triggerFileInput
+                                    }
+                                    onDragOver={
+                                        jobSearchMutation.isPending
+                                            ? undefined
+                                            : (e) => e.preventDefault()
+                                    }
+                                    onDrop={jobSearchMutation.isPending ? undefined : handleDrop}
+                                    style={
+                                        jobSearchMutation.isPending
+                                            ? { pointerEvents: 'none', opacity: 0.7 }
+                                            : {}
+                                    }
                                 >
                                     <input
                                         type="file"
@@ -346,8 +378,17 @@ const JobSearchPage = () => {
                                         // @ts-ignore
                                         {...register('resume' as any)}
                                         ref={fileInputRef}
-                                        onClick={(e) => e.stopPropagation()}
-                                        onChange={handleFileChange}
+                                        onClick={
+                                            jobSearchMutation.isPending
+                                                ? (e) => e.preventDefault()
+                                                : (e) => e.stopPropagation()
+                                        }
+                                        onChange={
+                                            jobSearchMutation.isPending
+                                                ? undefined
+                                                : handleFileChange
+                                        }
+                                        disabled={jobSearchMutation.isPending}
                                     />
                                     <div className="flex flex-col items-center pointer-events-none select-none">
                                         <svg
@@ -384,7 +425,9 @@ const JobSearchPage = () => {
 
                             {/* Select Mode */}
                             {selectedResumeMode === 'select' && (
-                                <div className="border border-gray-300 rounded-lg bg-gray-50 p-4">
+                                <div
+                                    className={`border border-gray-300 rounded-lg bg-gray-50 p-4 ${jobSearchMutation.isPending ? 'opacity-70 pointer-events-none' : ''}`}
+                                >
                                     {resumesLoading ? (
                                         <div className="flex justify-center py-8">
                                             <div className="flex flex-col items-center gap-2">
@@ -425,18 +468,21 @@ const JobSearchPage = () => {
                                             {resumesData.map((resume) => (
                                                 <div
                                                     key={resume.id}
-                                                    onClick={() =>
-                                                        handleExistingResumeSelect(
-                                                            resume.id,
-                                                            resume.url,
-                                                        )
+                                                    onClick={
+                                                        jobSearchMutation.isPending
+                                                            ? undefined
+                                                            : () =>
+                                                                  handleExistingResumeSelect(
+                                                                      resume.id,
+                                                                      resume.url,
+                                                                  )
                                                     }
                                                     className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
                                                         selectedExistingResume?.resume_id ===
                                                         resume.id
                                                             ? 'bg-blue-100 border-2 border-blue-500'
                                                             : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-sm'
-                                                    }`}
+                                                    } ${jobSearchMutation.isPending ? 'pointer-events-none opacity-70' : ''}`}
                                                 >
                                                     <div className="flex items-center gap-3">
                                                         <FileText
@@ -482,9 +528,14 @@ const JobSearchPage = () => {
                         <div className="flex justify-end">
                             <button
                                 type="submit"
-                                className="bg-blue-600 hover:cursor-pointer hover:opacity-75 text-white rounded px-6 py-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                className={`${
+                                    jobSearchMutation.isPending
+                                        ? 'bg-gray-400 cursor-not-allowed opacity-70'
+                                        : 'bg-blue-600 hover:cursor-pointer hover:opacity-75'
+                                } text-white rounded px-6 py-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                                disabled={jobSearchMutation.isPending}
                             >
-                                Submit
+                                {jobSearchMutation.isPending ? 'Submitting...' : 'Submit'}
                             </button>
                         </div>
                     </form>

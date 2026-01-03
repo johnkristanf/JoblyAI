@@ -18,7 +18,6 @@ from src.job.models import Job
 
 from src.job.service import (
     extract_resume_from_source,
-    llm_job_extraction,
     search_rapidapi_jobs_jsearch,
     truncate_job_listing_properties,
 )
@@ -129,3 +128,19 @@ async def delete_saved_job_by_id(
     await session.delete(job)
     await session.commit()
     return {"message": "Saved job deleted successfully"}
+
+
+@job_router.get("/search/response/{taskID}")
+async def get_job_search_response(
+    taskID: str,
+    user: dict = Depends(verify_user_from_token),
+    redis_client: Redis = Depends(Database.get_redis_client),
+):
+    key = f"task:{taskID}"
+    result = await redis_client.get(key)
+    if not result:
+        return {"error": "No search response found for this task."}, 404
+    
+    job_response_data = json_decode(result)
+    return job_response_data
+
