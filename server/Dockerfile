@@ -7,5 +7,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 80
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--workers", "4"]
+ENTRYPOINT ["/entrypoint.sh"]
