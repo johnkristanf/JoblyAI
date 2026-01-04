@@ -32,8 +32,8 @@ export default function ResumeCardsPage() {
             queryClient.invalidateQueries({ queryKey: ['resumes', 'all'] })
         },
         onError: (err: any) => {
-            console.log("err sa upload resume: ", err);
-            
+            console.log('err sa upload resume: ', err)
+
             toast.error('Error uploading resume, please try again later')
         },
     })
@@ -42,6 +42,16 @@ export default function ResumeCardsPage() {
         const files = Array.from(e.target.files || [])
 
         if (files.length === 0) return
+
+        // Only accept PDFs: validate before proceeding
+        const invalidFiles = files.filter(
+            (file) => file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf'),
+        )
+        if (invalidFiles.length > 0) {
+            toast.error('Only PDF files are allowed.')
+            if (fileInputRef.current) fileInputRef.current.value = ''
+            return
+        }
 
         const mapped: ResumeFile[] = files.map((file, idx) => ({
             id: Date.now() + Math.random() + idx,
@@ -102,9 +112,10 @@ export default function ResumeCardsPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {/* Render resume cards */}
-                {resumes && resumes.map((resume) => (
-                    <ResumeCard key={resume.id} resume={resume} onPreview={handlePreview} />
-                ))}
+                {resumes &&
+                    resumes.map((resume) => (
+                        <ResumeCard key={resume.id} resume={resume} onPreview={handlePreview} />
+                    ))}
 
                 {/* Upload card - always visible */}
                 <UploadNewResumeCard
