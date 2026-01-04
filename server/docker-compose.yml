@@ -3,11 +3,20 @@ services:
   app:
     image: johnkristan/joblyai:latest
     container_name: joblyai
-    restart: always
     ports:
       - "80:80"
     depends_on:
       - redis-server
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80"]
+    restart: always
+
+  celery:
+    image: johnkristan/joblyai:latest
+    container_name: joblyai-celery
+    depends_on:
+      - redis-server
+    command: ["celery", "-A", "src.celery", "worker", "--loglevel", "INFO", "--concurrency", "4"]
+    restart: always
 
   redis-server:
     image: redis:latest
