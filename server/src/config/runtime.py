@@ -4,27 +4,25 @@ import sys
 
 from src.aws.ssm import get_ssm_parameter
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
 # Setup logger
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(sys.stdout)]
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 
+
 def get_env_param(name, param_store_path):
     APP_ENV = os.getenv("APP_ENV")
-    
+
     if APP_ENV == "development":
         value = os.getenv(name)
-        logger.info(f"   Mode: DEVELOPMENT")
-        if value:
-            logger.info(f"   ✅ Value found in .env")
-        else:
-            logger.warning(f"   ⚠️  Value NOT found in .env")
+        logger.info(f"   Mode: DEVELOPMENT - Fetching from .env")
         return value.strip()
 
     logger.info(f"   Mode: PRODUCTION - Fetching from SSM...")
@@ -35,6 +33,7 @@ def get_env_param(name, param_store_path):
     except Exception as e:
         logger.error(f"   ❌ CRITICAL ERROR: {str(e)}")
         import traceback
+
         logger.error(traceback.format_exc())
 
 
@@ -61,8 +60,9 @@ params = {
     "AWS_S3_BUCKET_NAME": get_env_param(
         "AWS_S3_BUCKET_NAME", "/joblyai/prod/AWS_S3_BUCKET_NAME"
     ),
-    
-    "CELERY_BROKER_URL": get_env_param("CELERY_BROKER_URL", "/joblyai/prod/CELERY_BROKER_URL"),
+    "CELERY_BROKER_URL": get_env_param(
+        "CELERY_BROKER_URL", "/joblyai/prod/CELERY_BROKER_URL"
+    ),
     "CELERY_BACKEND_URL": get_env_param(
         "CELERY_BACKEND_URL", "/joblyai/prod/CELERY_BACKEND_URL"
     ),

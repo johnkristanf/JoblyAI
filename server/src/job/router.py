@@ -140,7 +140,6 @@ async def get_job_search_response(
     result = await redis_client.get(key)
     if not result:
         return {"error": "No search response found for this task."}, 404
-    
+
     job_response_data = json_decode(result)
     return job_response_data
-
