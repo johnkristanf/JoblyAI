@@ -25,7 +25,7 @@ export function UploadNewResumeCard({
             <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                 <Plus className="w-10 h-10 text-blue-600" />
             </div>
-            <span className="text-blue-600 font-semibold text-lg mb-1">Add Resume</span>
+            <span className="text-blue-600 font-semibold text-lg mb-1">Upload Resume</span>
             <span className="text-gray-500 text-sm">PDF, DOC, or DOCX</span>
             <input
                 type="file"

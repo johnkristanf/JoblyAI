@@ -38,25 +38,9 @@ const JobSearchPage = () => {
         formState: { errors },
     } = useForm<JobSearchForm>()
 
-    // const mutation = useMutation({
-    //     mutationFn: jobSearch,
-    //     onSuccess: (response: JobSearchResponse) => {
-    //         const undefinedValueCatcher = {
-    //             job_listings: [],
-    //             jobs_matched: [],
-    //         }
-
-    //         setJobSearchResponse(response ?? undefinedValueCatcher)
-    //     },
-    //     onError: (err: any) => {
-    //         toast.error('Error in searching job, please try again later')
-    //     },
-    // })
-
     const jobSearchMutation = useMutation({
         mutationFn: jobSearch,
         onSuccess: (response) => {
-            console.log('response: ', response)
             setIsJobSearchPolling(true)
             setJobSearchTaskID(response.task_id)
         },

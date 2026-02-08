@@ -126,13 +126,13 @@ export default function ResumeCardsPage() {
             </div>
 
             {/* Empty state when no resumes */}
-            {resumes.length === 0 && !mutation.isPending && (
+            {/* {resumes.length === 0 && !mutation.isPending && (
                 <div className="text-center mt-8 text-gray-500">
                     <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                     <p className="text-lg mb-2">No resumes yet</p>
                     <p className="text-sm">Upload your first resume to get started</p>
                 </div>
-            )}
+            )} */}
 
             {/* Loading state during upload */}
             {mutation.isPending && <FullScreenLoader message="Uploading resume(s)..." />}
