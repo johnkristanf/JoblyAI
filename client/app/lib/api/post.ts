@@ -81,3 +81,23 @@ export const removeResume = async (remove_resume_data: RemoveResumeData) => {
         throw new Error(error.response?.data?.message || 'Failed to save job')
     }
 }
+
+export const generateInterviewProcess = async (jobData: JobMatch): Promise<{ process: string }> => {
+    try {
+        const accessToken = await getAccessToken()
+
+        const response = await axios.post(
+            `${import.meta.env.VITE_API_V1_BASE_URL}/job/interview-process`,
+            jobData,
+            {
+                headers: {
+                    Authorization: accessToken ? `Bearer ${accessToken}` : '',
+                    'Content-Type': 'application/json',
+                },
+            },
+        )
+        return response.data
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Failed to generate interview process')
+    }
+}

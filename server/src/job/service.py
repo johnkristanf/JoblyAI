@@ -4,11 +4,10 @@ from openai import AsyncOpenAI
 
 from src.config.runtime import params
 from src.utils import json_decode, read_return_pdf_content_stream
-from src.prompt import JobSeachPrompt
+from src.prompt import JobSeachPrompt, InterviewProcessPrompt
 
 
 logger = logging.getLogger("job")
-
 
 async def llm_job_extraction(job_listings, job_params: dict):
 
@@ -27,6 +26,21 @@ async def llm_job_extraction(job_listings, job_params: dict):
 
     jobs_matched = json_decode(response.output_text)
     return jobs_matched
+
+
+async def generate_interview_process(job_data: dict) -> str:
+    client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
+
+    prompt = InterviewProcessPrompt()
+    system_prompt = prompt.load_system_prompt(job_data)
+    user_prompt = prompt.load_user_prompt()
+
+    response = await client.responses.create(
+        model=params["OPENAI_MODEL"],
+        input=[system_prompt, user_prompt],
+    )
+
+    return response.output_text
 
 
 def truncate_job_listing_properties(job_listing):

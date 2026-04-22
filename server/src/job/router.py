@@ -13,11 +13,12 @@ from src.utils import (
     json_decode,
     read_return_pdf_content_stream,
 )
-from src.job.schema import JobsSearchIn, SaveJobIn
+from src.job.schema import JobsSearchIn, SaveJobIn, InterviewProcessIn
 from src.job.models import Job
 
 from src.job.service import (
     extract_resume_from_source,
+    generate_interview_process,
     search_rapidapi_jobs_jsearch,
     truncate_job_listing_properties,
 )
@@ -143,3 +144,13 @@ async def get_job_search_response(
 
     job_response_data = json_decode(result)
     return job_response_data
+
+
+@job_router.post("/interview-process")
+async def get_interview_process(
+    payload: InterviewProcessIn,
+    user: dict = Depends(verify_user_from_token),
+):
+    job_data = payload.model_dump(exclude_none=True)
+    process_text = await generate_interview_process(job_data)
+    return {"process": process_text}

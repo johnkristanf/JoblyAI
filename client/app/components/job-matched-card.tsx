@@ -6,6 +6,7 @@ import { OtherJobListingsDialog } from './other-job-listings-dialog'
 import { Globe } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 import { JobLocationTooltip } from './job-location-tooltip'
+import { InterviewProcessBtn } from './interview-process-btn'
 
 export function JobMatchedCard({ jobSearchResponse }: { jobSearchResponse: JobSearchResponse }) {
     return (
@@ -22,14 +23,15 @@ export function JobMatchedCard({ jobSearchResponse }: { jobSearchResponse: JobSe
                             key={idx}
                             className="bg-white rounded-lg shadow p-5 flex flex-col gap-4 relative"
                         >
-                            {job.job_latitude && job.job_longitude && (
-                                <div className="flex justify-end">
+                            <div className="flex justify-end gap-2">
+                                {job.job_latitude && job.job_longitude && (
                                     <JobLocationTooltip
                                         job_latitude={job.job_latitude}
                                         job_longitude={job.job_longitude}
                                     />
-                                </div>
-                            )}
+                                )}
+                                <InterviewProcessBtn job={job} />
+                            </div>
 
                             {/* COMPANY INFORMATION SECTION */}
                             <div className="flex items-center mb-2">
@@ -83,11 +85,10 @@ export function JobMatchedCard({ jobSearchResponse }: { jobSearchResponse: JobSe
 
                                 {job.job_is_remote !== null && (
                                     <span
-                                        className={`inline-block px-2 py-0.5 rounded text-xs ${
-                                            job.job_is_remote
+                                        className={`inline-block px-2 py-0.5 rounded text-xs ${job.job_is_remote
                                                 ? 'bg-green-100 text-green-700'
                                                 : 'bg-yellow-100 text-yellow-700'
-                                        }`}
+                                            }`}
                                     >
                                         {job.job_is_remote ? 'Remote' : 'On-site'}
                                     </span>

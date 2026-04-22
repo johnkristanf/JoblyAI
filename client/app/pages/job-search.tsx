@@ -159,8 +159,8 @@ const JobSearchPage = () => {
         <div className="w-full min-h-screen flex flex-col p-10">
             {/* DYNAMIC PAGE TITLE */}
             {jobSearchResponse &&
-            ((jobSearchResponse.jobs_matched && jobSearchResponse.jobs_matched.length > 0) ||
-                (jobSearchResponse.job_listings && jobSearchResponse.job_listings.length > 0)) ? (
+                ((jobSearchResponse.jobs_matched && jobSearchResponse.jobs_matched.length > 0) ||
+                    (jobSearchResponse.job_listings && jobSearchResponse.job_listings.length > 0)) ? (
                 <>
                     <h1 className="text-2xl font-bold text-gray-900">Job Results</h1>
                     <h3 className="text-md text-blue-600 font-normal">
@@ -211,8 +211,8 @@ const JobSearchPage = () => {
             )}
 
             {jobSearchResponse &&
-            ((jobSearchResponse.jobs_matched && jobSearchResponse.jobs_matched.length > 0) ||
-                (jobSearchResponse.job_listings && jobSearchResponse.job_listings.length > 0)) ? (
+                ((jobSearchResponse.jobs_matched && jobSearchResponse.jobs_matched.length > 0) ||
+                    (jobSearchResponse.job_listings && jobSearchResponse.job_listings.length > 0)) ? (
                 <div className="space-y-10 mt-6">
                     {/* SEARCH ANOTHER */}
                     <div className="flex justify-end">
@@ -310,11 +310,10 @@ const JobSearchPage = () => {
                                 <button
                                     type="button"
                                     onClick={() => setSelectedResumeMode('upload')}
-                                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                                        selectedResumeMode === 'upload'
+                                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${selectedResumeMode === 'upload'
                                             ? 'bg-blue-600 text-white shadow-md'
                                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
+                                        }`}
                                     disabled={jobSearchMutation.isPending}
                                 >
                                     <Upload className="inline-block w-4 h-4 mr-2" />
@@ -323,11 +322,10 @@ const JobSearchPage = () => {
                                 <button
                                     type="button"
                                     onClick={() => setSelectedResumeMode('select')}
-                                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                                        selectedResumeMode === 'select'
+                                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${selectedResumeMode === 'select'
                                             ? 'bg-blue-600 text-white shadow-md'
                                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
+                                        }`}
                                     disabled={jobSearchMutation.isPending}
                                 >
                                     <FileText className="inline-block w-4 h-4 mr-2" />
@@ -456,26 +454,24 @@ const JobSearchPage = () => {
                                                         jobSearchMutation.isPending
                                                             ? undefined
                                                             : () =>
-                                                                  handleExistingResumeSelect(
-                                                                      resume.id,
-                                                                      resume.url,
-                                                                  )
+                                                                handleExistingResumeSelect(
+                                                                    resume.id,
+                                                                    resume.url,
+                                                                )
                                                     }
-                                                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
-                                                        selectedExistingResume?.resume_id ===
-                                                        resume.id
+                                                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${selectedExistingResume?.resume_id ===
+                                                            resume.id
                                                             ? 'bg-blue-100 border-2 border-blue-500'
                                                             : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-sm'
-                                                    } ${jobSearchMutation.isPending ? 'pointer-events-none opacity-70' : ''}`}
+                                                        } ${jobSearchMutation.isPending ? 'pointer-events-none opacity-70' : ''}`}
                                                 >
                                                     <div className="flex items-center gap-3">
                                                         <FileText
-                                                            className={`w-5 h-5 ${
-                                                                selectedExistingResume?.resume_id ===
-                                                                resume.id
+                                                            className={`w-5 h-5 ${selectedExistingResume?.resume_id ===
+                                                                    resume.id
                                                                     ? 'text-blue-600'
                                                                     : 'text-gray-400'
-                                                            }`}
+                                                                }`}
                                                         />
                                                         <div>
                                                             <p className="text-sm font-medium text-gray-800">
@@ -491,8 +487,8 @@ const JobSearchPage = () => {
                                                     </div>
                                                     {selectedExistingResume?.resume_id ===
                                                         resume.id && (
-                                                        <Check className="w-5 h-5 text-blue-600" />
-                                                    )}
+                                                            <Check className="w-5 h-5 text-blue-600" />
+                                                        )}
                                                 </div>
                                             ))}
                                         </div>
@@ -512,11 +508,10 @@ const JobSearchPage = () => {
                         <div className="flex justify-end">
                             <button
                                 type="submit"
-                                className={`${
-                                    jobSearchMutation.isPending
+                                className={`${jobSearchMutation.isPending
                                         ? 'bg-gray-400 cursor-not-allowed opacity-70'
                                         : 'bg-blue-600 hover:cursor-pointer hover:opacity-75'
-                                } text-white rounded px-6 py-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400`}
+                                    } text-white rounded px-6 py-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400`}
                                 disabled={jobSearchMutation.isPending}
                             >
                                 {jobSearchMutation.isPending ? 'Submitting...' : 'Submit'}

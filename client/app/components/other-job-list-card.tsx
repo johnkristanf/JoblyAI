@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 import { Globe } from 'lucide-react'
 import { JobLocationTooltip } from './job-location-tooltip'
 import { DescriptionSection } from './description-section'
+import { InterviewProcessBtn } from './interview-process-btn'
 
 export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: JobSearchResponse }) {
     const matchedJobs = Array.isArray(jobSearchResponse.jobs_matched)
@@ -31,14 +32,15 @@ export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: Job
                                 key={idx}
                                 className="bg-gray-50 rounded-lg shadow p-5 flex flex-col gap-4 border border-gray-200"
                             >
-                                {job.job_latitude && job.job_longitude && (
-                                    <div className="flex justify-end">
+                                <div className="flex justify-end gap-2">
+                                    {job.job_latitude && job.job_longitude && (
                                         <JobLocationTooltip
                                             job_latitude={job.job_latitude}
                                             job_longitude={job.job_longitude}
                                         />
-                                    </div>
-                                )}
+                                    )}
+                                    <InterviewProcessBtn job={job} />
+                                </div>
                                 {/* COMPANY INFORMATION SECTION */}
                                 <div className="flex items-center mb-2">
                                     {job.employer_logo ? (
@@ -92,11 +94,10 @@ export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: Job
 
                                     {job.job_is_remote !== null && (
                                         <span
-                                            className={`inline-block px-2 py-0.5 rounded text-xs ${
-                                                job.job_is_remote
+                                            className={`inline-block px-2 py-0.5 rounded text-xs ${job.job_is_remote
                                                     ? 'bg-green-100 text-green-700'
                                                     : 'bg-yellow-100 text-yellow-700'
-                                            }`}
+                                                }`}
                                         >
                                             {job.job_is_remote ? 'Remote' : 'On-site'}
                                         </span>
