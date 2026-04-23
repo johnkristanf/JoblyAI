@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str
     CELERY_BACKEND_URL: str
 
+    FIRECRAWL_API_KEY: str
+
     class Config:
         env_file = ".env"
 

@@ -1,6 +1,8 @@
 import logging
+import os
 import httpx
 from openai import AsyncOpenAI
+from firecrawl import AsyncFirecrawlApp
 
 from src.config.runtime import params
 from src.utils import json_decode, read_return_pdf_content_stream
@@ -28,19 +30,34 @@ async def llm_job_extraction(job_listings, job_params: dict):
     return jobs_matched
 
 
-async def generate_interview_process(job_data: dict) -> str:
-    client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
+class JobsService:
+    async def generate_interview_process(self, job_data: dict) -> str:
+        employer_website = job_data.get("employer_website")
+        if employer_website:
+            api_key = os.getenv("FIRECRAWL_API_KEY")
+            if api_key:
+                try:
+                    app = AsyncFirecrawlApp(api_key=api_key)
+                    scrape_response = await app.scrape(url=employer_website, params={"formats": ["markdown"]})
+                    logger.info(f"SCRAPE RESPONSE: {scrape_response}")
+                    markdown = scrape_response.get("markdown")
+                    if markdown:
+                        job_data["employer_website_context"] = markdown
+                except Exception as e:
+                    logger.error(f"Error scraping employer website with FirecrawlApp: {e}")
 
-    prompt = InterviewProcessPrompt()
-    system_prompt = prompt.load_system_prompt(job_data)
-    user_prompt = prompt.load_user_prompt()
+        client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
 
-    response = await client.responses.create(
-        model=params["OPENAI_MODEL"],
-        input=[system_prompt, user_prompt],
-    )
+        prompt = InterviewProcessPrompt()
+        system_prompt = prompt.load_system_prompt(job_data)
+        user_prompt = prompt.load_user_prompt()
 
-    return response.output_text
+        response = await client.responses.create(
+            model=params["OPENAI_MODEL"],
+            input=[system_prompt, user_prompt],
+        )
+
+        return response.output_text
 
 
 def truncate_job_listing_properties(job_listing):

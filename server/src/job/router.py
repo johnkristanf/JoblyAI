@@ -18,10 +18,11 @@ from src.job.models import Job
 
 from src.job.service import (
     extract_resume_from_source,
-    generate_interview_process,
     search_rapidapi_jobs_jsearch,
     truncate_job_listing_properties,
 )
+from src.job.dependencies import get_jobs_service
+from src.job.service import JobsService
 
 job_router = APIRouter()
 
@@ -150,7 +151,8 @@ async def get_job_search_response(
 async def get_interview_process(
     payload: InterviewProcessIn,
     user: dict = Depends(verify_user_from_token),
+    jobs_service: JobsService = Depends(get_jobs_service),
 ):
     job_data = payload.model_dump(exclude_none=True)
-    process_text = await generate_interview_process(job_data)
+    process_text = await jobs_service.generate_interview_process(job_data)
     return {"process": process_text}
