@@ -11,24 +11,6 @@ from src.prompt import JobSeachPrompt, InterviewProcessPrompt
 
 logger = logging.getLogger("job")
 
-async def llm_job_extraction(job_listings, job_params: dict):
-
-    client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
-
-    job_seach_prompt = JobSeachPrompt()
-    system_prompt = job_seach_prompt.load_system_prompt(
-        job_params.get("resume_text"),
-    )
-    user_prompt = job_seach_prompt.load_user_prompt(job_listings)
-
-    response = await client.responses.create(
-        model=params["OPENAI_MODEL"],
-        input=[system_prompt, user_prompt],
-    )
-
-    jobs_matched = json_decode(response.output_text)
-    return jobs_matched
-
 
 class JobsService:
     async def generate_interview_process(self, job_data: dict) -> str:
@@ -59,6 +41,62 @@ class JobsService:
 
         return response.output_text
 
+    async def search_rapidapi_jobs_jsearch(self, job_title, country, date_posted, page):
+        """
+        Free tier: 150 requests/month
+        API: https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
+        Asynchronous version using httpx.AsyncClient for better performance.
+        """
+
+        url = "https://jsearch.p.rapidapi.com/search"
+
+        querystring = {
+            "query": f"{job_title} ",
+            "country": country,
+            "page": page,
+            "num_pages": page,
+            "date_posted": date_posted,
+        }
+
+        headers = {
+            "X-RapidAPI-Key": params["RAPID_API_KEY"],
+            "X-RapidAPI-Host": params["RAPID_API_HOST"],
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=30, http2=True) as client:
+                response = await client.get(url, headers=headers, params=querystring)
+                response.raise_for_status()
+                return response.json()
+        except httpx.TimeoutException:
+            logger.error("Timeout occurred while searching for jobs on RapidAPI")
+            return {"data": []}
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error occurred while searching for jobs: {e.response.status_code} - {e.response.text}")
+            return {"data": []}
+        except Exception as e:
+            logger.error(f"An unexpected error occurred during job search: {e}", exc_info=True)
+            return {"data": []}
+
+
+async def llm_job_extraction(job_listings, job_params: dict):
+
+    client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
+
+    job_seach_prompt = JobSeachPrompt()
+    system_prompt = job_seach_prompt.load_system_prompt(
+        job_params.get("resume_text"),
+    )
+    user_prompt = job_seach_prompt.load_user_prompt(job_listings)
+
+    response = await client.responses.create(
+        model=params["OPENAI_MODEL"],
+        input=[system_prompt, user_prompt],
+    )
+
+    jobs_matched = json_decode(response.output_text)
+    return jobs_matched
+
 
 def truncate_job_listing_properties(job_listing):
     # Define properties to remove
@@ -82,38 +120,6 @@ def truncate_job_listing_properties(job_listing):
         truncated_job_listings.append(job_cleaned)
 
     return truncated_job_listings
-
-
-async def search_rapidapi_jobs_jsearch(job_title, country, date_posted, page):
-    """
-    Free tier: 150 requests/month
-    API: https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
-    Asynchronous version using httpx.AsyncClient for better performance.
-    """
-
-    url = "https://jsearch.p.rapidapi.com/search"
-
-    querystring = {
-        "query": f"{job_title} ",
-        "country": country,
-        "page": page,
-        "num_pages": page,
-        "date_posted": date_posted,
-    }
-
-    headers = {
-        "X-RapidAPI-Key": params["RAPID_API_KEY"],
-        "X-RapidAPI-Host": params["RAPID_API_HOST"],
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=30, http2=True) as client:
-            response = await client.get(url, headers=headers, params=querystring)
-            response.raise_for_status()
-            return response.json()
-    except httpx.TimeoutException:
-        # log here
-        return {"data": []}
 
 
 async def extract_resume_from_source(source):

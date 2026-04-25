@@ -18,7 +18,6 @@ from src.job.models import Job
 
 from src.job.service import (
     extract_resume_from_source,
-    search_rapidapi_jobs_jsearch,
     truncate_job_listing_properties,
 )
 from src.job.dependencies import get_jobs_service
@@ -36,6 +35,7 @@ async def job_search(
     existing_resume: str = Form(None),
     user: dict = Depends(verify_user_from_token),
     redis_client: Redis = Depends(Database.get_redis_client),
+    jobs_service: JobsService = Depends(get_jobs_service),
 ):
     job_list_page_length = "3"
     job_search_results = None
@@ -43,7 +43,7 @@ async def job_search(
 
     cached_results = await redis_client.get(cache_key)
     if cached_results is None:
-        job_search_results = await search_rapidapi_jobs_jsearch(
+        job_search_results = await jobs_service.search_rapidapi_jobs_jsearch(
             job_title=job_title,
             country=country,
             date_posted=date_posted,  # all, today, 3days, week, month

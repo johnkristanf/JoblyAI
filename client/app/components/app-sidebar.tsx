@@ -1,4 +1,4 @@
-import { BookmarkCheck, BriefcaseBusiness, FileUser, MapPin } from 'lucide-react'
+import { BookmarkCheck, BriefcaseBusiness, FileUser, MapPin, Sparkles } from 'lucide-react'
 import { NavLink } from 'react-router'
 import {
     Sidebar,
@@ -31,29 +31,46 @@ export function AppSidebar() {
 
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <NavLink to="/job/search" className="flex items-center gap-1">
-                                <SidebarMenuButton>
-                                    <BriefcaseBusiness className="size-4" />{' '}
-                                    <span className="text-xs">Job Search</span>
-                                </SidebarMenuButton>
+                            <NavLink to="/job/search">
+                                {({ isActive }) => (
+                                    <SidebarMenuButton isActive={isActive} className="cursor-pointer">
+                                        <BriefcaseBusiness className="size-4" />{' '}
+                                        <span className="text-xs">Job Search</span>
+                                    </SidebarMenuButton>
+                                )}
                             </NavLink>
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>
-                            <NavLink to="/saved/jobs" className="flex items-center gap-1 ">
-                                <SidebarMenuButton>
-                                    <BookmarkCheck className="size-4" />{' '}
-                                    <span className="text-xs">Saved Jobs</span>
-                                </SidebarMenuButton>
+                            <NavLink to="/job/ai-search">
+                                {({ isActive }) => (
+                                    <SidebarMenuButton isActive={isActive} className="cursor-pointer">
+                                        <Sparkles className="size-4" />{' '}
+                                        <span className="text-xs">AI Matchmaker</span>
+                                    </SidebarMenuButton>
+                                )}
                             </NavLink>
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>
-                            <NavLink to="/resume" className="flex items-center gap-1">
-                                <SidebarMenuButton>
-                                    <FileUser className="size-4" />{' '}
-                                    <span className="text-xs">Resume</span>
-                                </SidebarMenuButton>
+                            <NavLink to="/saved/jobs">
+                                {({ isActive }) => (
+                                    <SidebarMenuButton isActive={isActive} className="cursor-pointer">
+                                        <BookmarkCheck className="size-4" />{' '}
+                                        <span className="text-xs">Saved Jobs</span>
+                                    </SidebarMenuButton>
+                                )}
+                            </NavLink>
+                        </SidebarMenuItem>
+
+                        <SidebarMenuItem>
+                            <NavLink to="/resume">
+                                {({ isActive }) => (
+                                    <SidebarMenuButton isActive={isActive} className="cursor-pointer">
+                                        <FileUser className="size-4" />{' '}
+                                        <span className="text-xs">Resume</span>
+                                    </SidebarMenuButton>
+                                )}
                             </NavLink>
                         </SidebarMenuItem>
                     </SidebarMenu>
