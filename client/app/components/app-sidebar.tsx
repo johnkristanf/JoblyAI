@@ -42,17 +42,6 @@ export function AppSidebar() {
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>
-                            <NavLink to="/job/ai-search">
-                                {({ isActive }) => (
-                                    <SidebarMenuButton isActive={isActive} className="cursor-pointer">
-                                        <Sparkles className="size-4" />{' '}
-                                        <span className="text-xs">AI Matchmaker</span>
-                                    </SidebarMenuButton>
-                                )}
-                            </NavLink>
-                        </SidebarMenuItem>
-
-                        <SidebarMenuItem>
                             <NavLink to="/saved/jobs">
                                 {({ isActive }) => (
                                     <SidebarMenuButton isActive={isActive} className="cursor-pointer">
