@@ -86,8 +86,8 @@ export function JobMatchedCard({ jobSearchResponse }: { jobSearchResponse: JobSe
                                 {job.job_is_remote !== null && (
                                     <span
                                         className={`inline-block px-2 py-0.5 rounded text-xs ${job.job_is_remote
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-yellow-100 text-yellow-700'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-yellow-100 text-yellow-700'
                                             }`}
                                     >
                                         {job.job_is_remote ? 'Remote' : 'On-site'}

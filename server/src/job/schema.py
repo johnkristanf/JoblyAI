@@ -54,3 +54,22 @@ class InterviewProcessIn(BaseModel):
     job_max_salary: float | None = None
     job_salary_period: str | None = None
     job_posted_at: str | None = None
+
+
+class UserProfile(BaseModel):
+    full_name: str
+    email: str
+    phone: str | None = None
+    location: str | None = None
+    linkedin_url: str | None = None
+    years_of_experience: int | None = None
+    highest_education: str | None = None
+    current_role: str | None = None
+    resume_url: str | None = None
+
+
+class AutoApplyIn(BaseModel):
+    job_apply_link: str
+    job_title: str | None = None
+    employer_name: str | None = None
+    user_profile: UserProfile
