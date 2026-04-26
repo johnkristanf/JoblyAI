@@ -7,6 +7,7 @@ import { Globe } from 'lucide-react'
 import { JobLocationTooltip } from './job-location-tooltip'
 import { DescriptionSection } from './description-section'
 import { InterviewProcessBtn } from './interview-process-btn'
+import { EmployerInsightsBtn } from './employer-insights-btn'
 
 export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: JobSearchResponse }) {
     const matchedJobs = Array.isArray(jobSearchResponse.jobs_matched)
@@ -62,14 +63,20 @@ export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: Job
                                             {job.employer_name}
                                         </div>
                                         {job.employer_website && (
-                                            <a
-                                                href={job.employer_website}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-500 underline text-xs"
-                                            >
-                                                {job.employer_website}
-                                            </a>
+                                            <div className="flex items-center">
+                                                <a
+                                                    href={job.employer_website}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-500 underline text-xs"
+                                                >
+                                                    {job.employer_website}
+                                                </a>
+                                                <EmployerInsightsBtn
+                                                    employerName={job.employer_name}
+                                                    employerWebsite={job.employer_website}
+                                                />
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -95,8 +102,8 @@ export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: Job
                                     {job.job_is_remote !== null && (
                                         <span
                                             className={`inline-block px-2 py-0.5 rounded text-xs ${job.job_is_remote
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : 'bg-yellow-100 text-yellow-700'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-yellow-100 text-yellow-700'
                                                 }`}
                                         >
                                             {job.job_is_remote ? 'Remote' : 'On-site'}

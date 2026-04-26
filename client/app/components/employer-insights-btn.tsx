@@ -18,6 +18,8 @@ export function EmployerInsightsBtn({ employerName, employerWebsite }: EmployerI
     const mutation = useMutation({
         mutationFn: () => generateEmployerInsights(employerWebsite),
         onSuccess: (data) => {
+            console.log("data: ", data);
+            
             setInsightsText(data.insights)
         },
         onError: () => {
