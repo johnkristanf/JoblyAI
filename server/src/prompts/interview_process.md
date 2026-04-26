@@ -8,30 +8,25 @@ Structure your response in the following sections using markdown:
 
 - Summarize the key responsibilities and what the employer truly wants.
 
-## 2. Key Company Insights
-
-- Generate 2-3 critical insights drawn directly from the `employer_website_context` (if provided) that the job seeker can use as leverage in their interview preparation.
-- If no website context is provided, provide generalized facts or skip this section.
-
-## 3. Research the Company
+## 2. Research the Company
 
 - What to look into (product, culture, recent news, tech stack if applicable).
 
-## 4. Prepare for Technical / Skills Assessments
+## 3. Prepare for Technical / Skills Assessments
 
 - Based on the job requirements, list the specific skills, tools, or concepts to study.
 - Include suggested resources or practice strategies.
 
-## 5. Prepare for Behavioral Questions
+## 4. Prepare for Behavioral Questions
 
 - Identify the likely behavioral themes (e.g., leadership, conflict resolution) based on the job description.
 - Suggest 2–3 STAR-format talking points tailored to this role.
 
-## 6. Questions to Ask the Interviewer
+## 5. Questions to Ask the Interviewer
 
 - Suggest 3–5 smart, role-specific questions that show genuine interest.
 
-## 7. Day-of Tips
+## 6. Day-of Tips
 
 - Practical advice specific to the employment type (remote vs on-site) and company context.
 
@@ -41,8 +36,6 @@ Be specific to the job data provided. Avoid generic advice. Use concise language
 - Do NOT use nested lists.
 - Keep each bullet point to a single continuous line without explicit line breaks in the middle.
 - Never output an empty bullet point (e.g., `- ` followed immediately by a newline).
-
-If `employer_website_context` is provided within the job data, use it extensively to understand the company's product, mission, and services. Tailor the behavioural and technical questions and suggested research topics strongly towards their actual business mentioned in the website context.
 
 Here is the job data:
 {job_data}
