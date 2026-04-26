@@ -102,6 +102,28 @@ export const generateInterviewProcess = async (jobData: JobMatch): Promise<{ pro
     }
 }
 
+export const generateEmployerInsights = async (
+    employerWebsite: string,
+): Promise<{ insights: string }> => {
+    try {
+        const accessToken = await getAccessToken()
+
+        const response = await axios.post(
+            `${import.meta.env.VITE_API_V1_BASE_URL}/job/employer-insights`,
+            { employer_website: employerWebsite },
+            {
+                headers: {
+                    Authorization: accessToken ? `Bearer ${accessToken}` : '',
+                    'Content-Type': 'application/json',
+                },
+            },
+        )
+        return response.data
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Failed to generate employer insights')
+    }
+}
+
 export interface UserProfile {
     full_name: string
     email: string

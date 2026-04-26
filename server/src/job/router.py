@@ -16,7 +16,7 @@ from src.utils import (
     json_decode,
     read_return_pdf_content_stream,
 )
-from src.job.schema import JobsSearchIn, SaveJobIn, InterviewProcessIn, AutoApplyIn
+from src.job.schema import JobsSearchIn, SaveJobIn, InterviewProcessIn, AutoApplyIn, EmployerInsightsIn
 from src.job.models import Job
 from src.job.playwright_tools import TOOL_SCHEMAS, TOOL_DISPATCH
 
@@ -161,6 +161,18 @@ async def get_interview_process(
     process_text = await jobs_service.generate_interview_process(job_data)
     return {"process": process_text}
 
+
+@job_router.post("/employer-insights")
+async def get_employer_insights(
+    payload: EmployerInsightsIn,
+    user: dict = Depends(verify_user_from_token),
+    jobs_service: JobsService = Depends(get_jobs_service),
+):
+    try:
+        insights_text = await jobs_service.generate_employer_insights(payload.employer_website)
+        return {"insights": insights_text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 MAX_AGENT_ITERATIONS = 15
 

@@ -36,3 +36,22 @@ class InterviewProcessPrompt:
             "role": "user",
             "content": "Please generate the interview process guide for this specific job.",
         }
+
+
+class EmployerInsightsPrompt:
+    PROMPT_PATH = (
+        "src/prompts/employer_insights.md"
+    )
+
+    def load_system_prompt(self, employer_website_context: str):
+        with open(self.PROMPT_PATH, "r", encoding="utf-8") as f:
+            template = f.read()
+
+        content = template.format(employer_website_context=employer_website_context)
+        return {"role": "system", "content": content}
+
+    def load_user_prompt(self):
+        return {
+            "role": "user",
+            "content": "Please generate the employer insights.",
+        }

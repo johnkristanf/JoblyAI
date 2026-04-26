@@ -56,6 +56,10 @@ class InterviewProcessIn(BaseModel):
     job_posted_at: str | None = None
 
 
+class EmployerInsightsIn(BaseModel):
+    employer_website: str
+
+
 class UserProfile(BaseModel):
     full_name: str
     email: str

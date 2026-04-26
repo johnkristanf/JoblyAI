@@ -2,36 +2,54 @@ import logging
 import os
 import httpx
 from openai import AsyncOpenAI
-from firecrawl import AsyncFirecrawlApp
 
 from src.config.runtime import params
 from src.utils import json_decode, read_return_pdf_content_stream
-from src.prompt import JobSeachPrompt, InterviewProcessPrompt
-
+from src.prompt import JobSeachPrompt, InterviewProcessPrompt, EmployerInsightsPrompt
+from firecrawl import AsyncFirecrawlApp
 
 logger = logging.getLogger("job")
 
-
 class JobsService:
     async def generate_interview_process(self, job_data: dict) -> str:
-        employer_website = job_data.get("employer_website")
-        if employer_website:
-            api_key = os.getenv("FIRECRAWL_API_KEY")
-            if api_key:
-                try:
-                    app = AsyncFirecrawlApp(api_key=api_key)
-                    scrape_response = await app.scrape(url=employer_website, params={"formats": ["markdown"]})
-                    logger.info(f"SCRAPE RESPONSE: {scrape_response}")
-                    markdown = scrape_response.get("markdown")
-                    if markdown:
-                        job_data["employer_website_context"] = markdown
-                except Exception as e:
-                    logger.error(f"Error scraping employer website with FirecrawlApp: {e}")
-
         client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
 
         prompt = InterviewProcessPrompt()
         system_prompt = prompt.load_system_prompt(job_data)
+        user_prompt = prompt.load_user_prompt()
+
+        response = await client.responses.create(
+            model=params["OPENAI_MODEL"],
+            input=[system_prompt, user_prompt],
+        )
+
+        return response.output_text
+
+    async def generate_employer_insights(self, employer_website: str) -> str:
+        api_key = os.getenv("FIRECRAWL_API_KEY")
+        employer_website_context = ""
+        if api_key:
+            try:
+                app = AsyncFirecrawlApp(api_key=api_key)
+                scrape_response = await app.scrape(url=employer_website, params={"formats": ["markdown"]})
+                logger.info(f"SCRAPE RESPONSE for insights: {scrape_response}")
+                if isinstance(scrape_response, dict):
+                    markdown = scrape_response.get("markdown")
+                else:
+                    markdown = getattr(scrape_response, "markdown", None)
+                if markdown:
+                    employer_website_context = markdown
+            except Exception as e:
+                logger.error(f"Error scraping employer website with FirecrawlApp: {e}")
+                return "Could not retrieve insights. Failed to scrape the employer website."
+        
+        if not employer_website_context:
+            return "Could not retrieve insights from the employer website."
+
+        client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
+
+        prompt = EmployerInsightsPrompt()
+        system_prompt = prompt.load_system_prompt(employer_website_context)
         user_prompt = prompt.load_user_prompt()
 
         response = await client.responses.create(
