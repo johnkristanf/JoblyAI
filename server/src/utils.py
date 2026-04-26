@@ -56,10 +56,16 @@ async def extract_data_from_batch_tasks(list_data, awaitable, params, batch_size
 
     flattened = []
     for result in results:
-        if "listings" in result:
-            flattened.extend(result["listings"])
+        if isinstance(result, dict):
+            if "error" in result:
+                logger.warning(f"Skipping failed batch result: {result.get('error')}")
+                continue
+            if "listings" in result:
+                flattened.extend(result["listings"])
+        elif isinstance(result, list):
+            flattened.extend(item for item in result if isinstance(item, dict))
         else:
-            flattened.extend(result)
+            logger.warning(f"Skipping unexpected batch result type: {type(result)}")
 
     return flattened
 
