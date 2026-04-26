@@ -58,22 +58,3 @@ class InterviewProcessIn(BaseModel):
 
 class EmployerInsightsIn(BaseModel):
     employer_website: str
-
-
-class UserProfile(BaseModel):
-    full_name: str
-    email: str
-    phone: str | None = None
-    location: str | None = None
-    linkedin_url: str | None = None
-    years_of_experience: int | None = None
-    highest_education: str | None = None
-    current_role: str | None = None
-    resume_url: str | None = None
-
-
-class AutoApplyIn(BaseModel):
-    job_apply_link: str
-    job_title: str | None = None
-    employer_name: str | None = None
-    user_profile: UserProfile

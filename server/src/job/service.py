@@ -57,7 +57,7 @@ class JobsService:
             input=[system_prompt, user_prompt],
         )
 
-        return response.output_text
+        return response.output_text, employer_website_context
 
     async def search_rapidapi_jobs_jsearch(self, job_title, country, date_posted, page):
         """
@@ -96,6 +96,42 @@ class JobsService:
             logger.error(f"An unexpected error occurred during job search: {e}", exc_info=True)
             return {"data": []}
 
+    def truncate_job_listing_properties(self, job_listing):
+        # Define properties to remove
+        properties_to_remove = [
+            "apply_options",
+            "job_benefits",
+            "job_city",
+            "job_google_link",
+            "job_id",
+            "job_location",
+            "job_onet_job_zone",
+            "job_onet_soc",
+            "job_posted_at_datetime_utc",
+            "job_posted_at_timestamp",
+            "job_state",
+        ]
+
+        truncated_job_listings = []
+        for job in job_listing:
+            job_cleaned = {k: v for k, v in job.items() if k not in properties_to_remove}
+            truncated_job_listings.append(job_cleaned)
+
+        return truncated_job_listings
+
+    async def extract_resume_from_source(self, source):
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(source)
+                if response.status_code == 200:
+                    resume_content = response.content
+                    return read_return_pdf_content_stream(resume_content)
+        except Exception as e:
+            logger.error(
+                f"Error fetching or reading the resume PDF from URL: {e}", exc_info=True
+            )
+            raise Exception(f"Error fetching or reading the resume PDF from URL: {e}")
+
 
 async def llm_job_extraction(job_listings, job_params: dict):
 
@@ -116,42 +152,7 @@ async def llm_job_extraction(job_listings, job_params: dict):
     return jobs_matched
 
 
-def truncate_job_listing_properties(job_listing):
-    # Define properties to remove
-    properties_to_remove = [
-        "apply_options",
-        "job_benefits",
-        "job_city",
-        "job_google_link",
-        "job_id",
-        "job_location",
-        "job_onet_job_zone",
-        "job_onet_soc",
-        "job_posted_at_datetime_utc",
-        "job_posted_at_timestamp",
-        "job_state",
-    ]
 
-    truncated_job_listings = []
-    for job in job_listing:
-        job_cleaned = {k: v for k, v in job.items() if k not in properties_to_remove}
-        truncated_job_listings.append(job_cleaned)
-
-    return truncated_job_listings
-
-
-async def extract_resume_from_source(source):
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(source)
-            if response.status_code == 200:
-                resume_content = response.content
-                return read_return_pdf_content_stream(resume_content)
-    except Exception as e:
-        logger.error(
-            f"Error fetching or reading the resume PDF from URL: {e}", exc_info=True
-        )
-        raise Exception(f"Error fetching or reading the resume PDF from URL: {e}")
 
 
 # Example response object from job rapid API:
