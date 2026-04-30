@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from src.resume.router import resume_router
 from src.user.router import user_route
 from src.job.router import job_router
+from src.interview.router import router as interview_router
 from src.utils import group
 from src.database import Database
 
@@ -47,6 +48,7 @@ api_v1_router = group(
     (job_router, "/job", ["Job"]),
     (user_route, "/user", ["User"]),
     (resume_router, "/resume", ["Resume"]),
+    (interview_router, "/interview", ["Interview"]),
 )
 
 app.include_router(api_v1_router)

@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 import { JobLocationTooltip } from './job-location-tooltip'
 import { InterviewProcessBtn } from './interview-process-btn'
 import { EmployerInsightsBtn } from './employer-insights-btn'
+import { MockInterviewModal } from './mock-interview-modal'
 
 export function JobMatchedCard({ jobSearchResponse }: { jobSearchResponse: JobSearchResponse }) {
     return (
@@ -24,7 +25,7 @@ export function JobMatchedCard({ jobSearchResponse }: { jobSearchResponse: JobSe
                             key={idx}
                             className="bg-white rounded-lg shadow p-5 flex flex-col gap-4 relative"
                         >
-                            <div className="flex justify-end gap-2">
+                            <div className="flex justify-end items-center gap-2">
                                 {job.job_latitude && job.job_longitude && (
                                     <JobLocationTooltip
                                         job_latitude={job.job_latitude}
@@ -32,6 +33,7 @@ export function JobMatchedCard({ jobSearchResponse }: { jobSearchResponse: JobSe
                                     />
                                 )}
                                 <InterviewProcessBtn job={job} />
+                                <MockInterviewModal job={job} />
                             </div>
 
                             {/* COMPANY INFORMATION SECTION */}
