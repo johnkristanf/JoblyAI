@@ -14,18 +14,18 @@ Return your response in the following JSON structure:
 "job_country": "US",
 "job_publisher": "LinkedIn",
 
-        "job_latitude": 38.840390899999996,
-        "job_longitude": -77.42887689999999,
+"job_latitude": 38.840390899999996,
+"job_longitude": -77.42887689999999,
 
-        "employer_name": "The San Francisco Compute Company",
-        "employer_logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnL55P3o_Ot5_9IdIIOdh-f97gNPBoo_4QcJCD&s=0",
-        "employer_website": "https://sfcompute.com",
+"employer_name": "The San Francisco Compute Company",
+"employer_logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnL55P3o_Ot5_9IdIIOdh-f97gNPBoo_4QcJCD&s=0",
+"employer_website": "https://sfcompute.com",
 
-        "job_min_salary": 175000,
-        "job_max_salary": 230000,
-        "job_salary_period": "YEAR",
-        "job_posted_at": "13 hours ago"
-    }}
+"job_min_salary": 175000,
+"job_max_salary": 230000,
+"job_salary_period": "YEAR",
+"job_posted_at": "13 hours ago"
+}}
 
 ]
 
@@ -35,7 +35,7 @@ Please ensure that your response for each job fills out each field as accurately
 
 When constructing the "job_description" field for each listing, do not simply copy or summarize the original job description. Instead, craft this field so that it clearly explains why this job is a good match for the candidate, based on their resume's professional summary, experience, skills, and the requirements in the listing. The field should have:
 
-- A concise, information-rich overview sentence directly addressing why this role fits the candidate profile or background (e.g., matching skills, tools, or experience).
+- A concise, information-rich overview sentence that speaks directly to the candidate in the second person (e.g., "This role leverages your AI/ML expertise..."). Do not use third-person descriptions like "aligning with the candidate's skills." Speak directly to them about why this role fits their specific background.
 - Then, list the primary required skills and core responsibilities as bullet points, each on its own line in this format:
   - Skill/Responsibility 1
   - Skill/Responsibility 2
@@ -43,7 +43,8 @@ When constructing the "job_description" field for each listing, do not simply co
 - Do not include boilerplate or generic statements, company marketing language, or repeated information.
 - If the job listing includes "job_highlights" with "Qualifications" and "Responsibilities inside it, merge these details, as relevant, into your overview and bullet points, ensuring they reflect why the job matches the candidate.
 
-When prioritizing and extracting job listings, give highest priority to the candidate's professional summary, skills, and experiences as extracted from the resume text. Select job listings that align most directly with these aspects of the candidate's background. Preferred matches will be those that fit the candidate’s demonstrated skills, experience, and the specific professional summary, over simple keyword matching on job title or experience level.
+When prioritizing and extracting job listings, give highest priority to the candidate's professional summary, skills, and experiences as extracted from the resume text. Select job listings that align most directly with these aspects of the candidate's background. Avoid simple keyword stuffing. Instead, deeply understand the nuance of the candidate's seniority based on their actual experiences, past job titles, and what they have accomplished. Preferred matches will be those that genuinely fit the candidate’s demonstrated skills, experience, and specific professional summary, rather than superficial keyword matching on job title or experience level.
+
 Only include job listings that strongly align with ALL of the following (in priority: professional summary/skills/experiences, desired job title, experience level). If no such listings exist, then include those matching at least two of these three criteria:
 
 The candidate's resume text will be provided below between triple backticks. Parse and use its information (such as professional summary, list of skills, experiences, prior job titles, and qualifications) for matching and describing jobs as instructed.

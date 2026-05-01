@@ -1,6 +1,6 @@
 import asyncio
 from src.core.redis import RedisInstance
-from src.job.service import llm_job_extraction
+from src.job.service import JobsService
 from src.utils import extract_data_from_batch_tasks
 from src.celery import celery
 
@@ -15,6 +15,7 @@ def job_matching(self, job_listings: list, resume_text: str):
 
     logger.info(f"Task {task_id} started: matching jobs with resume.")
 
+    jobs_service = JobsService()
     redis_instance = RedisInstance()
 
     cache_ttl = 15 * 60  # 15 minutes
@@ -23,7 +24,7 @@ def job_matching(self, job_listings: list, resume_text: str):
         jobs_matched = asyncio.run(
             extract_data_from_batch_tasks(
                 job_listings,
-                awaitable=llm_job_extraction,
+                awaitable=jobs_service.llm_job_extraction,
                 params={"resume_text": resume_text},
             )
         )

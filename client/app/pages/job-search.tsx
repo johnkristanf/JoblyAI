@@ -11,6 +11,7 @@ import FullScreenLoader from '~/components/full-screen-loader'
 import { getAllResumes, getJobSearchResponse } from '~/lib/api/get'
 import type { ResumeData, SelectedResume } from '~/types/resume'
 import { formatDate } from '~/lib/utils'
+import { Statuses } from '~/types/enum'
 
 const JobSearchPage = () => {
     const [jobSearchTaskID, setJobSearchTaskID] = useState<string>()
@@ -59,8 +60,11 @@ const JobSearchPage = () => {
         },
     })
 
+    console.log("jobSearchStatus: ", jobSearchStatus);
+    
+
     useEffect(() => {
-        if (jobSearchStatus?.status === 'SUCCESS') {
+        if (jobSearchStatus?.status === Statuses.SUCCESS) {
             setJobSearchResponse({
                 job_listings: jobSearchStatus.job_listings ?? [],
                 jobs_matched: jobSearchStatus.jobs_matched ?? [],
@@ -69,7 +73,7 @@ const JobSearchPage = () => {
             setIsJobSearchPolling(false)
         }
 
-        if (jobSearchStatus?.status === 'FAILURE') {
+        if (jobSearchStatus?.status === Statuses.FAILURE) {
             setIsJobSearchPolling(false)
             toast.error('Job search failed.')
         }

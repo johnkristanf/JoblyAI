@@ -132,24 +132,23 @@ class JobsService:
             )
             raise Exception(f"Error fetching or reading the resume PDF from URL: {e}")
 
+    async def llm_job_extraction(self, job_listings, job_params: dict):
 
-async def llm_job_extraction(job_listings, job_params: dict):
+        client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
 
-    client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
+        job_seach_prompt = JobSeachPrompt()
+        system_prompt = job_seach_prompt.load_system_prompt(
+            job_params.get("resume_text"),
+        )
+        user_prompt = job_seach_prompt.load_user_prompt(job_listings)
 
-    job_seach_prompt = JobSeachPrompt()
-    system_prompt = job_seach_prompt.load_system_prompt(
-        job_params.get("resume_text"),
-    )
-    user_prompt = job_seach_prompt.load_user_prompt(job_listings)
+        response = await client.responses.create(
+            model=params["OPENAI_MODEL"],
+            input=[system_prompt, user_prompt],
+        )
 
-    response = await client.responses.create(
-        model=params["OPENAI_MODEL"],
-        input=[system_prompt, user_prompt],
-    )
-
-    jobs_matched = json_decode(response.output_text)
-    return jobs_matched
+        jobs_matched = json_decode(response.output_text)
+        return jobs_matched
 
 
 
