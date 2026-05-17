@@ -85,3 +85,4 @@ watchfiles==1.1.1
 wcwidth==0.2.14
 websockets==15.0.1
 firecrawl-py
+elevenlabs==2.45.0

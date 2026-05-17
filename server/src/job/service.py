@@ -26,7 +26,10 @@ class JobsService:
         return response.output_text
 
     async def generate_employer_insights(self, employer_website: str) -> str:
-        api_key = os.getenv("FIRECRAWL_API_KEY")
+        api_key = params.get("FIRECRAWL_API_KEY")
+        if not api_key:
+            raise ValueError("FIRECRAWL_API_KEY is not configured")
+
         employer_website_context = ""
         if api_key:
             try:

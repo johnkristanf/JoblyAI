@@ -1,13 +1,26 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 import logging
+from src.interview.dependencies import get_interview_service
+from src.interview.service import InterviewService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 @router.websocket("/ws")
-async def mock_interview_websocket(websocket: WebSocket):
+async def mock_interview_websocket(
+    websocket: WebSocket,
+    interview_service: InterviewService = Depends(get_interview_service)
+):
     await websocket.accept()
     logger.info("WebSocket connection accepted for mock interview.")
+    
+    conversation_history = []
+
+    # 1. Send AI intro first
+    intro = "Hello! I'm your interviewer today. Let's start — tell me about yourself."
+    conversation_history.append({ "role": "assistant", "content": intro })
+    audio = await interview_service.text_to_speech(intro)          # ElevenLabs
+    await websocket.send_bytes(audio)
     
     try:
         while True:

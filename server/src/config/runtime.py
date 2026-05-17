@@ -20,11 +20,13 @@ logger = logging.getLogger(__name__)
 def get_env_param(name, param_store_path):
     APP_ENV = os.getenv("APP_ENV")
 
+    # Fetch local env variable for development
     if APP_ENV == "development":
         value = os.getenv(name)
         logger.info(f"   Mode: DEVELOPMENT - Fetching from .env")
         return value.strip()
 
+    # Fetch from AWS SSM if production
     logger.info(f"   Mode: PRODUCTION - Fetching from SSM...")
     try:
         value = get_ssm_parameter(param_store_path)
@@ -65,5 +67,14 @@ params = {
     ),
     "CELERY_BACKEND_URL": get_env_param(
         "CELERY_BACKEND_URL", "/joblyai/prod/CELERY_BACKEND_URL"
+    ),
+    "FIRECRAWL_API_KEY": get_env_param(
+        "FIRECRAWL_API_KEY", "/joblyai/prod/FIRECRAWL_API_KEY"
+    ),
+    "DEEPGRAM_API_KEY": get_env_param(
+        "DEEPGRAM_API_KEY", "/joblyai/prod/DEEPGRAM_API_KEY"
+    ),
+    "ELEVENLABS_API_KEY": get_env_param(
+        "ELEVENLABS_API_KEY", "/joblyai/prod/ELEVENLABS_API_KEY"
     ),
 }

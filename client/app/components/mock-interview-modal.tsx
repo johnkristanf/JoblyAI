@@ -58,9 +58,10 @@ export function MockInterviewModal({ job }: MockInterviewModalProps) {
                 console.log('WebSocket connected');
                 setIsStreaming(true);
 
-                // Initialize MediaRecorder
-                const mediaRecorder = new MediaRecorder(stream, {
-                    mimeType: 'video/webm;codecs=vp8,opus'
+                // Initialize MediaRecorder with only audio tracks
+                const audioStream = new MediaStream(stream.getAudioTracks());
+                const mediaRecorder = new MediaRecorder(audioStream, {
+                    mimeType: 'audio/webm;codecs=opus'
                 });
                 mediaRecorderRef.current = mediaRecorder;
 
@@ -110,7 +111,7 @@ export function MockInterviewModal({ job }: MockInterviewModalProps) {
         if (videoRef.current) {
             videoRef.current.srcObject = null;
         }
-        
+
         setIsStreaming(false);
     };
 
