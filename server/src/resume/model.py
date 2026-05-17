@@ -12,10 +12,10 @@ class Resume(Base):
 
     user_id = Column(
         UUID(as_uuid=True),
+        ForeignKey("auth.users.id", ondelete="CASCADE"),
         primary_key=True,
         index=True,
         nullable=False,
-        foreign_key=ForeignKey("auth.users.id", ondelete="CASCADE"),
     )
 
     created_at = Column(DateTime, server_default=func.now(), nullable=False)

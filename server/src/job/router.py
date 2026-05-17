@@ -1,5 +1,4 @@
 import json
-import asyncio
 
 from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException
 from openai import OpenAI
@@ -15,8 +14,14 @@ from src.utils import (
     json_decode,
     read_return_pdf_content_stream,
 )
-from src.job.schema import JobsSearchIn, SaveJobIn, InterviewProcessIn, EmployerInsightsIn
+from src.job.schema import JobsSearchIn, SaveJobIn, InterviewProcessIn, EmployerInsightsIn, JobQueryIn
 from src.job.models import Job
+
+from langchain.agents import create_agent
+from langchain_openai import ChatOpenAI
+from src.config.runtime import params
+from src.job.tools.job_search_tool import search_job_tool
+from src.prompt import JobQueryPrompt
 
 from src.job.dependencies import get_jobs_service
 from src.job.service import JobsService
@@ -183,3 +188,32 @@ async def get_employer_insights(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@job_router.post("/query")
+async def process_job_query(
+    payload: JobQueryIn,
+    user: dict = Depends(verify_user_from_token)
+):
+    try:
+        # Initialize LLM
+        llm = ChatOpenAI(
+            model=params["OPENAI_MODEL"], 
+            api_key=params["OPENAI_API_KEY"],
+            temperature=0
+        )
+        
+        # Load tools and prompt
+        tools = [search_job_tool]
+        prompt_str = JobQueryPrompt().load_system_prompt()
+        
+        # Create agent using the new v1 interface
+        agent = create_agent(llm, tools=tools, system_prompt=prompt_str)
+        
+        # Invoke the agent asynchronously
+        result = await agent.ainvoke({"messages": [("user", payload.query)]})
+        
+        # The agent returns a dictionary with 'messages' list; the last message is the AI's final response
+        final_message = result["messages"][-1].content
+        
+        return {"response": final_message}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

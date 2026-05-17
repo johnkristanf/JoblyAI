@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { JobMatch } from '~/types/job_search'
-import { getAccessToken, supabase } from '../supabase/client'
+import { getAccessToken } from '../supabase/client'
 import type { RemoveResumeData, ResumeFile } from '~/types/resume'
 
 export const jobSearch = async (formData: FormData) => {
@@ -121,5 +121,25 @@ export const generateEmployerInsights = async (
         return response.data
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Failed to generate employer insights')
+    }
+}
+
+export const jobQuery = async (query: string): Promise<{ response: string }> => {
+    try {
+        const accessToken = await getAccessToken()
+
+        const response = await axios.post(
+            `${import.meta.env.VITE_API_V1_BASE_URL}/job/query`,
+            { query },
+            {
+                headers: {
+                    Authorization: accessToken ? `Bearer ${accessToken}` : '',
+                    'Content-Type': 'application/json',
+                },
+            },
+        )
+        return response.data
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Failed to query jobs')
     }
 }

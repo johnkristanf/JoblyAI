@@ -10,6 +10,9 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubItem,
+    SidebarMenuSubButton,
 } from '~/components/ui/sidebar'
 
 export function AppSidebar() {
@@ -31,14 +34,30 @@ export function AppSidebar() {
 
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <NavLink to="/job/search">
-                                {({ isActive }) => (
-                                    <SidebarMenuButton isActive={isActive} className="cursor-pointer">
-                                        <BriefcaseBusiness className="size-4" />{' '}
-                                        <span className="text-xs">Job Search</span>
-                                    </SidebarMenuButton>
-                                )}
-                            </NavLink>
+                            <SidebarMenuButton className="font-semibold text-sidebar-foreground/70 mb-1 cursor-default pointer-events-none">
+                                <BriefcaseBusiness className="size-4" />{' '}
+                                <span className="text-sm">Job Search</span>
+                            </SidebarMenuButton>
+                            <SidebarMenuSub>
+                                <SidebarMenuSubItem>
+                                    <NavLink to="/job/search/query">
+                                        {({ isActive }) => (
+                                            <SidebarMenuSubButton isActive={isActive} className="cursor-pointer">
+                                                <span className="text-xs">Query</span>
+                                            </SidebarMenuSubButton>
+                                        )}
+                                    </NavLink>
+                                </SidebarMenuSubItem>
+                                <SidebarMenuSubItem>
+                                    <NavLink to="/job/search/resume-matching">
+                                        {({ isActive }) => (
+                                            <SidebarMenuSubButton isActive={isActive} className="cursor-pointer">
+                                                <span className="text-xs">Resume Matching</span>
+                                            </SidebarMenuSubButton>
+                                        )}
+                                    </NavLink>
+                                </SidebarMenuSubItem>
+                            </SidebarMenuSub>
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>

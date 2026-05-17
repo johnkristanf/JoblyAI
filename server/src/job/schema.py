@@ -58,3 +58,6 @@ class InterviewProcessIn(BaseModel):
 
 class EmployerInsightsIn(BaseModel):
     employer_website: str
+
+class JobQueryIn(BaseModel):
+    query: str

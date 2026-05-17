@@ -10,7 +10,8 @@ export default [
     ]),
 
     layout('./layout/authenticated.tsx', [
-        route('job/search', './pages/job-search.tsx'),
+        route('job/search/resume-matching', './pages/resume-matching.tsx'),
+        route('job/search/query', './pages/job-query.tsx'),
         route('saved/jobs', './pages/saved-jobs.tsx'),
         route('resume', './pages/resume.tsx'),
         route('profile', './pages/profile.tsx'),

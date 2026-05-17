@@ -10,11 +10,11 @@ class Profile(Base):
 
     user_id = Column(
         UUID(as_uuid=True),
+        ForeignKey("auth.users.id", ondelete="CASCADE"),
         primary_key=True,
         index=True,
         nullable=False,
         unique=True,
-        foreign_key=ForeignKey("auth.users.id", ondelete="CASCADE"),
     )
     full_name = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)

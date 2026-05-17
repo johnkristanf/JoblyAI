@@ -13,7 +13,7 @@ import type { ResumeData, SelectedResume } from '~/types/resume'
 import { formatDate } from '~/lib/utils'
 import { Statuses } from '~/types/enum'
 
-const JobSearchPage = () => {
+const ResumeMatchingPage = () => {
     const [jobSearchTaskID, setJobSearchTaskID] = useState<string>()
     const [jobSearchResponse, setJobSearchResponse] = useState<JobSearchResponse>()
     const [resumeName, setResumeName] = useState<string | null>(null)
@@ -528,4 +528,4 @@ const JobSearchPage = () => {
     )
 }
 
-export default JobSearchPage
+export default ResumeMatchingPage
