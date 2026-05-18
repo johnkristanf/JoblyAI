@@ -2,7 +2,6 @@ import json
 
 from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException
 from openai import OpenAI
-from playwright.sync_api import sync_playwright
 from redis.client import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
@@ -20,7 +19,7 @@ from src.job.models import Job
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 from src.config.runtime import params
-from src.job.tools.job_search_tool import search_job_tool
+from src.job.tools.job_search_tool import search_jsearch_job_tool, search_linkedin_job_tool
 from src.prompt import JobQueryPrompt
 
 from src.job.dependencies import get_jobs_service
@@ -202,7 +201,7 @@ async def process_job_query(
         )
         
         # Load tools and prompt
-        tools = [search_job_tool]
+        tools = [search_jsearch_job_tool, search_linkedin_job_tool]
         prompt_str = JobQueryPrompt().load_system_prompt()
         
         # Create agent using the new v1 interface

@@ -152,7 +152,37 @@ class JobsService:
         jobs_matched = json_decode(response.output_text)
         return jobs_matched
 
+    async def search_rapidapi_linkedin_jobs(self, title_filter: str, location_filter: str = "United States", limit: str = "10"):
+        url = "https://linkedin-job-search-api.p.rapidapi.com/active-jb-7d"
 
+        querystring = {
+            "limit": limit,
+            "offset": "0",
+            "title_filter": f'"{title_filter}"',
+            "location_filter": f'"{location_filter}"',
+            "description_type": "text"
+        }
+
+        headers = {
+            "X-RapidAPI-Key": params["RAPID_API_KEY"],
+            "X-RapidAPI-Host": params["LINKEDIN_RAPID_API_HOST"],
+            "Content-Type": "application/json"
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=30, http2=True) as client:
+                response = await client.get(url, headers=headers, params=querystring)
+                response.raise_for_status()
+                return response.json()
+        except httpx.TimeoutException:
+            logger.error("Timeout occurred while searching for LinkedIn jobs on RapidAPI")
+            return {"data": []}
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error occurred while searching for LinkedIn jobs: {e.response.status_code} - {e.response.text}")
+            return {"data": []}
+        except Exception as e:
+            logger.error(f"An unexpected error occurred during LinkedIn job search: {e}", exc_info=True)
+            return {"data": []}
 
 
 

@@ -47,6 +47,7 @@ params = {
     "REDIS_URL": get_env_param("REDIS_URL", "/joblyai/prod/REDIS_URL"),
     "RAPID_API_KEY": get_env_param("RAPID_API_KEY", "/joblyai/prod/RAPID_API_KEY"),
     "RAPID_API_HOST": get_env_param("RAPID_API_HOST", "/joblyai/prod/RAPID_API_HOST"),
+    "LINKEDIN_RAPID_API_HOST": get_env_param("LINKEDIN_RAPID_API_HOST", "/joblyai/prod/LINKEDIN_RAPID_API_HOST"),
     "OPENAI_API_KEY": get_env_param("OPENAI_API_KEY", "/joblyai/prod/OPENAI_API_KEY"),
     "OPENAI_MODEL": get_env_param("OPENAI_MODEL", "/joblyai/prod/OPENAI_MODEL"),
     "IMAGE_KIT_PUBLIC_KEY": get_env_param(
