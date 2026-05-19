@@ -18,12 +18,16 @@ from src.job.models import Job
 
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver
 from src.config.runtime import params
 from src.job.tools.job_search_tool import search_jsearch_job_tool, search_linkedin_job_tool
 from src.prompt import JobQueryPrompt
 
 from src.job.dependencies import get_jobs_service
 from src.job.service import JobsService
+
+# Module-level memory store — persists conversation history per user across requests
+_agent_memory = MemorySaver()
 
 job_router = APIRouter()
 
@@ -204,11 +208,14 @@ async def process_job_query(
         tools = [search_jsearch_job_tool, search_linkedin_job_tool]
         prompt_str = JobQueryPrompt().load_system_prompt()
         
-        # Create agent using the new v1 interface
-        agent = create_agent(llm, tools=tools, system_prompt=prompt_str)
+        # Create agent with persistent memory (per-user thread)
+        agent = create_agent(llm, tools=tools, system_prompt=prompt_str, checkpointer=_agent_memory)
+        
+        # Use user ID as thread_id to isolate each user's conversation history
+        thread_config = {"configurable": {"thread_id": user["id"]}}
         
         # Invoke the agent asynchronously
-        result = await agent.ainvoke({"messages": [("user", payload.query)]})
+        result = await agent.ainvoke({"messages": [("user", payload.query)]}, config=thread_config)
         
         # The agent returns a dictionary with 'messages' list; the last message is the AI's final response
         final_message = result["messages"][-1].content
