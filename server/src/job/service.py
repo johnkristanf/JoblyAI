@@ -1,15 +1,68 @@
 import logging
 import httpx
+import json
 from openai import AsyncOpenAI
+from redis.client import Redis
 
 from src.config.runtime import params
 from src.utils import json_decode, read_return_pdf_content_stream
 from src.prompt import JobSeachPrompt, InterviewProcessPrompt, EmployerInsightsPrompt
 from firecrawl import AsyncFirecrawlApp
 
+COUNTRY_CODE_TO_NAME = {
+    "us": "United States",
+    "gb": "United Kingdom",
+    "ca": "Canada",
+    "de": "Germany",
+    "ph": "Philippines",
+    "sg": "Singapore",
+    "au": "Australia",
+}
+
 logger = logging.getLogger("job")
 
 class JobsService:
+    async def get_job_search_results(
+        self,
+        redis_client: Redis,
+        job_platform: str,
+        job_title: str,
+        country: str,
+        date_posted: str,
+        job_list_page_length: str,
+    ):
+        cache_key = f"jobsearch:{job_platform}:{job_title}:{country}:{date_posted}"
+
+        # Results already in cache
+        cached_results = await redis_client.get(cache_key)
+        if cached_results is not None:
+            return json_decode(cached_results)
+
+        if job_platform == "linkedin":
+            location = COUNTRY_CODE_TO_NAME.get(country, "United States")
+            raw_response = await self.search_rapidapi_linkedin_jobs(
+                title_filter=job_title,
+                location_filter=location,
+            )
+            # Normalize to the {"data": [...]} envelope the rest of the pipeline expects
+            if isinstance(raw_response, list):
+                job_search_results = {"data": raw_response}
+            elif isinstance(raw_response, dict) and "data" not in raw_response:
+                job_search_results = {"data": list(raw_response.values())[0] if raw_response else []}
+            else:
+                job_search_results = raw_response
+        else:
+            job_search_results = await self.search_rapidapi_jobs_jsearch(
+                job_title=job_title,
+                country=country,
+                date_posted=date_posted,  # all, today, 3days, week, month
+                page=job_list_page_length,
+            )
+
+        ttl = 15 * 60  # 15 minutes in seconds
+        await redis_client.setex(cache_key, ttl, json.dumps(job_search_results))
+        return job_search_results
+
     async def generate_interview_process(self, job_data: dict) -> str:
         client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
 
@@ -61,6 +114,48 @@ class JobsService:
 
         return response.output_text, employer_website_context
 
+    def truncate_job_listing_properties(self, job_listing):
+        # Define properties to remove
+        properties_to_remove = [
+            "apply_options",
+            "job_benefits",
+            "job_city",
+            "job_google_link",
+            "job_id",
+            "job_location",
+            "job_onet_job_zone",
+            "job_onet_soc",
+            "job_posted_at_datetime_utc",
+            "job_posted_at_timestamp",
+            "job_state",
+        ]
+
+        truncated_job_listings = []
+        for job in job_listing:
+            job_cleaned = {k: v for k, v in job.items() if k not in properties_to_remove}
+            truncated_job_listings.append(job_cleaned)
+
+        return truncated_job_listings
+
+    async def llm_job_extraction(self, job_listings, job_params: dict):
+
+        client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
+
+        job_seach_prompt = JobSeachPrompt()
+        system_prompt = job_seach_prompt.load_system_prompt(
+            job_params.get("resume_text"),
+        )
+        user_prompt = job_seach_prompt.load_user_prompt(job_listings)
+
+        response = await client.responses.create(
+            model=params["OPENAI_MODEL"],
+            input=[system_prompt, user_prompt],
+        )
+
+        jobs_matched = json_decode(response.output_text)
+        return jobs_matched
+
+
     async def search_rapidapi_jobs_jsearch(self, job_title, country, date_posted, page):
         """
         Free tier: 150 requests/month
@@ -97,60 +192,6 @@ class JobsService:
         except Exception as e:
             logger.error(f"An unexpected error occurred during job search: {e}", exc_info=True)
             return {"data": []}
-
-    def truncate_job_listing_properties(self, job_listing):
-        # Define properties to remove
-        properties_to_remove = [
-            "apply_options",
-            "job_benefits",
-            "job_city",
-            "job_google_link",
-            "job_id",
-            "job_location",
-            "job_onet_job_zone",
-            "job_onet_soc",
-            "job_posted_at_datetime_utc",
-            "job_posted_at_timestamp",
-            "job_state",
-        ]
-
-        truncated_job_listings = []
-        for job in job_listing:
-            job_cleaned = {k: v for k, v in job.items() if k not in properties_to_remove}
-            truncated_job_listings.append(job_cleaned)
-
-        return truncated_job_listings
-
-    async def extract_resume_from_source(self, source):
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(source)
-                if response.status_code == 200:
-                    resume_content = response.content
-                    return read_return_pdf_content_stream(resume_content)
-        except Exception as e:
-            logger.error(
-                f"Error fetching or reading the resume PDF from URL: {e}", exc_info=True
-            )
-            raise Exception(f"Error fetching or reading the resume PDF from URL: {e}")
-
-    async def llm_job_extraction(self, job_listings, job_params: dict):
-
-        client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
-
-        job_seach_prompt = JobSeachPrompt()
-        system_prompt = job_seach_prompt.load_system_prompt(
-            job_params.get("resume_text"),
-        )
-        user_prompt = job_seach_prompt.load_user_prompt(job_listings)
-
-        response = await client.responses.create(
-            model=params["OPENAI_MODEL"],
-            input=[system_prompt, user_prompt],
-        )
-
-        jobs_matched = json_decode(response.output_text)
-        return jobs_matched
 
     async def search_rapidapi_linkedin_jobs(self, title_filter: str, location_filter: str = "United States", limit: str = "10"):
         url = "https://linkedin-job-search-api.p.rapidapi.com/active-jb-7d"

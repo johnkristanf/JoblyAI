@@ -24,21 +24,18 @@ export const getAllResumes = async () => {
 }
 
 
-export const getJobSearchResponse = async ({ queryKey }: { queryKey: QueryKey }) => {
-    // Extract taskID from the queryKey, which should have the format: ['job_search_response', taskID]
+export const getTaskStatus = async ({ queryKey }: { queryKey: QueryKey }) => {
+    // Extract taskID from the queryKey, which should have the format: ['task_status', taskID]
     const [_key, taskID] = queryKey as [string, string | undefined];
 
-    console.log("taskID inside polling: ", taskID);
-    
-
     if (!taskID) {
-        throw new Error('No taskID provided for job search response request.');
+        throw new Error('No taskID provided for task status request.');
     }
 
     const accessToken = await getAccessToken()
 
     const response = await axios.get(
-        `${import.meta.env.VITE_API_V1_BASE_URL}/job/search/response/${taskID}`,
+        `${import.meta.env.VITE_API_V1_BASE_URL}/job/task/${taskID}/status`,
         {
             headers: {
                 Authorization: accessToken ? `Bearer ${accessToken}` : '',
@@ -46,8 +43,16 @@ export const getJobSearchResponse = async ({ queryKey }: { queryKey: QueryKey })
         }
     )
 
-    console.log("response data sa polling: ", response.data);
-    
-
     return response.data
+}
+
+export const getResumePresignedUrl = async (objectKey: string): Promise<string> => {
+    const accessToken = await getAccessToken()
+    const response = await axios.get(`${import.meta.env.VITE_API_V1_BASE_URL}/resume/presigned-url`, {
+        headers: {
+            Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+        params: { object_key: objectKey },
+    })
+    return response.data.url
 }

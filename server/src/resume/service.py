@@ -6,8 +6,11 @@ import asyncio
 from botocore.exceptions import ClientError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from fastapi.concurrency import run_in_threadpool
+import base64
+import httpx
+from src.utils import json_decode, read_return_pdf_content_stream
 
 from src.resume.model import Resume
 from src.pydantic_config import settings
@@ -30,7 +33,7 @@ s3_semaphore = asyncio.Semaphore(5)
 
 class ResumeService:
     async def create_db_resume(
-        self, session: AsyncSession, filename: str, object_key: str, user_id: int
+        self, session: AsyncSession, filename: str, object_key: str, user_id: str
     ):
         db_resume = Resume(
             filename=filename,
@@ -127,6 +130,54 @@ class ResumeService:
             Body=file_content,
             ContentType=file_content_type,
         )
+
+    async def extract_resume_from_source(self, source):
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(source)
+                if response.status_code == 200:
+                    resume_content = response.content
+                    return read_return_pdf_content_stream(resume_content)
+        except Exception as e:
+            logger.error(
+                f"Error fetching or reading the resume PDF from URL: {e}", exc_info=True
+            )
+            raise Exception(f"Error fetching or reading the resume PDF from URL: {e}")
+
+    async def process_resume_for_job_search(
+        self, new_resume: UploadFile | None, existing_resume: str | None, user: dict
+    ) -> tuple[str, str | None]:
+        resume_text = ""
+        upload_task_id = None
+
+        if new_resume is not None:
+            try:
+                resume_content = await new_resume.read()
+                resume_text = read_return_pdf_content_stream(resume_content)
+
+                # Fire-and-forget: persist resume to S3 + DB in the background
+                from src.tasks.resume_upload import upload_resume
+                file_bytes_b64 = base64.b64encode(resume_content).decode("utf-8")
+                upload_task = upload_resume.delay(
+                    file_bytes_b64=file_bytes_b64,
+                    filename=new_resume.filename or "resume.pdf",
+                    content_type=new_resume.content_type or "application/pdf",
+                    user_id=user.get("id"),
+                )
+                if upload_task:
+                    upload_task_id = upload_task.id
+            except Exception as e:
+                print(f"Error extracting text from resume PDF: {e}")
+                resume_text = ""
+
+        # Read existing resume data from object storage source
+        if existing_resume is not None:
+            resume_data = json_decode(existing_resume)
+            resume_source_url = resume_data.get("resume_source_url")
+            if resume_source_url:
+                resume_text = await self.extract_resume_from_source(resume_source_url)
+
+        return resume_text, upload_task_id
 
     def generate_presigned_url(self, bucket: str, key: str) -> str:
         return s3.generate_presigned_url(

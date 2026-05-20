@@ -4,6 +4,7 @@ export type JobSearchForm = {
     date_posted: string
     country: string
     professional_summary: string
+    job_platform: 'all' | 'linkedin'
 }
 
 export type JobMatch = {
@@ -34,6 +35,7 @@ export type JobMatch = {
 export type JobSearchResponse = {
     job_listings: JobMatch[]
     jobs_matched: JobMatch[]
+    resume_upload_task_id?: string
 }
 
 export type SavedJobs = {

@@ -11,9 +11,6 @@ from src.config.runtime import params
 from src.resume.schema import RemoveResumeIn
 from src.auth.dependencies import verify_user_from_token
 from src.database import Database
-from src.resume.model import Resume
-from src.pydantic_config import settings
-
 
 logger = logging.getLogger("resume")
 resume_router = APIRouter()
@@ -124,6 +121,21 @@ async def get_all_resume_urls(
         )
 
     return resumes
+
+
+@resume_router.get("/presigned-url")
+async def get_presigned_url(
+    object_key: str,
+    resume_service: ResumeService = Depends(get_resume_service),
+    user: dict = Depends(verify_user_from_token),
+):
+    # generate_presigned_url is a local HMAC signing operation (no network call),
+    # so calling it directly is fine for a single URL.
+    url = resume_service.generate_presigned_url(
+        params["AWS_S3_BUCKET_NAME"],
+        object_key,
+    )
+    return {"url": url}
 
 
 @resume_router.post("/remove")

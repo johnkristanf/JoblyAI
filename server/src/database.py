@@ -4,10 +4,20 @@ import redis as redis_sync
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, declarative_base, sessionmaker
+from sqlalchemy import Table, Column
+from sqlalchemy.dialects.postgresql import UUID
 from src.config.runtime import params
 # from src.config import settings
 
 Base: DeclarativeBase = declarative_base()
+
+# Define auth.users for foreign key references since it is managed by Supabase
+Table(
+    "users",
+    Base.metadata,
+    Column("id", UUID(as_uuid=True), primary_key=True),
+    schema="auth",
+)
 
 
 class Database:

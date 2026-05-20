@@ -30,7 +30,6 @@ def job_matching(self, job_listings: list, resume_text: str):
         )
 
         logger.info(f"Task {task_id} succeeded, updating task state.")
-        logger.info(f"jobs_matched {jobs_matched}")
 
         response_object = {
             "status": "SUCCESS",
@@ -46,7 +45,6 @@ def job_matching(self, job_listings: list, resume_text: str):
             ttl=cache_ttl,
         )
 
-        logger.info(f"Job matching finished: {jobs_matched}")
         return response_object
 
     except Exception as e:

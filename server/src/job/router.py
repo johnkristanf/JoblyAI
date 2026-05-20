@@ -1,4 +1,5 @@
 import json
+import base64
 
 from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException
 from openai import OpenAI
@@ -7,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from src.tasks.job_matching import job_matching
+from src.tasks.resume_upload import upload_resume
 from src.auth.dependencies import verify_user_from_token
 from src.database import Database
 from src.utils import (
@@ -26,57 +28,45 @@ from src.prompt import JobQueryPrompt
 from src.job.dependencies import get_jobs_service
 from src.job.service import JobsService
 
+from src.resume.dependencies import get_resume_service
+from src.resume.service import ResumeService
+
 # Module-level memory store — persists conversation history per user across requests
 _agent_memory = MemorySaver()
 
 job_router = APIRouter()
-
 
 @job_router.post("/search")
 async def job_search(
     job_title: str = Form(...),
     date_posted: str = Form(...),
     country: str = Form(...),
+    job_platform: str = Form("all"),
     new_resume: UploadFile = File(None),
     existing_resume: str = Form(None),
+
+    # Dependencies
     user: dict = Depends(verify_user_from_token),
     redis_client: Redis = Depends(Database.get_redis_client),
     jobs_service: JobsService = Depends(get_jobs_service),
+    resume_service: ResumeService = Depends(get_resume_service),
 ):
     job_list_page_length = "3"
-    job_search_results = None
-    cache_key = f"jobsearch:{job_title}:{country}:{date_posted}"
+    job_search_results = await jobs_service.get_job_search_results(
+        redis_client=redis_client,
+        job_platform=job_platform,
+        job_title=job_title,
+        country=country,
+        date_posted=date_posted,
+        job_list_page_length=job_list_page_length,
+    )
 
-    cached_results = await redis_client.get(cache_key)
-    if cached_results is None:
-        job_search_results = await jobs_service.search_rapidapi_jobs_jsearch(
-            job_title=job_title,
-            country=country,
-            date_posted=date_posted,  # all, today, 3days, week, month
-            page=job_list_page_length,
-        )
-
-        ttl = 15 * 60  # 15 minutes in seconds
-        await redis_client.setex(cache_key, ttl, json.dumps(job_search_results))
-    else:
-        job_search_results = json_decode(cached_results)
-
-    # Read uploaded resume data from the memory
-    resume_text = ""
-    if new_resume is not None:
-        try:
-            resume_content = await new_resume.read()
-            resume_text = read_return_pdf_content_stream(resume_content)
-        except Exception as e:
-            print(f"Error extracting text from resume PDF: {e}")
-            resume_text = ""
-
-    # Read existing resume data from object storage source
-    if existing_resume is not None:
-        resume_data = json_decode(existing_resume)
-        resume_source_url = resume_data.get("resume_source_url")
-        if resume_source_url:
-            resume_text = await jobs_service.extract_resume_from_source(resume_source_url)
+    # Process resume text and handle upload if new resume
+    resume_text, upload_task_id = await resume_service.process_resume_for_job_search(
+        new_resume=new_resume,
+        existing_resume=existing_resume,
+        user=user
+    )
 
     # Pre-process job listing before feeding to LLM
     raw_job_listings = job_search_results.get("data", [])
@@ -85,8 +75,12 @@ async def job_search(
     # Process llm job in the background
     task = job_matching.delay(job_listings, resume_text)
     print(f"task LLM: {task}")
-
-    return {"message": "Job matching task submitted successfully", "task_id": task.id}
+    
+    return {
+        "message": "Job matching task submitted successfully",
+        "task_id": task.id,
+        "resume_upload_task_id": upload_task_id,
+    }
 
 
 @job_router.post("/save")
@@ -138,8 +132,8 @@ async def delete_saved_job_by_id(
     return {"message": "Saved job deleted successfully"}
 
 
-@job_router.get("/search/response/{taskID}")
-async def get_job_search_response(
+@job_router.get("/task/{taskID}/status")
+async def get_task_status(
     taskID: str,
     user: dict = Depends(verify_user_from_token),
     redis_client: Redis = Depends(Database.get_redis_client),
@@ -147,10 +141,10 @@ async def get_job_search_response(
     key = f"task:{taskID}"
     result = await redis_client.get(key)
     if not result:
-        return {"error": "No search response found for this task."}, 404
+        return {"error": "No response found for this task."}, 404
 
-    job_response_data = json_decode(result)
-    return job_response_data
+    response_data = json_decode(result)
+    return response_data
 
 
 @job_router.post("/interview-process")

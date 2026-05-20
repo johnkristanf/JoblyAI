@@ -2,19 +2,23 @@ import { useForm, type SubmitHandler } from 'react-hook-form'
 import type { JobSearchResponse, JobSearchForm } from '~/types/job_search'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, Upload, FileText, Check } from 'lucide-react'
+import { ArrowRight, Upload, FileText, Check, Globe, Linkedin } from 'lucide-react'
 import { JobMatchedCard } from '~/components/job-matched-card'
 import NoJobsFound from '~/components/ui/no-jobs-found'
 import { jobSearch } from '~/lib/api/post'
 import { toast } from 'sonner'
 import FullScreenLoader from '~/components/full-screen-loader'
-import { getAllResumes, getJobSearchResponse } from '~/lib/api/get'
+import { getAllResumes, getTaskStatus } from '~/lib/api/get'
 import type { ResumeData, SelectedResume } from '~/types/resume'
-import { formatDate } from '~/lib/utils'
+import { formatDate, validateResumeFile } from '~/lib/utils'
 import { Statuses } from '~/types/enum'
 
 const ResumeMatchingPage = () => {
     const [jobSearchTaskID, setJobSearchTaskID] = useState<string>()
+    const [resumeUploadState, setResumeUploadState] = useState<{
+        taskID?: string
+        objectKey: string | null
+    }>({ objectKey: null })
     const [jobSearchResponse, setJobSearchResponse] = useState<JobSearchResponse>()
     const [resumeName, setResumeName] = useState<string | null>(null)
     const [selectedResumeMode, setSelectedResumeMode] = useState<'upload' | 'select'>('upload')
@@ -28,22 +32,29 @@ const ResumeMatchingPage = () => {
         data: resumesData,
         isLoading: resumesLoading,
         error: resumesError,
+        refetch: refetchResumes,
     } = useQuery<ResumeData[]>({
         queryKey: ['resumes', 'all'],
         queryFn: getAllResumes,
     })
 
+    const [selectedJobPlatform, setSelectedJobPlatform] = useState<'all' | 'linkedin'>('all')
+
     const {
         register,
+        setValue,
         handleSubmit,
         formState: { errors },
-    } = useForm<JobSearchForm>()
+    } = useForm<JobSearchForm>({ defaultValues: { job_platform: 'all' } })
 
     const jobSearchMutation = useMutation({
         mutationFn: jobSearch,
         onSuccess: (response) => {
             setIsJobSearchPolling(true)
             setJobSearchTaskID(response.task_id)
+            if (response.resume_upload_task_id) {
+                setResumeUploadState((prev) => ({ ...prev, taskID: response.resume_upload_task_id }))
+            }
         },
         onError: (err: any) => {
             toast.error('Error in searching job, please try again later')
@@ -51,8 +62,8 @@ const ResumeMatchingPage = () => {
     })
 
     const { data: jobSearchStatus } = useQuery({
-        queryKey: ['job_search_response', jobSearchTaskID],
-        queryFn: getJobSearchResponse,
+        queryKey: ['task_status', jobSearchTaskID],
+        queryFn: getTaskStatus,
         enabled: !!jobSearchTaskID,
         refetchInterval: (query) => {
             const status = query.state.data?.status
@@ -60,8 +71,15 @@ const ResumeMatchingPage = () => {
         },
     })
 
-    console.log("jobSearchStatus: ", jobSearchStatus);
-    
+    const { data: resumeUploadStatus } = useQuery({
+        queryKey: ['task_status', resumeUploadState.taskID],
+        queryFn: getTaskStatus,
+        enabled: !!resumeUploadState.taskID,
+        refetchInterval: (query) => {
+            const status = query.state.data?.status
+            return status === 'SUCCESS' || status === 'FAILURE' ? false : 2000
+        },
+    })
 
     useEffect(() => {
         if (jobSearchStatus?.status === Statuses.SUCCESS) {
@@ -78,6 +96,21 @@ const ResumeMatchingPage = () => {
             toast.error('Job search failed.')
         }
     }, [jobSearchStatus])
+
+    useEffect(() => {
+        if (resumeUploadStatus?.status === Statuses.SUCCESS) {
+            setResumeUploadState((prev) => ({
+                taskID: undefined,
+                objectKey: resumeUploadStatus.object_key || prev.objectKey,
+            }))
+            refetchResumes()
+        }
+
+        if (resumeUploadStatus?.status === Statuses.FAILURE) {
+            setResumeUploadState((prev) => ({ ...prev, taskID: undefined }))
+            toast.error('Failed to save resume in background.')
+        }
+    }, [resumeUploadStatus, refetchResumes])
 
     const handleSearchAnother = () => setJobSearchResponse(undefined)
 
@@ -100,14 +133,10 @@ const ResumeMatchingPage = () => {
                 fileInputRef.current.files.length > 0
             ) {
                 const file = fileInputRef.current.files[0]
-                const allowedTypes = ['application/pdf']
-                const allowedExtensions = ['pdf']
-                const fileTypeValid = allowedTypes.includes(file.type)
-                const ext = file.name.split('.').pop()?.toLowerCase()
-                const extValid = ext ? allowedExtensions.includes(ext) : false
+                const validation = validateResumeFile(file)
 
-                if (!fileTypeValid && !extValid) {
-                    toast.error('Invalid file type. Only PDF files are allowed.')
+                if (!validation.isValid) {
+                    toast.error(validation.error)
                     return
                 }
 
@@ -151,8 +180,9 @@ const ResumeMatchingPage = () => {
         }
     }
 
-    const handleExistingResumeSelect = (resumeId: string, resumeSourceURL: string) => {
+    const handleExistingResumeSelect = (resumeId: string, resumeSourceURL: string, objectKey: string) => {
         setSelectedExistingResume({ resume_id: resumeId, resume_source_url: resumeSourceURL })
+        setResumeUploadState({ objectKey })
         setResumeName(null) // Clear uploaded file
         if (fileInputRef.current) {
             fileInputRef.current.value = '' // Clear file input
@@ -231,7 +261,10 @@ const ResumeMatchingPage = () => {
 
                     {/* Matched Jobs */}
                     {jobSearchResponse.jobs_matched && (
-                        <JobMatchedCard jobSearchResponse={jobSearchResponse} />
+                        <JobMatchedCard
+                            jobSearchResponse={jobSearchResponse}
+                            resumeObjectKey={resumeUploadState.objectKey}
+                        />
                     )}
                 </div>
             ) : (
@@ -243,6 +276,48 @@ const ResumeMatchingPage = () => {
                         onSubmit={handleSubmit(onSubmit)}
                     >
                         <div className="grid grid-cols-1 gap-6">
+
+                            {/* Job Platform */}
+                            <div className="flex flex-col">
+                                <label className="mb-1 text-gray-700 font-medium">
+                                    Job Platform
+                                </label>
+                                <div className="flex gap-2 mt-1 w-3/4">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedJobPlatform('all')
+                                            setValue('job_platform', 'all')
+                                        }}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium transition-all ${
+                                            selectedJobPlatform === 'all'
+                                                ? 'bg-blue-600 text-white shadow-md'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                        disabled={jobSearchMutation.isPending}
+                                    >
+                                        <Globe className="w-4 h-4" />
+                                        All Platforms
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedJobPlatform('linkedin')
+                                            setValue('job_platform', 'linkedin')
+                                        }}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium transition-all ${
+                                            selectedJobPlatform === 'linkedin'
+                                                ? 'bg-blue-600 text-white shadow-md'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                        disabled={jobSearchMutation.isPending}
+                                    >
+                                        <Linkedin className="w-4 h-4" />
+                                        LinkedIn Only
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* Job Title */}
                             <div className="flex flex-col">
                                 <label className="mb-1 text-gray-700 font-medium">Job Title</label>
@@ -321,7 +396,7 @@ const ResumeMatchingPage = () => {
                                     disabled={jobSearchMutation.isPending}
                                 >
                                     <Upload className="inline-block w-4 h-4 mr-2" />
-                                    Use New Resume
+                                    Upload New Resume
                                 </button>
                                 <button
                                     type="button"
@@ -461,6 +536,7 @@ const ResumeMatchingPage = () => {
                                                                 handleExistingResumeSelect(
                                                                     resume.id,
                                                                     resume.url,
+                                                                    resume.objectKey,
                                                                 )
                                                     }
                                                     className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${selectedExistingResume?.resume_id ===
