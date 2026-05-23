@@ -77,3 +77,12 @@ def read_return_pdf_content_stream(stream_content):
         extracted_content_text += page.get_text()
 
     return extracted_content_text
+
+def clean_markdown_json(json_str: str) -> str:
+    """Removes markdown formatting blocks from a JSON string."""
+    cleaned = json_str.strip()
+    if cleaned.startswith("```json"):
+        cleaned = cleaned[7:]
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3]
+    return cleaned.strip()

@@ -4,7 +4,6 @@ import base64
 import logging
 
 from src.celery import celery
-from src.resume.service import ResumeService
 from src.database import Database
 from src.config.runtime import params
 from src.core.redis import RedisInstance
@@ -16,6 +15,7 @@ async def _save_resume_to_db(filename: str, object_key: str, user_id: str):
     """Create a DB resume record inside an async session."""
     Database.connect_async_session()
     async with Database.async_session() as session:
+        from src.resume.service import ResumeService
         resume_service = ResumeService()
         await resume_service.create_db_resume(session, filename, object_key, user_id)
 
@@ -38,6 +38,7 @@ def upload_resume(
 
     try:
         file_bytes = base64.b64decode(file_bytes_b64)
+        from src.resume.service import ResumeService
         resume_service = ResumeService()
 
         # 1. Upload to S3 (synchronous boto3 — safe in Celery worker)

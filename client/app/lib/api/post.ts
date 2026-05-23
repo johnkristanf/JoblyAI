@@ -143,3 +143,29 @@ export const jobQuery = async (query: string): Promise<{ response: string }> => 
         throw new Error(error.response?.data?.message || 'Failed to query jobs')
     }
 }
+
+export interface TailorResumePayload {
+    object_key: string
+    job_title: string
+    job_description: string
+    employer_name?: string | null
+}
+
+export const tailorResume = async (payload: TailorResumePayload): Promise<Response> => {
+    const accessToken = await getAccessToken()
+
+    const response = await fetch(`${import.meta.env.VITE_API_V1_BASE_URL}/resume/tailor`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+        body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+        throw new Error('Failed to tailor resume')
+    }
+
+    return response
+}

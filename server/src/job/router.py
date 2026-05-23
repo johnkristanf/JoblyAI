@@ -7,8 +7,8 @@ from redis.client import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
-from src.tasks.job_matching import job_matching
-from src.tasks.resume_upload import upload_resume
+from src.celery.tasks.job_matching import job_matching
+from src.celery.tasks.resume_upload import upload_resume
 from src.auth.dependencies import verify_user_from_token
 from src.database import Database
 from src.utils import (
@@ -130,21 +130,6 @@ async def delete_saved_job_by_id(
     await session.delete(job)
     await session.commit()
     return {"message": "Saved job deleted successfully"}
-
-
-@job_router.get("/task/{taskID}/status")
-async def get_task_status(
-    taskID: str,
-    user: dict = Depends(verify_user_from_token),
-    redis_client: Redis = Depends(Database.get_redis_client),
-):
-    key = f"task:{taskID}"
-    result = await redis_client.get(key)
-    if not result:
-        return {"error": "No response found for this task."}, 404
-
-    response_data = json_decode(result)
-    return response_data
 
 
 @job_router.post("/interview-process")

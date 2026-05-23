@@ -6,7 +6,7 @@ celery = Celery(
     "worker",
     broker=params["CELERY_BROKER_URL"],
     backend=params["CELERY_BACKEND_URL"],
-    include=["src.tasks.job_matching", "src.tasks.resume_upload"]
+    include=["src.celery.tasks.job_matching", "src.celery.tasks.resume_upload"]
 )
 
 celery.conf.update(

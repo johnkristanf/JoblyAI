@@ -4,7 +4,7 @@ import type { ResumeData } from '~/types/resume'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { removeResume } from '~/lib/api/post'
-import FullScreenLoader from './full-screen-loader'
+import FullScreenLoader from '../full-screen-loader'
 import * as React from 'react'
 
 // Shadcn components for dialog confirmation

@@ -10,11 +10,16 @@ from fastapi import HTTPException, status, UploadFile
 from fastapi.concurrency import run_in_threadpool
 import base64
 import httpx
+import uuid
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from weasyprint import HTML
+
 from src.utils import json_decode, read_return_pdf_content_stream
 
 from src.resume.model import Resume
 from src.pydantic_config import settings
 from src.config.runtime import params
+from src.celery.tasks.resume_upload import upload_resume
 
 from dotenv import load_dotenv
 
@@ -156,7 +161,6 @@ class ResumeService:
                 resume_text = read_return_pdf_content_stream(resume_content)
 
                 # Fire-and-forget: persist resume to S3 + DB in the background
-                from src.tasks.resume_upload import upload_resume
                 file_bytes_b64 = base64.b64encode(resume_content).decode("utf-8")
                 upload_task = upload_resume.delay(
                     file_bytes_b64=file_bytes_b64,
@@ -220,3 +224,23 @@ class ResumeService:
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"Failed to remove from S3: {str(e)}",
             )
+
+    def fetch_pdf_bytes_from_s3(self, bucket: str, object_key: str) -> bytes:
+        response = s3.get_object(Bucket=bucket, Key=object_key)
+        return response['Body'].read()
+
+    def generate_tailored_pdf(self, resume_json: dict) -> bytes:
+        env = Environment(
+            loader=FileSystemLoader("src/resume/templates"),
+            autoescape=select_autoescape()
+        )
+        template = env.get_template("tailored_resume.html")
+        html_out = template.render(resume=resume_json)
+        
+        pdf_bytes = HTML(string=html_out).write_pdf()
+        return pdf_bytes
+
+    def upload_tailored_pdf(self, bucket: str, user_id: str, pdf_bytes: bytes) -> str:
+        object_key = f"resumes/{user_id}/tailored_{uuid.uuid4()}.pdf"
+        self.put_s3_object(bucket, object_key, pdf_bytes, "application/pdf")
+        return object_key

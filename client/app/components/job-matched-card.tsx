@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 import { JobLocationTooltip } from './job-location-tooltip'
 import { InterviewProcessBtn } from './interview-process-btn'
 import { EmployerInsightsBtn } from './employer-insights-btn'
-import { TailorResumeArtifact } from './tailor-resume-artifact'
+import { TailorResumeArtifact } from './resume/tailor-resume-artifact'
 import { Wand2 } from 'lucide-react'
 
 interface JobMatchedCardProps {
@@ -35,12 +35,7 @@ export function JobMatchedCard({ jobSearchResponse, resumeObjectKey }: JobMatche
                                 className="bg-white rounded-lg shadow p-5 flex flex-col gap-4 relative"
                             >
                                 <div className="flex justify-end items-center gap-2">
-                                    {job.job_latitude && job.job_longitude && (
-                                        <JobLocationTooltip
-                                            job_latitude={job.job_latitude}
-                                            job_longitude={job.job_longitude}
-                                        />
-                                    )}
+                                    
 
                                     {/* Tailor Resume button — only visible when an objectKey is available */}
                                     {resumeObjectKey && (
@@ -59,6 +54,13 @@ export function JobMatchedCard({ jobSearchResponse, resumeObjectKey }: JobMatche
                                                 <p>Tailor resume for this job</p>
                                             </TooltipContent>
                                         </Tooltip>
+                                    )}
+
+                                    {job.job_latitude && job.job_longitude && (
+                                        <JobLocationTooltip
+                                            job_latitude={job.job_latitude}
+                                            job_longitude={job.job_longitude}
+                                        />
                                     )}
 
                                     <InterviewProcessBtn job={job} />

@@ -35,7 +35,7 @@ export const getTaskStatus = async ({ queryKey }: { queryKey: QueryKey }) => {
     const accessToken = await getAccessToken()
 
     const response = await axios.get(
-        `${import.meta.env.VITE_API_V1_BASE_URL}/job/task/${taskID}/status`,
+        `${import.meta.env.VITE_API_V1_BASE_URL}/celery/task/${taskID}/status`,
         {
             headers: {
                 Authorization: accessToken ? `Bearer ${accessToken}` : '',
