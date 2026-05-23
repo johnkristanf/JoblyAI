@@ -178,8 +178,7 @@ async def tailor_resume(
     resume_service: ResumeService = Depends(get_resume_service),
     user: dict = Depends(verify_user_from_token),
 ) -> StreamingResponse:
-    user_id = user.get("id")
-    
+
     async def generate():
         try:
             # 1. Fetch PDF and extract text
@@ -220,39 +219,16 @@ async def tailor_resume(
                     data = json.dumps({"type" : "token", "content": content})
                     yield f"data: {data}\n\n"
 
-            # 3. Generate PDF and upload
+            # 3. Finalize JSON and emit
             try:
                 accumulated_json = clean_markdown_json(accumulated_json)
-                
                 resume_json = json.loads(accumulated_json.strip())
-                
-                new_pdf_bytes = await run_in_threadpool(
-                    resume_service.generate_tailored_pdf,
-                    resume_json
-                )
-                
-                new_object_key = await run_in_threadpool(
-                    resume_service.upload_tailored_pdf,
-                    params["AWS_S3_BUCKET_NAME"],
-                    str(user_id),
-                    new_pdf_bytes
-                )
-                
-                presigned_url = resume_service.generate_presigned_url(
-                    params["AWS_S3_BUCKET_NAME"],
-                    new_object_key
-                )
-                
-                data = json.dumps({"type": "done", "presigned_url": presigned_url})
+                data = json.dumps({"type": "done", "resume_json": resume_json})
                 yield f"data: {data}\n\n"
                 
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse JSON from LLM: {e}")
                 data = json.dumps({"type": "error", "message": "Failed to generate valid resume data."})
-                yield f"data: {data}\n\n"
-            except Exception as e:
-                logger.error(f"Error generating or uploading PDF: {e}", exc_info=True)
-                data = json.dumps({"type": "error", "message": "Failed to generate tailored PDF."})
                 yield f"data: {data}\n\n"
 
         except Exception as e:

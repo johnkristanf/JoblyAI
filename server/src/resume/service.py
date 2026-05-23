@@ -229,18 +229,3 @@ class ResumeService:
         response = s3.get_object(Bucket=bucket, Key=object_key)
         return response['Body'].read()
 
-    def generate_tailored_pdf(self, resume_json: dict) -> bytes:
-        env = Environment(
-            loader=FileSystemLoader("src/resume/templates"),
-            autoescape=select_autoescape()
-        )
-        template = env.get_template("tailored_resume.html")
-        html_out = template.render(resume=resume_json)
-        
-        pdf_bytes = HTML(string=html_out).write_pdf()
-        return pdf_bytes
-
-    def upload_tailored_pdf(self, bucket: str, user_id: str, pdf_bytes: bytes) -> str:
-        object_key = f"resumes/{user_id}/tailored_{uuid.uuid4()}.pdf"
-        self.put_s3_object(bucket, object_key, pdf_bytes, "application/pdf")
-        return object_key

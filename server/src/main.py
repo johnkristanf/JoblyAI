@@ -48,7 +48,6 @@ api_v1_router = group(
     (job_router, "/job", ["Job"]),
     (user_route, "/user", ["User"]),
     (resume_router, "/resume", ["Resume"]),
-
     (celery_router, "/celery", ["Celery"]),
 )
 

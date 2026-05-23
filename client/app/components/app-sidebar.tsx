@@ -1,5 +1,5 @@
-import { BookmarkCheck, BriefcaseBusiness, FileUser, MapPin, Sparkles } from 'lucide-react'
-import { NavLink } from 'react-router'
+import { BookmarkCheck, BriefcaseBusiness, FileUser, MapPin } from 'lucide-react'
+import { Link, useLocation } from 'react-router'
 import {
     Sidebar,
     SidebarContent,
@@ -16,6 +16,8 @@ import {
 } from '~/components/ui/sidebar'
 
 export function AppSidebar() {
+    const { pathname } = useLocation()
+
     return (
         <Sidebar>
             <SidebarHeader>
@@ -40,46 +42,38 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                             <SidebarMenuSub>
                                 <SidebarMenuSubItem>
-                                    <NavLink to="/job/search/query">
-                                        {({ isActive }) => (
-                                            <SidebarMenuSubButton isActive={isActive} className="cursor-pointer">
-                                                <span className="text-xs">Query</span>
-                                            </SidebarMenuSubButton>
-                                        )}
-                                    </NavLink>
+                                    <SidebarMenuSubButton asChild isActive={pathname === '/job/search/query'} className="cursor-pointer">
+                                        <Link to="/job/search/query">
+                                            <span className="text-xs">Query</span>
+                                        </Link>
+                                    </SidebarMenuSubButton>
                                 </SidebarMenuSubItem>
                                 <SidebarMenuSubItem>
-                                    <NavLink to="/job/search/resume-matching">
-                                        {({ isActive }) => (
-                                            <SidebarMenuSubButton isActive={isActive} className="cursor-pointer">
-                                                <span className="text-xs">Resume Matching</span>
-                                            </SidebarMenuSubButton>
-                                        )}
-                                    </NavLink>
+                                    <SidebarMenuSubButton asChild isActive={pathname === '/job/search/resume-matching'} className="cursor-pointer">
+                                        <Link to="/job/search/resume-matching">
+                                            <span className="text-xs">Resume Matching</span>
+                                        </Link>
+                                    </SidebarMenuSubButton>
                                 </SidebarMenuSubItem>
                             </SidebarMenuSub>
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>
-                            <NavLink to="/saved/jobs">
-                                {({ isActive }) => (
-                                    <SidebarMenuButton isActive={isActive} className="cursor-pointer">
-                                        <BookmarkCheck className="size-4" />{' '}
-                                        <span className="text-xs">Saved Jobs</span>
-                                    </SidebarMenuButton>
-                                )}
-                            </NavLink>
+                            <SidebarMenuButton asChild isActive={pathname === '/saved/jobs'} className="cursor-pointer">
+                                <Link to="/saved/jobs">
+                                    <BookmarkCheck className="size-4" />{' '}
+                                    <span className="text-xs">Saved Jobs</span>
+                                </Link>
+                            </SidebarMenuButton>
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>
-                            <NavLink to="/resume">
-                                {({ isActive }) => (
-                                    <SidebarMenuButton isActive={isActive} className="cursor-pointer">
-                                        <FileUser className="size-4" />{' '}
-                                        <span className="text-xs">Resume</span>
-                                    </SidebarMenuButton>
-                                )}
-                            </NavLink>
+                            <SidebarMenuButton asChild isActive={pathname === '/resume'} className="cursor-pointer">
+                                <Link to="/resume">
+                                    <FileUser className="size-4" />{' '}
+                                    <span className="text-xs">Resume</span>
+                                </Link>
+                            </SidebarMenuButton>
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroup>

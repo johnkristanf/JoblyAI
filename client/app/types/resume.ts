@@ -5,6 +5,9 @@ export type ResumeFile = {
     previewUrl: string
 }
 
+export type TemplateId = 'modern' | 'classic' | 'bold'
+
+
 export type ResumeData = {
     id: string
     name: string
@@ -21,4 +24,32 @@ export type SelectedResume = {
 export type RemoveResumeData = {
     id: string
     object_key: string
+}
+
+
+export interface TailoredResumeData {
+  name?: string;
+  contact?: {
+    email?: string;
+    phone?: string;
+    location?: string;
+    linkedin?: string;
+    github?: string;
+    portfolio?: string;
+  };
+  summary?: string;
+  skills?: string[];
+  experience?: Array<{
+    title?: string;
+    company?: string;
+    dates?: string;
+    bullets?: string[];
+  }>;
+  education?: Array<{
+    degree?: string;
+    institution?: string;
+    dates?: string;
+    details?: string;
+  }>;
+  certifications?: string[];
 }
