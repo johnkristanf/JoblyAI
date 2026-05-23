@@ -6,7 +6,6 @@ import { JobPublisherAndApply } from './publisher-and-apply'
 import { OtherJobListingsDialog } from './other-job-listings-dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 import { JobLocationTooltip } from './job-location-tooltip'
-import { InterviewProcessBtn } from './interview-process-btn'
 import { EmployerInsightsBtn } from './employer-insights-btn'
 import { TailorResumeArtifact } from './resume/tailor-resume-artifact'
 import { Wand2 } from 'lucide-react'
@@ -63,8 +62,7 @@ export function JobMatchedCard({ jobSearchResponse, resumeObjectKey }: JobMatche
                                         />
                                     )}
 
-                                    <InterviewProcessBtn job={job} />
-                                    {/* <MockInterviewModal job={job} /> */}
+
                                 </div>
 
                                 {/* COMPANY INFORMATION SECTION */}

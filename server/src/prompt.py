@@ -19,24 +19,6 @@ class JobSeachPrompt:
         return {"role": "user", "content": content}
 
 
-class InterviewProcessPrompt:
-    PROMPT_PATH = (
-        "src/prompts/interview_process.md"
-    )
-
-    def load_system_prompt(self, job_data: dict):
-        with open(self.PROMPT_PATH, "r", encoding="utf-8") as f:
-            template = f.read()
-
-        content = template.format(job_data=job_data)
-        return {"role": "system", "content": content}
-
-    def load_user_prompt(self):
-        return {
-            "role": "user",
-            "content": "Please generate the interview process guide for this specific job.",
-        }
-
 
 class EmployerInsightsPrompt:
     PROMPT_PATH = (

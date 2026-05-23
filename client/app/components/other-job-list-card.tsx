@@ -6,7 +6,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 import { Globe } from 'lucide-react'
 import { JobLocationTooltip } from './job-location-tooltip'
 import { DescriptionSection } from './description-section'
-import { InterviewProcessBtn } from './interview-process-btn'
 import { EmployerInsightsBtn } from './employer-insights-btn'
 
 export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: JobSearchResponse }) {
@@ -40,7 +39,7 @@ export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: Job
                                             job_longitude={job.job_longitude}
                                         />
                                     )}
-                                    <InterviewProcessBtn job={job} />
+
                                 </div>
                                 {/* COMPANY INFORMATION SECTION */}
                                 <div className="flex items-center mb-2">

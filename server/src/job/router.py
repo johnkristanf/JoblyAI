@@ -15,7 +15,7 @@ from src.utils import (
     json_decode,
     read_return_pdf_content_stream,
 )
-from src.job.schema import JobsSearchIn, SaveJobIn, InterviewProcessIn, EmployerInsightsIn, JobQueryIn
+from src.job.schema import JobsSearchIn, SaveJobIn, EmployerInsightsIn, JobQueryIn
 from src.job.models import Job
 
 from langchain.agents import create_agent
@@ -132,15 +132,6 @@ async def delete_saved_job_by_id(
     return {"message": "Saved job deleted successfully"}
 
 
-@job_router.post("/interview-process")
-async def get_interview_process(
-    payload: InterviewProcessIn,
-    user: dict = Depends(verify_user_from_token),
-    jobs_service: JobsService = Depends(get_jobs_service),
-):
-    job_data = payload.model_dump(exclude_none=True)
-    process_text = await jobs_service.generate_interview_process(job_data)
-    return {"process": process_text}
 
 
 @job_router.post("/employer-insights")

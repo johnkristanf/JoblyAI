@@ -6,7 +6,7 @@ from redis.client import Redis
 
 from src.config.runtime import params
 from src.utils import json_decode, read_return_pdf_content_stream
-from src.prompt import JobSeachPrompt, InterviewProcessPrompt, EmployerInsightsPrompt
+from src.prompt import JobSeachPrompt, EmployerInsightsPrompt
 from firecrawl import AsyncFirecrawlApp
 
 COUNTRY_CODE_TO_NAME = {
@@ -63,19 +63,6 @@ class JobsService:
         await redis_client.setex(cache_key, ttl, json.dumps(job_search_results))
         return job_search_results
 
-    async def generate_interview_process(self, job_data: dict) -> str:
-        client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
-
-        prompt = InterviewProcessPrompt()
-        system_prompt = prompt.load_system_prompt(job_data)
-        user_prompt = prompt.load_user_prompt()
-
-        response = await client.responses.create(
-            model=params["OPENAI_MODEL"],
-            input=[system_prompt, user_prompt],
-        )
-
-        return response.output_text
 
     async def generate_employer_insights(self, employer_website: str) -> str:
         api_key = params.get("FIRECRAWL_API_KEY")
