@@ -120,40 +120,12 @@ class ResumeService:
 
         return resume
 
-    # ---------------------------------- AWS S3 RELATED METHODS ---------------------------------------
-
-    def put_s3_object(
-        self,
-        bucket: str,
-        object_key: str,
-        file_content: bytes,
-        file_content_type: str | None,
-    ):
-        return s3.put_object(
-            Bucket=bucket,
-            Key=object_key,
-            Body=file_content,
-            ContentType=file_content_type,
-        )
-
-    async def extract_resume_from_source(self, source):
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(source)
-                if response.status_code == 200:
-                    resume_content = response.content
-                    return read_return_pdf_content_stream(resume_content)
-        except Exception as e:
-            logger.error(
-                f"Error fetching or reading the resume PDF from URL: {e}", exc_info=True
-            )
-            raise Exception(f"Error fetching or reading the resume PDF from URL: {e}")
-
     async def process_resume_for_job_search(
         self, new_resume: UploadFile | None, existing_resume: str | None, user: dict
-    ) -> tuple[str, str | None]:
+    ) -> tuple[str, str | None, str | None]:
         resume_text = ""
         upload_task_id = None
+        object_key = None
 
         if new_resume is not None:
             try:
@@ -176,12 +148,47 @@ class ResumeService:
 
         # Read existing resume data from object storage source
         if existing_resume is not None:
-            resume_data = json_decode(existing_resume)
-            resume_source_url = resume_data.get("resume_source_url")
-            if resume_source_url:
-                resume_text = await self.extract_resume_from_source(resume_source_url)
+            existing_resume_data = json_decode(existing_resume)
+            object_key = existing_resume_data.get("object_key")
+            if object_key:
+                try:
+                    resume_content = self.get_object_from_s3(params["AWS_S3_BUCKET_NAME"], object_key)
+                    resume_text = read_return_pdf_content_stream(resume_content)
+                except Exception as e:
+                    logger.error(f"Error fetching existing resume from S3: {e}", exc_info=True)
+                    resume_text = ""
 
-        return resume_text, upload_task_id
+        return resume_text, upload_task_id, object_key
+
+
+    # ---------------------------------- AWS S3 RELATED METHODS ---------------------------------------
+
+    def put_s3_object(
+        self,
+        bucket: str,
+        object_key: str,
+        file_content: bytes,
+        file_content_type: str | None,
+    ):
+        return s3.put_object(
+            Bucket=bucket,
+            Key=object_key,
+            Body=file_content,
+            ContentType=file_content_type,
+        )
+
+
+    def get_object_from_s3(self, bucket: str, object_key: str) -> bytes:
+        response = s3.get_object(Bucket=bucket, Key=object_key)
+        return response['Body'].read()
+
+    async def get_object_from_s3_safe(self, bucket: str, object_key: str) -> bytes:
+        async with s3_semaphore:
+            return await run_in_threadpool(
+                self.get_object_from_s3,
+                bucket,
+                object_key,
+            )
 
     def generate_presigned_url(self, bucket: str, key: str) -> str:
         return s3.generate_presigned_url(
@@ -225,7 +232,4 @@ class ResumeService:
                 detail=f"Failed to remove from S3: {str(e)}",
             )
 
-    def fetch_pdf_bytes_from_s3(self, bucket: str, object_key: str) -> bytes:
-        response = s3.get_object(Bucket=bucket, Key=object_key)
-        return response['Body'].read()
-
+    

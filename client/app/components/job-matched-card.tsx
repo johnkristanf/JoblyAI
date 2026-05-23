@@ -17,6 +17,7 @@ interface JobMatchedCardProps {
 
 export function JobMatchedCard({ jobSearchResponse, resumeObjectKey }: JobMatchedCardProps) {
     const [tailorTarget, setTailorTarget] = useState<JobMatch | null>(null)
+console.log("resumeObjectKey: ", resumeObjectKey);
 
     return (
         <>

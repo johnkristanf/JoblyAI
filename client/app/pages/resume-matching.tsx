@@ -1,17 +1,17 @@
-import { useForm, type SubmitHandler } from 'react-hook-form'
-import type { JobSearchResponse, JobSearchForm } from '~/types/job_search'
+import type { JobSearchResponse } from '~/types/job_search'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, Upload, FileText, Check, Globe, Linkedin } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ArrowRight } from 'lucide-react'
 import { JobMatchedCard } from '~/components/job-matched-card'
 import NoJobsFound from '~/components/ui/no-jobs-found'
 import { jobSearch } from '~/lib/api/post'
 import { toast } from 'sonner'
 import FullScreenLoader from '~/components/full-screen-loader'
 import { getAllResumes, getTaskStatus } from '~/lib/api/get'
-import type { ResumeData, SelectedResume } from '~/types/resume'
-import { formatDate, validateResumeFile } from '~/lib/utils'
+import type { ResumeData } from '~/types/resume'
 import { Statuses } from '~/types/enum'
+import { JobSearchForm } from '~/components/job/job-search-form'
+import InlineLoader from '~/components/ui/inline-loader'
 
 const ResumeMatchingPage = () => {
     const [jobSearchTaskID, setJobSearchTaskID] = useState<string>()
@@ -20,12 +20,6 @@ const ResumeMatchingPage = () => {
         objectKey: string | null
     }>({ objectKey: null })
     const [jobSearchResponse, setJobSearchResponse] = useState<JobSearchResponse>()
-    const [resumeName, setResumeName] = useState<string | null>(null)
-    const [selectedResumeMode, setSelectedResumeMode] = useState<'upload' | 'select'>('upload')
-    const [selectedExistingResume, setSelectedExistingResume] = useState<SelectedResume | null>(
-        null,
-    )
-    const fileInputRef = useRef<HTMLInputElement>(null)
     const [isJobSearchPolling, setIsJobSearchPolling] = useState<boolean>(false)
 
     const {
@@ -37,27 +31,22 @@ const ResumeMatchingPage = () => {
         queryKey: ['resumes', 'all'],
         queryFn: getAllResumes,
     })
-
-    const [selectedJobPlatform, setSelectedJobPlatform] = useState<'all' | 'linkedin'>('all')
-
-    const {
-        register,
-        setValue,
-        handleSubmit,
-        formState: { errors },
-    } = useForm<JobSearchForm>({ defaultValues: { job_platform: 'all' } })
-
     const jobSearchMutation = useMutation({
         mutationFn: jobSearch,
         onSuccess: (response) => {
+            console.log("response: ", response);
+            
             setIsJobSearchPolling(true)
-            setJobSearchTaskID(response.task_id)
+            setJobSearchTaskID(response.job_matching_task_id)
             if (response.resume_upload_task_id) {
                 setResumeUploadState((prev) => ({ ...prev, taskID: response.resume_upload_task_id }))
             }
+            if (response.existing_resume_object_key) {
+                setResumeUploadState((prev) => ({ ...prev, objectKey: response.existing_resume_object_key }))
+            }
         },
         onError: (err: any) => {
-            toast.error('Error in searching job, please try again later')
+            toast.error('Error in matching job, please try again later')
         },
     })
 
@@ -114,81 +103,6 @@ const ResumeMatchingPage = () => {
 
     const handleSearchAnother = () => setJobSearchResponse(undefined)
 
-    const onSubmit: SubmitHandler<JobSearchForm> = (data) => {
-        const formData = new FormData()
-
-        // Append all primitive fields (except file input)
-        Object.entries(data).forEach(([key, value]) => {
-            if (key !== 'resume' && value !== undefined && value !== null) {
-                formData.append(key, value as string)
-            }
-        })
-
-        // Handle resume based on selected mode
-        if (selectedResumeMode === 'upload') {
-            // Validate file input to only accept pdf and docs
-            if (
-                fileInputRef.current &&
-                fileInputRef.current.files &&
-                fileInputRef.current.files.length > 0
-            ) {
-                const file = fileInputRef.current.files[0]
-                const validation = validateResumeFile(file)
-
-                if (!validation.isValid) {
-                    toast.error(validation.error)
-                    return
-                }
-
-                formData.append('new_resume', file)
-            }
-        } else if (selectedResumeMode === 'select' && selectedExistingResume) {
-            // Append the selected existing resume ID
-            formData.append('existing_resume', JSON.stringify(selectedExistingResume))
-        }
-
-        jobSearchMutation.mutate(formData)
-    }
-
-    // Handler for file drop and click
-    const triggerFileInput = () => {
-        if (fileInputRef.current) fileInputRef.current.click()
-    }
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.length) {
-            setResumeName(e.target.files[0].name)
-            setSelectedExistingResume(null) // Clear existing resume selection
-        } else {
-            setResumeName(null)
-        }
-    }
-
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault()
-        const files = e.dataTransfer.files
-        if (fileInputRef.current && files.length) {
-            const dt = new DataTransfer()
-            Array.from(files).forEach((file) => dt.items.add(file))
-            fileInputRef.current.files = dt.files
-
-            const event = new Event('change', { bubbles: true })
-            fileInputRef.current.dispatchEvent(event)
-
-            setResumeName(files[0].name)
-            setSelectedExistingResume(null) // Clear existing resume selection
-        }
-    }
-
-    const handleExistingResumeSelect = (resumeId: string, resumeSourceURL: string, objectKey: string) => {
-        setSelectedExistingResume({ resume_id: resumeId, resume_source_url: resumeSourceURL })
-        setResumeUploadState({ objectKey })
-        setResumeName(null) // Clear uploaded file
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '' // Clear file input
-        }
-    }
-
     return (
         <div className="w-full min-h-screen flex flex-col p-10">
             {/* DYNAMIC PAGE TITLE */}
@@ -217,31 +131,7 @@ const ResumeMatchingPage = () => {
 
             {/* JOB SEARCH POLLING LOADER */}
             {!jobSearchResponse && isJobSearchPolling && (
-                <div className="flex flex-col items-center justify-center py-12">
-                    <svg
-                        className="animate-spin h-8 w-8 text-blue-500 mb-3"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                        <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                        />
-                        <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                        />
-                    </svg>
-                    <span className="text-gray-700 text-md font-medium">
-                        Searching may take a few moments...
-                    </span>
-                </div>
+                <InlineLoader message='Searching may take a few moments...' />
             )}
 
             {jobSearchResponse &&
@@ -271,333 +161,14 @@ const ResumeMatchingPage = () => {
                 // JOB SEARCH FORM
                 !jobSearchResponse &&
                 !isJobSearchPolling && (
-                    <form
-                        className="mb-8 bg-white rounded-lg shadow p-6 space-y-6"
-                        onSubmit={handleSubmit(onSubmit)}
-                    >
-                        <div className="grid grid-cols-1 gap-6">
-
-                            {/* Job Platform */}
-                            <div className="flex flex-col">
-                                <label className="mb-1 text-gray-700 font-medium">
-                                    Job Platform
-                                </label>
-                                <div className="flex gap-2 mt-1 w-3/4">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setSelectedJobPlatform('all')
-                                            setValue('job_platform', 'all')
-                                        }}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium transition-all ${
-                                            selectedJobPlatform === 'all'
-                                                ? 'bg-blue-600 text-white shadow-md'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                        }`}
-                                        disabled={jobSearchMutation.isPending}
-                                    >
-                                        <Globe className="w-4 h-4" />
-                                        All Platforms
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setSelectedJobPlatform('linkedin')
-                                            setValue('job_platform', 'linkedin')
-                                        }}
-                                        className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium transition-all ${
-                                            selectedJobPlatform === 'linkedin'
-                                                ? 'bg-blue-600 text-white shadow-md'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                        }`}
-                                        disabled={jobSearchMutation.isPending}
-                                    >
-                                        <Linkedin className="w-4 h-4" />
-                                        LinkedIn Only
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Job Title */}
-                            <div className="flex flex-col">
-                                <label className="mb-1 text-gray-700 font-medium">Job Title</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. Software Engineer"
-                                    className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                    {...register('job_title')}
-                                    disabled={jobSearchMutation.isPending}
-                                />
-                            </div>
-
-                            {/* Date Posted */}
-                            <div className="flex flex-col">
-                                <label className="mb-1 text-gray-700 font-medium">
-                                    Date Posted
-                                </label>
-                                <select
-                                    className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                    defaultValue=""
-                                    {...register('date_posted')}
-                                    disabled={jobSearchMutation.isPending}
-                                >
-                                    <option value="" disabled>
-                                        Select date posted
-                                    </option>
-                                    <option value="all">Anytime</option>
-                                    <option value="today">Last 24 hours</option>
-                                    <option value="3days">Last 3 days</option>
-                                    <option value="week">A week ago</option>
-                                    <option value="month">A month ago</option>
-                                </select>
-                            </div>
-
-                            {/* Country */}
-                            <div className="flex flex-col">
-                                <label className="mb-1 text-gray-700 font-medium">Country</label>
-                                <select
-                                    className="rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                    defaultValue=""
-                                    {...register('country')}
-                                    disabled={jobSearchMutation.isPending}
-                                >
-                                    <option value="" disabled>
-                                        Select country
-                                    </option>
-                                    <option value="us">United States</option>
-                                    <option value="gb">United Kingdom</option>
-                                    <option value="ca">Canada</option>
-                                    <option value="de">Germany</option>
-                                    <option value="ph">Philippines</option>
-                                    <option value="sg">Singapore</option>
-                                    <option value="au">Australia</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* ENHANCED RESUME SECTION */}
-                        <div className="flex flex-col">
-                            <label className="mb-1 text-gray-700 font-medium">Resume</label>
-                            <p className="text-blue-600 text-xs mb-4">
-                                Must include relevant professional summary, skills, and experience.
-                                Our AI will analyze your background to find and match you with the
-                                best job opportunities.
-                            </p>
-
-                            {/* Toggle Buttons */}
-                            <div className="flex gap-2 mb-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedResumeMode('upload')}
-                                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${selectedResumeMode === 'upload'
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                        }`}
-                                    disabled={jobSearchMutation.isPending}
-                                >
-                                    <Upload className="inline-block w-4 h-4 mr-2" />
-                                    Upload New Resume
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedResumeMode('select')}
-                                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${selectedResumeMode === 'select'
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                        }`}
-                                    disabled={jobSearchMutation.isPending}
-                                >
-                                    <FileText className="inline-block w-4 h-4 mr-2" />
-                                    Select Existing Resume
-                                </button>
-                            </div>
-
-                            {/* Upload Mode */}
-                            {selectedResumeMode === 'upload' && (
-                                <div
-                                    className={`relative flex flex-col items-center justify-center border-2 border-dashed border-blue-400 rounded-lg bg-white px-6 py-8 transition ${jobSearchMutation.isPending ? 'bg-gray-100 cursor-not-allowed' : 'hover:bg-blue-50 cursor-pointer'}`}
-                                    onClick={
-                                        jobSearchMutation.isPending ? undefined : triggerFileInput
-                                    }
-                                    onDragOver={
-                                        jobSearchMutation.isPending
-                                            ? undefined
-                                            : (e) => e.preventDefault()
-                                    }
-                                    onDrop={jobSearchMutation.isPending ? undefined : handleDrop}
-                                    style={
-                                        jobSearchMutation.isPending
-                                            ? { pointerEvents: 'none', opacity: 0.7 }
-                                            : {}
-                                    }
-                                >
-                                    <input
-                                        type="file"
-                                        accept=".pdf,.doc,.docx"
-                                        id="resume-upload"
-                                        className="hidden"
-                                        // @ts-ignore
-                                        {...register('resume' as any)}
-                                        ref={fileInputRef}
-                                        onClick={
-                                            jobSearchMutation.isPending
-                                                ? (e) => e.preventDefault()
-                                                : (e) => e.stopPropagation()
-                                        }
-                                        onChange={
-                                            jobSearchMutation.isPending
-                                                ? undefined
-                                                : handleFileChange
-                                        }
-                                        disabled={jobSearchMutation.isPending}
-                                    />
-                                    <div className="flex flex-col items-center pointer-events-none select-none">
-                                        <svg
-                                            className="w-12 h-12 text-blue-400 mb-3"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"
-                                            />
-                                        </svg>
-                                        <span className="text-blue-600 font-semibold text-lg">
-                                            Click to Upload or Drag &amp; Drop
-                                        </span>
-                                        <span className="text-gray-500 text-sm mt-1">
-                                            PDF, DOC, or DOCX (Max 5MB)
-                                        </span>
-                                    </div>
-                                    {resumeName && (
-                                        <div className="mt-4 flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-md">
-                                            <FileText className="w-5 h-5 text-blue-600" />
-                                            <span className="text-gray-700 text-sm font-medium truncate max-w-xs">
-                                                {resumeName}
-                                            </span>
-                                            <Check className="w-5 h-5 text-green-600" />
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Select Mode */}
-                            {selectedResumeMode === 'select' && (
-                                <div
-                                    className={`border border-gray-300 rounded-lg bg-gray-50 p-4 ${jobSearchMutation.isPending ? 'opacity-70 pointer-events-none' : ''}`}
-                                >
-                                    {resumesLoading ? (
-                                        <div className="flex justify-center py-8">
-                                            <div className="flex flex-col items-center gap-2">
-                                                <svg
-                                                    className="animate-spin h-8 w-8 text-blue-500"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <circle
-                                                        className="opacity-25"
-                                                        cx="12"
-                                                        cy="12"
-                                                        r="10"
-                                                        stroke="currentColor"
-                                                        strokeWidth="4"
-                                                    ></circle>
-                                                    <path
-                                                        className="opacity-75"
-                                                        fill="currentColor"
-                                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                                    ></path>
-                                                </svg>
-                                                <span className="text-sm text-gray-500">
-                                                    Loading resumes...
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ) : resumesError ? (
-                                        <div className="text-center py-8 text-red-500">
-                                            Failed to load resumes. Please try again.
-                                        </div>
-                                    ) : resumesData && resumesData.length > 0 ? (
-                                        <div className="space-y-2">
-                                            <p className="text-sm text-gray-600 mb-3">
-                                                Select from your previously uploaded resumes:
-                                            </p>
-                                            {resumesData.map((resume) => (
-                                                <div
-                                                    key={resume.id}
-                                                    onClick={
-                                                        jobSearchMutation.isPending
-                                                            ? undefined
-                                                            : () =>
-                                                                handleExistingResumeSelect(
-                                                                    resume.id,
-                                                                    resume.url,
-                                                                    resume.objectKey,
-                                                                )
-                                                    }
-                                                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${selectedExistingResume?.resume_id ===
-                                                            resume.id
-                                                            ? 'bg-blue-100 border-2 border-blue-500'
-                                                            : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-sm'
-                                                        } ${jobSearchMutation.isPending ? 'pointer-events-none opacity-70' : ''}`}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <FileText
-                                                            className={`w-5 h-5 ${selectedExistingResume?.resume_id ===
-                                                                    resume.id
-                                                                    ? 'text-blue-600'
-                                                                    : 'text-gray-400'
-                                                                }`}
-                                                        />
-                                                        <div>
-                                                            <p className="text-sm font-medium text-gray-800">
-                                                                {resume.name}
-                                                            </p>
-                                                            <p className="text-xs text-gray-500">
-                                                                Uploaded:{' '}
-                                                                {resume.upload_date
-                                                                    ? formatDate(resume.upload_date)
-                                                                    : 'Unknown'}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    {selectedExistingResume?.resume_id ===
-                                                        resume.id && (
-                                                            <Check className="w-5 h-5 text-blue-600" />
-                                                        )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="text-center py-8">
-                                            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                                            <p className="text-gray-500 text-sm">
-                                                No existing resumes found. Upload a new one to get
-                                                started.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex justify-end">
-                            <button
-                                type="submit"
-                                className={`${jobSearchMutation.isPending
-                                        ? 'bg-gray-400 cursor-not-allowed opacity-70'
-                                        : 'bg-blue-600 hover:cursor-pointer hover:opacity-75'
-                                    } text-white rounded px-6 py-2 font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400`}
-                                disabled={jobSearchMutation.isPending}
-                            >
-                                {jobSearchMutation.isPending ? 'Submitting...' : 'Submit'}
-                            </button>
-                        </div>
-                    </form>
+                    <JobSearchForm
+                        onSubmitForm={jobSearchMutation.mutate}
+                        isPending={jobSearchMutation.isPending}
+                        resumesData={resumesData}
+                        resumesLoading={resumesLoading}
+                        resumesError={resumesError}
+                        onSetResumeObjectKey={(objectKey) => setResumeUploadState((prev) => ({ ...prev, objectKey }))}
+                    />
                 )
             )}
         </div>

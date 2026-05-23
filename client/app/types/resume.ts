@@ -18,7 +18,7 @@ export type ResumeData = {
 
 export type SelectedResume = {
     resume_id: string
-    resume_source_url: string
+    object_key: string
 }
 
 export type RemoveResumeData = {

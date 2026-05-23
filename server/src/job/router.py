@@ -62,7 +62,7 @@ async def job_search(
     )
 
     # Process resume text and handle upload if new resume
-    resume_text, upload_task_id = await resume_service.process_resume_for_job_search(
+    resume_text, upload_task_id, existing_resume_object_key = await resume_service.process_resume_for_job_search(
         new_resume=new_resume,
         existing_resume=existing_resume,
         user=user
@@ -78,8 +78,9 @@ async def job_search(
     
     return {
         "message": "Job matching task submitted successfully",
-        "task_id": task.id,
+        "job_matching_task_id": task.id,
         "resume_upload_task_id": upload_task_id,
+        "existing_resume_object_key": existing_resume_object_key,
     }
 
 

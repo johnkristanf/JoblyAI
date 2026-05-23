@@ -182,8 +182,7 @@ async def tailor_resume(
     async def generate():
         try:
             # 1. Fetch PDF and extract text
-            pdf_bytes = await run_in_threadpool(
-                resume_service.fetch_pdf_bytes_from_s3,
+            pdf_bytes = resume_service.get_object_from_s3(
                 params["AWS_S3_BUCKET_NAME"],
                 payload.object_key
             )
