@@ -36,6 +36,12 @@ jobs:
             --overwrite
 
           aws ssm put-parameter \
+            --name "/joblyai/prod/LINKEDIN_RAPID_API_HOST" \
+            --value "${{ secrets.LINKEDIN_RAPID_API_HOST }}" \
+            --type SecureString \
+            --overwrite
+
+          aws ssm put-parameter \
             --name "/joblyai/prod/OPENAI_MODEL" \
             --value "${{ secrets.OPENAI_MODEL }}" \
             --type SecureString \
@@ -76,25 +82,6 @@ jobs:
             --value "${{ secrets.AWS_S3_BUCKET_NAME }}" \
             --type SecureString \
             --overwrite
-            
-          aws ssm put-parameter \
-            --name "/joblyai/prod/IMAGE_KIT_PUBLIC_KEY" \
-            --value "${{ secrets.IMAGE_KIT_PUBLIC_KEY }}" \
-            --type SecureString \
-            --overwrite
-
-          aws ssm put-parameter \
-            --name "/joblyai/prod/IMAGE_KIT_PRIVATE_KEY" \
-            --value "${{ secrets.IMAGE_KIT_PRIVATE_KEY }}" \
-            --type SecureString \
-            --overwrite
-
-          aws ssm put-parameter \
-            --name "/joblyai/prod/IMAGE_KIT_URL_ENDPOINT" \
-            --value "${{ secrets.IMAGE_KIT_URL_ENDPOINT }}" \
-            --type SecureString \
-            --overwrite
-
 
           aws ssm put-parameter \
             --name "/joblyai/prod/CELERY_BROKER_URL" \
@@ -105,5 +92,11 @@ jobs:
           aws ssm put-parameter \
             --name "/joblyai/prod/CELERY_BACKEND_URL" \
             --value "${{ secrets.CELERY_BACKEND_URL }}" \
+            --type SecureString \
+            --overwrite
+
+          aws ssm put-parameter \
+            --name "/joblyai/prod/FIRECRAWL_API_KEY" \
+            --value "${{ secrets.FIRECRAWL_API_KEY }}" \
             --type SecureString \
             --overwrite

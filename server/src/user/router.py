@@ -2,12 +2,10 @@ import base64
 import uuid
 
 from fastapi import APIRouter, Depends, Form, UploadFile, File, HTTPException
-from imagekitio import ImageKit
-from imagekitio.file import UploadFileRequestOptions
+
 from src.config.runtime import params
 from src.resume.dependencies import get_resume_service
 from src.resume.service import ResumeService
-from src.user.dependencies import get_image_kit_method
 from src.auth.dependencies import verify_user_from_token
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import Database
@@ -50,7 +48,6 @@ async def update_profile(
     avatar: Optional[UploadFile] = File(None),
     user: dict = Depends(verify_user_from_token),
     resume_service: ResumeService = Depends(get_resume_service),
-    imagekit: ImageKit = Depends(get_image_kit_method),
     session: AsyncSession = Depends(Database.get_async_session),
 ):
     user_id = user.get("id")
