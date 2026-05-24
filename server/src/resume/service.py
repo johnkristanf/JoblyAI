@@ -9,7 +9,6 @@ from sqlalchemy import select
 from fastapi import HTTPException, status, UploadFile
 from fastapi.concurrency import run_in_threadpool
 import base64
-from weasyprint import HTML
 
 from src.utils import json_decode, read_return_pdf_content_stream
 
