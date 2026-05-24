@@ -50,15 +50,7 @@ params = {
     "LINKEDIN_RAPID_API_HOST": get_env_param("LINKEDIN_RAPID_API_HOST", "/joblyai/prod/LINKEDIN_RAPID_API_HOST"),
     "OPENAI_API_KEY": get_env_param("OPENAI_API_KEY", "/joblyai/prod/OPENAI_API_KEY"),
     "OPENAI_MODEL": get_env_param("OPENAI_MODEL", "/joblyai/prod/OPENAI_MODEL"),
-    "IMAGE_KIT_PUBLIC_KEY": get_env_param(
-        "IMAGE_KIT_PUBLIC_KEY", "/joblyai/prod/IMAGE_KIT_PUBLIC_KEY"
-    ),
-    "IMAGE_KIT_PRIVATE_KEY": get_env_param(
-        "IMAGE_KIT_PRIVATE_KEY", "/joblyai/prod/IMAGE_KIT_PRIVATE_KEY"
-    ),
-    "IMAGE_KIT_URL_ENDPOINT": get_env_param(
-        "IMAGE_KIT_URL_ENDPOINT", "/joblyai/prod/IMAGE_KIT_URL_ENDPOINT"
-    ),
+
     "AWS_REGION": get_env_param("AWS_REGION", "/joblyai/prod/AWS_REGION"),
     "AWS_S3_BUCKET_NAME": get_env_param(
         "AWS_S3_BUCKET_NAME", "/joblyai/prod/AWS_S3_BUCKET_NAME"

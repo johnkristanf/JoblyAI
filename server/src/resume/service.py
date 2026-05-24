@@ -9,15 +9,11 @@ from sqlalchemy import select
 from fastapi import HTTPException, status, UploadFile
 from fastapi.concurrency import run_in_threadpool
 import base64
-import httpx
-import uuid
-from jinja2 import Environment, FileSystemLoader, select_autoescape
 from weasyprint import HTML
 
 from src.utils import json_decode, read_return_pdf_content_stream
 
 from src.resume.model import Resume
-from src.pydantic_config import settings
 from src.config.runtime import params
 from src.celery.tasks.resume_upload import upload_resume
 
@@ -26,8 +22,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 if os.getenv("APP_ENV") == "development":
-    session = boto3.Session(profile_name=settings.AWS_PROFILE)
-    s3 = session.client("s3", region_name=settings.AWS_REGION)
+    session = boto3.Session(profile_name=os.getenv("AWS_PROFILE"))
+    s3 = session.client("s3", region_name=params["AWS_REGION"])
 else:
     s3 = boto3.client("s3", region_name=params["AWS_REGION"])
 
