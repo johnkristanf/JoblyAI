@@ -64,10 +64,4 @@ params = {
     "FIRECRAWL_API_KEY": get_env_param(
         "FIRECRAWL_API_KEY", "/joblyai/prod/FIRECRAWL_API_KEY"
     ),
-    "DEEPGRAM_API_KEY": get_env_param(
-        "DEEPGRAM_API_KEY", "/joblyai/prod/DEEPGRAM_API_KEY"
-    ),
-    "ELEVENLABS_API_KEY": get_env_param(
-        "ELEVENLABS_API_KEY", "/joblyai/prod/ELEVENLABS_API_KEY"
-    ),
 }

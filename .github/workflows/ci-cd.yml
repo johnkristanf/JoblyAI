@@ -4,12 +4,12 @@ on:
   push:
     branches:
       - production
-  workflow_dispatch:  # Allow manual triggers
+  workflow_dispatch: # Allow manual triggers
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
@@ -38,12 +38,12 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: Deploy to EC2 using in-memory SSH key 
+      - name: Deploy to EC2 using in-memory SSH key
         run: |
           # Start a temporary SSH agent
           eval "$(ssh-agent -s)"
