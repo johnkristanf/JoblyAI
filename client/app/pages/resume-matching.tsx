@@ -12,6 +12,7 @@ import type { ResumeData } from '~/types/resume'
 import { Statuses } from '~/types/enum'
 import { JobSearchForm } from '~/components/job/job-search-form'
 import InlineLoader from '~/components/ui/inline-loader'
+import { PageHeader } from '~/components/ui/page-header'
 
 const ResumeMatchingPage = () => {
     const [jobSearchTaskID, setJobSearchTaskID] = useState<string>()
@@ -34,8 +35,6 @@ const ResumeMatchingPage = () => {
     const jobSearchMutation = useMutation({
         mutationFn: jobSearch,
         onSuccess: (response) => {
-            console.log("response: ", response);
-            
             setIsJobSearchPolling(true)
             setJobSearchTaskID(response.job_matching_task_id)
             if (response.resume_upload_task_id) {
@@ -72,6 +71,8 @@ const ResumeMatchingPage = () => {
 
     useEffect(() => {
         if (jobSearchStatus?.status === Statuses.SUCCESS) {
+            console.log("jobSearchStatus: ", jobSearchStatus);
+            
             setJobSearchResponse({
                 job_listings: jobSearchStatus.job_listings ?? [],
                 jobs_matched: jobSearchStatus.jobs_matched ?? [],
@@ -109,19 +110,19 @@ const ResumeMatchingPage = () => {
             {jobSearchResponse &&
                 ((jobSearchResponse.jobs_matched && jobSearchResponse.jobs_matched.length > 0) ||
                     (jobSearchResponse.job_listings && jobSearchResponse.job_listings.length > 0)) ? (
-                <>
-                    <h1 className="text-2xl font-bold text-gray-900">Job Results</h1>
-                    <h3 className="text-md text-blue-600 font-normal">
-                        Review the jobs matching your search criteria
-                    </h3>
-                </>
+                <PageHeader
+                    title="Job Results"
+                    subtitle="Here are the best job matches found based on your resume and search criteria."
+                    className="mb-6 shrink-0"
+                />
             ) : (
-                <>
-                    <h1 className="text-2xl font-bold text-gray-900">Search for Jobs</h1>
-                    <h3 className="text-md text-blue-600 font-normal">
-                        Specify the job specification you're searching for
-                    </h3>
-                </>
+                !isJobSearchPolling && (
+                    <PageHeader
+                        title="Resume Job Matching"
+                        subtitle="Upload your resume and specify a role — our AI will find the best-matching jobs for your background."
+                        className="mb-6 shrink-0"
+                    />
+                )
             )}
 
             {/* NO JOB LISTING RETRIEVED */}

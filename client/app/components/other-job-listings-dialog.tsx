@@ -7,8 +7,6 @@ type OtherJobListingsDialogProps = {
 }
 
 export function OtherJobListingsDialog({ jobSearchResponse }: OtherJobListingsDialogProps) {
-    console.log('jobSearchResponse: ', jobSearchResponse)
-
     return (
         <Dialog>
             <DialogTrigger asChild>

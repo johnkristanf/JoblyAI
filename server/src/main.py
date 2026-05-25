@@ -38,7 +38,7 @@ async def preflight_handler(rest_of_path: str):
             "Access-Control-Allow-Origin": "https://jobly-ai-weld.vercel.app",
             "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
             "Access-Control-Allow-Headers": "Authorization,Content-Type",
-            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Credentials": "true", 
         },
     )
 

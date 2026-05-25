@@ -7,6 +7,7 @@ import type { SavedJobs } from '~/types/job_search'
 import { Trash2 } from 'lucide-react'
 import { deleteSavedJobs } from '~/lib/api/delete'
 import FullScreenLoader from '~/components/full-screen-loader'
+import { PageHeader } from '~/components/ui/page-header'
 
 function SavedJobsPage() {
     const queryClient = useQueryClient()
@@ -49,12 +50,11 @@ function SavedJobsPage() {
 
     return (
         <div className="w-full min-h-screen flex flex-col p-10">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Saved Jobs</h1>
-                <h3 className="text-md text-blue-600 font-normal">
-                    Jobs you've saved for later review
-                </h3>
-            </div>
+            <PageHeader
+                title="Saved Jobs"
+                subtitle="Jobs you've saved for later review"
+                className="mb-6 shrink-0"
+            />
 
             {savedJobs.length === 0 ? (
                 <div className="text-gray-500 mt-8">You have no saved jobs yet.</div>

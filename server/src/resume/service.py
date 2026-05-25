@@ -9,9 +9,8 @@ from sqlalchemy import select
 from fastapi import HTTPException, status, UploadFile
 from fastapi.concurrency import run_in_threadpool
 import base64
-from weasyprint import HTML
 
-from src.utils import json_decode, read_return_pdf_content_stream
+from src.utils import json_decode, read_return_pdf_content_stream, read_return_docx_content, is_valid_resume_file, get_file_extension
 
 from src.resume.model import Resume
 from src.config.runtime import params
@@ -124,22 +123,37 @@ class ResumeService:
         object_key = None
 
         if new_resume is not None:
+            filename = new_resume.filename or "resume.pdf"
+            content_type = new_resume.content_type or "application/pdf"
+
+            if not is_valid_resume_file(filename, content_type):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Invalid file type. Only PDF and Word (.doc/.docx) files are accepted.",
+                )
+
             try:
                 resume_content = await new_resume.read()
-                resume_text = read_return_pdf_content_stream(resume_content)
+                ext = get_file_extension(filename)
+                if ext in ("doc", "docx"):
+                    resume_text = read_return_docx_content(resume_content)
+                else:
+                    resume_text = read_return_pdf_content_stream(resume_content)
 
                 # Fire-and-forget: persist resume to S3 + DB in the background
                 file_bytes_b64 = base64.b64encode(resume_content).decode("utf-8")
                 upload_task = upload_resume.delay(
                     file_bytes_b64=file_bytes_b64,
-                    filename=new_resume.filename or "resume.pdf",
-                    content_type=new_resume.content_type or "application/pdf",
+                    filename=filename,
+                    content_type=content_type,
                     user_id=user.get("id"),
                 )
                 if upload_task:
                     upload_task_id = upload_task.id
+            except HTTPException:
+                raise
             except Exception as e:
-                print(f"Error extracting text from resume PDF: {e}")
+                print(f"Error extracting text from resume: {e}")
                 resume_text = ""
 
         # Read existing resume data from object storage source
@@ -149,7 +163,11 @@ class ResumeService:
             if object_key:
                 try:
                     resume_content = self.get_object_from_s3(params["AWS_S3_BUCKET_NAME"], object_key)
-                    resume_text = read_return_pdf_content_stream(resume_content)
+                    ext = get_file_extension(object_key)
+                    if ext in ("doc", "docx"):
+                        resume_text = read_return_docx_content(resume_content)
+                    else:
+                        resume_text = read_return_pdf_content_stream(resume_content)
                 except Exception as e:
                     logger.error(f"Error fetching existing resume from S3: {e}", exc_info=True)
                     resume_text = ""

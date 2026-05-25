@@ -26,14 +26,18 @@ export const formatDate = (dateString: string) => {
 }
 
 export const validateResumeFile = (file: File): { isValid: boolean; error?: string } => {
-    const allowedTypes = ['application/pdf']
-    const allowedExtensions = ['pdf']
+    const allowedTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+    ]
+    const allowedExtensions = ['pdf', 'doc', 'docx']
     const fileTypeValid = allowedTypes.includes(file.type)
     const ext = file.name.split('.').pop()?.toLowerCase()
     const extValid = ext ? allowedExtensions.includes(ext) : false
 
     if (!fileTypeValid && !extValid) {
-        return { isValid: false, error: 'Invalid file type. Only PDF files are allowed.' }
+        return { isValid: false, error: 'Invalid file type. Only PDF and Word (.doc/.docx) files are allowed.' }
     }
     
     return { isValid: true }
