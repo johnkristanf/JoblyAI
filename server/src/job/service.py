@@ -5,7 +5,7 @@ from openai import AsyncOpenAI
 from redis.client import Redis
 
 from src.config.runtime import params
-from src.utils import json_decode, read_return_pdf_content_stream
+from src.utils import json_decode, clean_markdown_json
 from src.prompt import JobSeachPrompt, EmployerInsightsPrompt
 from firecrawl import AsyncFirecrawlApp
 
@@ -137,9 +137,12 @@ class JobsService:
         response = await client.responses.create(
             model=params["OPENAI_MODEL"],
             input=[system_prompt, user_prompt],
+            temperature=0,
+            seed=42,
         )
 
-        jobs_matched = json_decode(response.output_text)
+        response_text = clean_markdown_json(response.output_text)
+        jobs_matched = json_decode(response_text)
         return jobs_matched
 
 

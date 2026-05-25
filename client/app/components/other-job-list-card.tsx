@@ -15,19 +15,20 @@ export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: Job
 
     const matchedJobTitles = matchedJobs.map((j) => (j?.job_title ? j.job_title.toLowerCase() : ''))
 
+    const otherJobListings = jobSearchResponse.job_listings.filter(
+        (job) =>
+            job?.job_title &&
+            !matchedJobTitles.includes(job.job_title.toLowerCase()),
+    )
+
     return (
         <div>
-            <h2 className="text-2xl font-semibold text-gray-700 mt-5 mb-2">Other Job Postings</h2>
+            <h2 className="text-2xl font-semibold text-gray-700 mt-5 mb-2">
+                Other Job Postings ({otherJobListings.length})
+            </h2>
             {/* ONLY DISPLAY JOBS THAT IS NOT IN THE MATCHED JOB LISTINGS */}
             <div className="max-h-[500px] grid grid-cols-1 md:grid-cols-2 gap-6 opacity-90 ">
-                {(() => {
-                    return jobSearchResponse.job_listings
-                        .filter(
-                            (job) =>
-                                job?.job_title &&
-                                !matchedJobTitles.includes(job.job_title.toLowerCase()),
-                        )
-                        .map((job, idx) => (
+                {otherJobListings.map((job, idx) => (
                             <div
                                 key={idx}
                                 className="bg-gray-50 rounded-lg shadow p-5 flex flex-col gap-4 border border-gray-200"
@@ -116,8 +117,7 @@ export function OtherJobListCard({ jobSearchResponse }: { jobSearchResponse: Job
                                 <div className="grow"></div>
                                 <JobPublisherAndApply job={job} />
                             </div>
-                        ))
-                })()}
+                        ))}
             </div>
         </div>
     )

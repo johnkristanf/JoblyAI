@@ -82,7 +82,6 @@ export const removeResume = async (remove_resume_data: RemoveResumeData) => {
     }
 }
 
-
 export const generateEmployerInsights = async (
     employerWebsite: string,
 ): Promise<{ insights: string }> => {

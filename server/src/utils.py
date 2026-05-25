@@ -1,7 +1,9 @@
 import asyncio
+import io
 import json
 from fastapi import APIRouter
 import pymupdf
+from docx import Document
 import logging
 
 logger = logging.getLogger("utils")
@@ -77,6 +79,34 @@ def read_return_pdf_content_stream(stream_content):
         extracted_content_text += page.get_text()
 
     return extracted_content_text
+
+
+def get_file_extension(filename: str) -> str:
+    """Returns the lowercase file extension without the dot, or an empty string."""
+    return filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+
+
+ALLOWED_RESUME_CONTENT_TYPES = {
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/msword",
+}
+ALLOWED_RESUME_EXTENSIONS = {"pdf", "doc", "docx"}
+
+
+def is_valid_resume_file(filename: str, content_type: str) -> bool:
+    ext = (filename.rsplit(".", 1)[-1].lower()) if "." in filename else ""
+    return (
+        content_type in ALLOWED_RESUME_CONTENT_TYPES
+        or ext in ALLOWED_RESUME_EXTENSIONS
+    )
+
+
+def read_return_docx_content(stream_content: bytes) -> str:
+    """Extract plain text from a .docx file byte stream."""
+    doc = Document(io.BytesIO(stream_content))
+    return "\n".join(paragraph.text for paragraph in doc.paragraphs)
+
 
 def clean_markdown_json(json_str: str) -> str:
     """Removes markdown formatting blocks from a JSON string."""

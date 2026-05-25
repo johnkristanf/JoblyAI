@@ -8,6 +8,7 @@ import { UploadNewResumeCard } from '~/components/resume/upload-new-resume-card'
 import { getAllResumes } from '~/lib/api/get'
 import { uploadResume } from '~/lib/api/post'
 import type { ResumeData, ResumeFile } from '~/types/resume'
+import { PageHeader } from '~/components/ui/page-header'
 
 export default function ResumeCardsPage() {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -103,12 +104,11 @@ export default function ResumeCardsPage() {
 
     return (
         <div className="w-full min-h-screen flex flex-col p-10">
-            <div className="mb-10">
-                <h1 className="text-2xl font-bold text-gray-900">Resume</h1>
-                <h3 className="text-md text-blue-600 font-normal">
-                    Upload and manage your resumes below.
-                </h3>
-            </div>
+            <PageHeader
+                title="Resume"
+                subtitle="Upload and manage your resumes below."
+                className="mb-10 shrink-0"
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {/* Render resume cards */}

@@ -5,6 +5,7 @@ import rehypeRaw from 'rehype-raw'
 import { useMutation } from '@tanstack/react-query'
 import { jobQuery } from '~/lib/api/post'
 import type { Message } from '~/types/job-query'
+import { PageHeader } from '~/components/ui/page-header'
 
 const SAMPLE_QUERIES = [
     "Find me remote React developer jobs",
@@ -114,15 +115,11 @@ export default function JobQueryPage() {
 
     return (
         <div className="w-full h-screen max-h-screen flex flex-col p-6 md:p-10 bg-gray-50/50">
-            {/* Header */}
-            <div className="mb-6 shrink-0">
-                <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-900">
-                    Job Search Query
-                </h1>
-                <p className="text-gray-600 mt-1 text-sm md:text-base max-w-3xl">
-                    Ask our AI assistant to search for specific roles and create a tailored resume for the searched and desired role.
-                </p>
-            </div>
+            <PageHeader
+                title="Job Search Query"
+                subtitle="Ask our AI assistant to search for specific roles and create a tailored resume for the searched and desired role."
+                className="mb-6 shrink-0"
+            />
 
             {/* Chat Container */}
             <div className="flex-1 flex flex-col bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden min-h-0">

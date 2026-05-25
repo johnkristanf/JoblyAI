@@ -17,19 +17,23 @@ interface JobMatchedCardProps {
 
 export function JobMatchedCard({ jobSearchResponse, resumeObjectKey }: JobMatchedCardProps) {
     const [tailorTarget, setTailorTarget] = useState<JobMatch | null>(null)
-console.log("resumeObjectKey: ", resumeObjectKey);
+    console.log("resumeObjectKey: ", resumeObjectKey);
+
+    const sortedJobsByMatchScore = [...jobSearchResponse.jobs_matched].sort(
+        (a, b) => (b.match_score || 0) - (a.match_score || 0)
+    )
 
     return (
         <>
             <div>
                 <div className="flex justify-between mb-3">
-                    <h2 className="text-2xl font-semibold text-green-600 mb-2">Matched Job Postings</h2>
+                    <h2 className="text-2xl font-semibold text-green-600 mb-2">Matched Job Postings ({sortedJobsByMatchScore.length})</h2>
 
                     <OtherJobListingsDialog jobSearchResponse={jobSearchResponse} />
                 </div>
                 {jobSearchResponse.jobs_matched.length > 0 ? (
                     <div className="max-h-[500px] overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {jobSearchResponse.jobs_matched.map((job, idx) => (
+                        {sortedJobsByMatchScore.map((job, idx) => (
                             <div
                                 key={idx}
                                 className="bg-white rounded-lg shadow p-5 flex flex-col gap-4 relative"
@@ -80,8 +84,15 @@ console.log("resumeObjectKey: ", resumeObjectKey);
                                         </div>
                                     )}
                                     <div>
-                                        <div className="font-bold text-indigo-700 text-lg">
-                                            {job.job_title}
+                                        <div className="flex items-center gap-2">
+                                            <div className="font-bold text-indigo-700 text-lg">
+                                                {job.job_title}
+                                            </div>
+                                            {job.match_score !== undefined && (
+                                                <span className="bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded text-xs whitespace-nowrap">
+                                                    Match: {job.match_score}/100
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="text-gray-700 text-sm">{job.employer_name}</div>
                                         {job.employer_website && (

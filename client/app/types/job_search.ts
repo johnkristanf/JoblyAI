@@ -30,6 +30,7 @@ export type JobMatch = {
 
     job_posted_at: string
     extraction_note: string
+    match_score: number
 }
 
 export type JobSearchResponse = {

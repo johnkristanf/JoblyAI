@@ -9,7 +9,7 @@ interface ResumeSectionProps {
     setSelectedResumeMode: (mode: 'upload' | 'select') => void
     triggerFileInput: () => void
     handleDrop: (e: React.DragEvent<HTMLDivElement>) => void
-    fileInputRef: React.RefObject<HTMLInputElement>
+    fileInputRef: React.RefObject<HTMLInputElement | null>
     register: any
     handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
     resumeName: string | null
@@ -37,7 +37,7 @@ export function ResumeSection({
     handleExistingResumeSelect
 }: ResumeSectionProps) {
     console.log("resumesData: ", resumesData);
-    
+
     return (
         <div className="flex flex-col">
             <label className="mb-1 text-gray-700 font-medium">Resume</label>
@@ -53,8 +53,8 @@ export function ResumeSection({
                     type="button"
                     onClick={() => setSelectedResumeMode('upload')}
                     className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${selectedResumeMode === 'upload'
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                     disabled={isPending}
                 >
@@ -65,8 +65,8 @@ export function ResumeSection({
                     type="button"
                     onClick={() => setSelectedResumeMode('select')}
                     className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${selectedResumeMode === 'select'
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                     disabled={isPending}
                 >
@@ -202,17 +202,17 @@ export function ResumeSection({
                                                 )
                                     }
                                     className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${selectedExistingResume?.resume_id ===
-                                            resume.id
-                                            ? 'bg-blue-100 border-2 border-blue-500'
-                                            : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                                        resume.id
+                                        ? 'bg-blue-100 border-2 border-blue-500'
+                                        : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-sm'
                                         } ${isPending ? 'pointer-events-none opacity-70' : ''}`}
                                 >
                                     <div className="flex items-center gap-3">
                                         <FileText
                                             className={`w-5 h-5 ${selectedExistingResume?.resume_id ===
-                                                    resume.id
-                                                    ? 'text-blue-600'
-                                                    : 'text-gray-400'
+                                                resume.id
+                                                ? 'text-blue-600'
+                                                : 'text-gray-400'
                                                 }`}
                                         />
                                         <div>
