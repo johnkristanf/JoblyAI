@@ -138,7 +138,6 @@ class JobsService:
             model=params["OPENAI_MODEL"],
             input=[system_prompt, user_prompt],
             temperature=0,
-            seed=42,
         )
 
         response_text = clean_markdown_json(response.output_text)
