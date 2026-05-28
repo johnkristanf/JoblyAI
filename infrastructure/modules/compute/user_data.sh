@@ -1,7 +1,15 @@
 #!/bin/bash
 set -euo pipefail
 
-# ─── System Update ───────────────────────────────────────────
+# ─── Create 2GB swap to prevent OOM on t3.micro ────────────────────────────────────
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
+
+# ─── System Update ────────────────────────────────────
 apt-get update -y
 apt-get upgrade -y
 

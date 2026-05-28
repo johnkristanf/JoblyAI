@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 
 type DescriptionSectionProps = {
     description?: string | null
+    label?: string
 }
 
 // Helper function to estimate line count
@@ -15,7 +16,14 @@ function getDescriptionLineCount(description: string): number {
     return Math.ceil(description.length / 80)
 }
 
-export function DescriptionSection({ description }: DescriptionSectionProps) {
+function getHeightClass(lineCount: number): string {
+    if (lineCount <= 8)  return "min-h-[6rem]"
+    if (lineCount <= 15) return "min-h-[10rem]"
+    if (lineCount <= 30) return "min-h-[15rem]"
+    return "min-h-[20rem]"
+}
+
+export function DescriptionSection({ description, label = 'Job Summary:' }: DescriptionSectionProps) {
     if (!description) {
         return null
     }
@@ -25,20 +33,11 @@ export function DescriptionSection({ description }: DescriptionSectionProps) {
 
     // Dynamic height rules
     // e.g., 1-8 lines: 6rem. 9-15: 10rem. 16-30: 15rem. Above 30: 20rem.
-    let heightClass = ""
-    if (lineCount <= 8) {
-        heightClass = "min-h-[6rem]"
-    } else if (lineCount <= 15) {
-        heightClass = "min-h-[10rem]"
-    } else if (lineCount <= 30) {
-        heightClass = "min-h-[15rem]"
-    } else {
-        heightClass = "min-h-[20rem]"
-    }
+    const heightClass = getHeightClass(lineCount)
 
     return (
         <div className={`mb-2 ${heightClass} max-h-80 overflow-y-auto `}>
-            <span className="font-semibold text-gray-800 ">Job Summary:</span>
+            <span className="font-semibold text-gray-800 ">{label}</span>
             <div className="text-gray-700 text-sm whitespace-pre-line">
                 {description.includes('- ') ? (
                     description.split('\n').map((line, idx) =>

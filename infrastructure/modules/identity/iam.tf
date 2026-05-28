@@ -25,7 +25,7 @@ resource "aws_iam_role_policy_attachment" "attach_s3_policy" {
 
 resource "aws_iam_role_policy_attachment" "attach_ssm_policy" {
   role       = aws_iam_role.ec2_role.name
-  policy_arn = "arn:aws:iam::aws:https://ap-southeast-1.console.aws.amazon.com/s3/home?region=ap-southeast-1#policy/AmazonSSMReadOnlyAccess"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 # Instance profile wraps the role so EC2 can use it

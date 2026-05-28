@@ -15,7 +15,7 @@ services:
     container_name: joblyai-celery
     depends_on:
       - redis-server
-    command: ["celery", "-A", "src.celery", "worker", "--loglevel", "INFO", "--concurrency", "4"]
+    command: ["celery", "-A", "src.celery", "worker", "--loglevel", "INFO", "--concurrency", "2"]
     restart: always
 
   redis-server:
