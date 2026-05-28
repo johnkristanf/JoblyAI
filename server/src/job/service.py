@@ -101,9 +101,73 @@ class JobsService:
 
         return response.output_text, employer_website_context
 
-    def truncate_job_listing_properties(self, job_listing):
-        # Define properties to remove
-        properties_to_remove = [
+    # ------------------------------------------------------------------ #
+    #  LinkedIn API schema → canonical LLM-ready schema                  #
+    # ------------------------------------------------------------------ #
+    def _normalize_linkedin_job(self, job: dict) -> dict:
+        """
+        Maps a LinkedIn RapidAPI job object to the canonical field names
+        that the LLM prompt and downstream consumers expect.
+        """
+        # --- location helpers ---
+        locations_raw = job.get("locations_raw") or []
+        first_loc = locations_raw[0] if locations_raw else {}
+        address = first_loc.get("address") or {}
+        lat = first_loc.get("latitude") or (job.get("lats_derived") or [None])[0]
+        lng = first_loc.get("longitude") or (job.get("lngs_derived") or [None])[0]
+
+        country_raw = address.get("addressCountry") or (job.get("countries_derived") or [None])[0]
+
+        # --- salary helpers ---
+        salary_raw = job.get("salary_raw") or {}
+        salary_value = salary_raw.get("value") or {}
+        job_min_salary = salary_value.get("minValue")
+        job_max_salary = salary_value.get("maxValue")
+        job_salary_period = salary_value.get("unitText")
+
+        # --- employment type ---
+        emp_types = job.get("employment_type") or []
+        employment_type_map = {
+            "FULL_TIME": "Full-time",
+            "PART_TIME": "Part-time",
+            "CONTRACTOR": "Contract",
+            "TEMPORARY": "Temporary",
+            "INTERN": "Internship",
+        }
+        job_employment_type = employment_type_map.get(emp_types[0], emp_types[0]) if emp_types else None
+
+        # --- posted_at: convert ISO date to a readable string ---
+        date_posted = job.get("date_posted") or ""
+        job_posted_at = date_posted[:10] if date_posted else None  # "YYYY-MM-DD"
+
+        return {
+            "job_title": job.get("title"),
+            "job_description": job.get("description_text"),
+            "job_employment_type": job_employment_type,
+            "job_apply_link": job.get("url"),
+            "job_apply_is_direct": job.get("directapply", False),
+            "job_is_remote": job.get("remote_derived", False),
+            "job_country": country_raw,
+            "job_publisher": job.get("source") or job.get("source_domain"),
+
+            "job_latitude": lat,
+            "job_longitude": lng,
+
+            "employer_name": job.get("organization"),
+            "employer_logo": job.get("organization_logo"),
+            "employer_website": job.get("linkedin_org_url"),
+
+            "job_min_salary": job_min_salary,
+            "job_max_salary": job_max_salary,
+            "job_salary_period": job_salary_period,
+            "job_posted_at": job_posted_at,
+        }
+
+    # ------------------------------------------------------------------ #
+    #  Old JSearch schema: just strip noisy fields                        #
+    # ------------------------------------------------------------------ #
+    def _truncate_jsearch_job(self, job: dict) -> dict:
+        properties_to_remove = {
             "apply_options",
             "job_benefits",
             "job_city",
@@ -115,14 +179,28 @@ class JobsService:
             "job_posted_at_datetime_utc",
             "job_posted_at_timestamp",
             "job_state",
-        ]
+        }
+        return {k: v for k, v in job.items() if k not in properties_to_remove}
 
-        truncated_job_listings = []
+    def truncate_job_listing_properties(self, job_listing: list) -> list:
+        """
+        Normalizes a list of raw job objects (from any supported API) into
+        the canonical schema the LLM prompt expects.
+
+        Detection heuristic:
+          - LinkedIn API objects contain an 'organization' key.
+          - JSearch API objects contain a 'job_title' key.
+        """
+        normalized = []
         for job in job_listing:
-            job_cleaned = {k: v for k, v in job.items() if k not in properties_to_remove}
-            truncated_job_listings.append(job_cleaned)
+            if "organization" in job:
+                # New LinkedIn RapidAPI schema
+                normalized.append(self._normalize_linkedin_job(job))
+            else:
+                # Legacy JSearch schema
+                normalized.append(self._truncate_jsearch_job(job))
+        return normalized
 
-        return truncated_job_listings
 
     async def llm_job_extraction(self, job_listings, job_params: dict):
 

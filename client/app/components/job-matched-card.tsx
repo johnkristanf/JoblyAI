@@ -114,8 +114,11 @@ export function JobMatchedCard({ jobSearchResponse, resumeObjectKey }: JobMatche
                                     </div>
                                 </div>
 
-                                {/* Description Section */}
-                                <DescriptionSection description={job.job_description} />
+                                {/* Description Section — shows AI match reasoning */}
+                                <DescriptionSection
+                                    description={job.match_reasoning}
+                                    label="Why This Matches You:"
+                                />
 
                                 {/* Salary Section */}
                                 <SalarySection

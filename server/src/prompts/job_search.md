@@ -7,6 +7,7 @@ Return your response in the following JSON structure:
 {{
 "job_title": "Software Engineer - Cloud",
 "job_description": "We're building the company which will de-risk the largest infrastructure build-out in history.",
+"match_reasoning": "This role leverages your cloud infrastructure expertise and your 2 years of experience with distributed systems directly aligns with their core requirements. Your background resulted in an 85/100 match because your hands-on experience with AWS and Kubernetes fulfills their primary requirements, though you are slightly under their preferred 3-year mark.",
 "job_employment_type": "Full-time",
 "job_apply_link": "https://jobs.ashbyhq.com/sfcompute/6fd69951...",
 "job_apply_is_direct": true,
@@ -43,9 +44,7 @@ CRITICAL: STRICT EXPERIENCE AND SENIORITY MATCHING
 5. Provide a "match_score" (0-100) based on how well the candidate's background aligns with the job requirements. Give a very low score (e.g., <20) if the role requires senior experience and the candidate is junior. Ensure jobs that perfectly fit the candidate's skills, experience level, and desired title score high (e.g., >85).
 6. EXCLUSION THRESHOLD: You MUST ONLY extract and return job listings that receive a match_score greater than 40. Any job listing that scores 40 or below MUST BE EXCLUDED from your final JSON response.
 
-When constructing the "job_description" field for each listing, do not simply copy or summarize the original job description. Instead, craft this field so that it clearly explains why this job is a good match for the candidate, based on their resume's professional summary, experience, skills, and the requirements in the listing. The field should have:
-
-- A concise, information-rich overview sentence that speaks directly to the candidate in the second person (e.g., "This role leverages your AI/ML expertise..."). Do not use third-person descriptions like "aligning with the candidate's skills." Speak directly to them about why this role fits their specific background. Connect the candidate's calculated years of experience and specific skills to the job's core requirements to explain exactly why the score is what it is (e.g., "Your background resulted in an 85/100 match because your 1.5 years of React experience fulfills their core requirement, though you are slightly under their preferred 2-year mark").
+For the "match_reasoning" field, craft a concise, information-rich explanation that speaks directly to the candidate in the second person (e.g., "This role leverages your AI/ML expertise..."). Do not use third-person descriptions like "aligning with the candidate's skills." Speak directly to them about why this role fits their specific background. Connect the candidate's calculated years of experience and specific skills to the job's core requirements to explain exactly why the score is what it is (e.g., "Your background resulted in an 85/100 match because your 1.5 years of React experience fulfills their core requirement, though you are slightly under their preferred 2-year mark").
 
 The candidate's resume text is provided below within <resume> tags. 
 <resume>

@@ -31,6 +31,7 @@ export type JobMatch = {
     job_posted_at: string
     extraction_note: string
     match_score: number
+    match_reasoning?: string | null
 }
 
 export type JobSearchResponse = {

@@ -1,5 +1,3 @@
-import json
-import base64
 
 from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException
 from openai import OpenAI
@@ -11,11 +9,7 @@ from src.celery.tasks.job_matching import job_matching
 from src.celery.tasks.resume_upload import upload_resume
 from src.auth.dependencies import verify_user_from_token
 from src.database import Database
-from src.utils import (
-    json_decode,
-    read_return_pdf_content_stream,
-)
-from src.job.schema import JobsSearchIn, SaveJobIn, EmployerInsightsIn, JobQueryIn
+from src.job.schema import SaveJobIn, EmployerInsightsIn, JobQueryIn
 from src.job.models import Job
 
 from langchain.agents import create_agent
