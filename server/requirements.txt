@@ -78,7 +78,7 @@ pydantic==2.12.5
 pydantic_core==2.41.5
 pydyf==0.12.1
 pyee==13.0.1
-Pygments==2.19.2
+Pygments==2.20.0
 PyMuPDF==1.26.6
 pyphen==0.17.2
 python-dateutil==2.9.0.post0
