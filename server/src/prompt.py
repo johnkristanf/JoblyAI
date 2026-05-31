@@ -38,15 +38,6 @@ class EmployerInsightsPrompt:
             "content": "Please generate the employer insights.",
         }
 
-class JobQueryPrompt:
-    PROMPT_PATH = (
-        "src/prompts/job_query.md"
-    )
-
-    def load_system_prompt(self) -> str:
-        with open(self.PROMPT_PATH, "r", encoding="utf-8") as f:
-            template = f.read()
-        return template
 
 class TailorResumePrompt:
     PROMPT_PATH = (

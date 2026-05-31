@@ -41,13 +41,7 @@ export function AppSidebar() {
                                 <span className="text-sm">Job Search</span>
                             </SidebarMenuButton>
                             <SidebarMenuSub>
-                                <SidebarMenuSubItem>
-                                    <SidebarMenuSubButton asChild isActive={pathname === '/job/search/query'} className="cursor-pointer">
-                                        <Link to="/job/search/query">
-                                            <span className="text-xs">Query</span>
-                                        </Link>
-                                    </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
+
                                 <SidebarMenuSubItem>
                                     <SidebarMenuSubButton asChild isActive={pathname === '/job/search/resume-matching'} className="cursor-pointer">
                                         <Link to="/job/search/resume-matching">

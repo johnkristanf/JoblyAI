@@ -6,18 +6,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from src.celery.tasks.job_matching import job_matching
-from src.celery.tasks.resume_upload import upload_resume
 from src.auth.dependencies import verify_user_from_token
 from src.database import Database
-from src.job.schema import SaveJobIn, EmployerInsightsIn, JobQueryIn
+from src.job.schema import SaveJobIn, EmployerInsightsIn
 from src.job.models import Job
 
-from langchain.agents import create_agent
-from langchain_openai import ChatOpenAI
-from langgraph.checkpoint.memory import MemorySaver
-from src.config.runtime import params
-from src.job.tools.job_search_tool import search_jsearch_job_tool, search_linkedin_job_tool
-from src.prompt import JobQueryPrompt
 
 from src.job.dependencies import get_jobs_service
 from src.job.service import JobsService
@@ -25,8 +18,6 @@ from src.job.service import JobsService
 from src.resume.dependencies import get_resume_service
 from src.resume.service import ResumeService
 
-# Module-level memory store — persists conversation history per user across requests
-_agent_memory = MemorySaver()
 
 job_router = APIRouter()
 
@@ -159,35 +150,3 @@ async def get_employer_insights(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@job_router.post("/query")
-async def process_job_query(
-    payload: JobQueryIn,
-    user: dict = Depends(verify_user_from_token)
-):
-    try:
-        # Initialize LLM
-        llm = ChatOpenAI(
-            model=params["OPENAI_MODEL"], 
-            api_key=params["OPENAI_API_KEY"],
-            temperature=0
-        )
-        
-        # Load tools and prompt
-        tools = [search_jsearch_job_tool, search_linkedin_job_tool]
-        prompt_str = JobQueryPrompt().load_system_prompt()
-        
-        # Create agent with persistent memory (per-user thread)
-        agent = create_agent(llm, tools=tools, system_prompt=prompt_str, checkpointer=_agent_memory)
-        
-        # Use user ID as thread_id to isolate each user's conversation history
-        thread_config = {"configurable": {"thread_id": user["id"]}}
-        
-        # Invoke the agent asynchronously
-        result = await agent.ainvoke({"messages": [("user", payload.query)]}, config=thread_config)
-        
-        # The agent returns a dictionary with 'messages' list; the last message is the AI's final response
-        final_message = result["messages"][-1].content
-        
-        return {"response": final_message}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))

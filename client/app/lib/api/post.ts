@@ -104,25 +104,6 @@ export const generateEmployerInsights = async (
     }
 }
 
-export const jobQuery = async (query: string): Promise<{ response: string }> => {
-    try {
-        const accessToken = await getAccessToken()
-
-        const response = await axios.post(
-            `${import.meta.env.VITE_API_V1_BASE_URL}/job/query`,
-            { query },
-            {
-                headers: {
-                    Authorization: accessToken ? `Bearer ${accessToken}` : '',
-                    'Content-Type': 'application/json',
-                },
-            },
-        )
-        return response.data
-    } catch (error: any) {
-        throw new Error(error.response?.data?.message || 'Failed to query jobs')
-    }
-}
 
 export interface TailorResumePayload {
     object_key: string

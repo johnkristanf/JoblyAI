@@ -36,7 +36,7 @@ const LoginPage = () => {
 
             if (data.user) {
                 // Redirect to job search page after successful login
-                navigate('/job/search/query')
+                navigate('/job/search/resume-matching')
             }
         } catch (err) {
             setError('An unexpected error occurred. Please try again.')
