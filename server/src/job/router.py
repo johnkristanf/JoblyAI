@@ -21,8 +21,8 @@ from src.resume.service import ResumeService
 
 job_router = APIRouter()
 
-@job_router.post("/search")
-async def job_search(
+@job_router.post("/match-resume")
+async def match_resume(
     job_title: str = Form(...),
     date_posted: str = Form(...),
     country: str = Form(...),

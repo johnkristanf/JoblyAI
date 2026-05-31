@@ -22,7 +22,7 @@ export default function PdfViewer({ url }: { url: string }) {
             {/* Toolbar */}
             <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200 shadow-sm z-10 shrink-0">
                 <div className="flex items-center gap-2">
-                    <button 
+                    <button
                         onClick={() => setPageNumber(p => Math.max(1, p - 1))}
                         disabled={pageNumber <= 1}
                         className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 transition-colors"
@@ -33,7 +33,7 @@ export default function PdfViewer({ url }: { url: string }) {
                     <span className="text-xs font-medium text-gray-600 min-w-12 text-center">
                         {pageNumber} / {numPages || '-'}
                     </span>
-                    <button 
+                    <button
                         onClick={() => setPageNumber(p => Math.min(numPages || 1, p + 1))}
                         disabled={pageNumber >= (numPages || 1)}
                         className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 transition-colors"
@@ -43,7 +43,7 @@ export default function PdfViewer({ url }: { url: string }) {
                     </button>
                 </div>
                 <div className="flex items-center gap-1">
-                    <button 
+                    <button
                         onClick={() => setScale(s => Math.max(0.5, s - 0.2))}
                         className="p-1.5 rounded hover:bg-gray-100 transition-colors"
                         title="Zoom out"
@@ -53,7 +53,7 @@ export default function PdfViewer({ url }: { url: string }) {
                     <span className="text-xs font-medium text-gray-600 w-12 text-center">
                         {Math.round(scale * 100)}%
                     </span>
-                    <button 
+                    <button
                         onClick={() => setScale(s => Math.min(2.5, s + 0.2))}
                         className="p-1.5 rounded hover:bg-gray-100 transition-colors"
                         title="Zoom in"
@@ -82,9 +82,9 @@ export default function PdfViewer({ url }: { url: string }) {
                     }
                     className="flex flex-col items-center shadow-md bg-white"
                 >
-                    <Page 
-                        pageNumber={pageNumber} 
-                        scale={scale} 
+                    <Page
+                        pageNumber={pageNumber}
+                        scale={scale}
                         className="transition-transform duration-200"
                         renderAnnotationLayer={false}
                         renderTextLayer={false}

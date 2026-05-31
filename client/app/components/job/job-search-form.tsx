@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { toast } from 'sonner'
-import type { JobSearchForm as JobSearchFormType } from '~/types/job_search'
+import type { JobSearchForm as JobSearchFormType } from '~/types/resume_matching'
 import type { ResumeData, SelectedResume } from '~/types/resume'
 import { validateResumeFile } from '~/lib/utils'
 import { ResumeSection } from '../resume/resume-section'

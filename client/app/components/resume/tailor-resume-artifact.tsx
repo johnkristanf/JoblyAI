@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, lazy, Suspense } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { X, FileText, Loader2, AlertCircle, ExternalLink, Wand2, Sparkles, Download } from 'lucide-react'
-import type { JobMatch } from '~/types/job_search'
+import type { JobMatch } from '~/types/resume_matching'
 import { getResumePresignedUrl } from '~/lib/api/get'
 import { tailorResume } from '~/lib/api/post'
 
@@ -29,7 +29,7 @@ export function TailorResumeArtifact({ job, resumeObjectKey, onClose }: TailorRe
     const [resumeJson, setResumeJson] = useState<TailoredResumeData | null>(null)
     const [errorMsg, setErrorMsg] = useState('')
     const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>('modern')
-    
+
     const previewRef = useRef<HTMLDivElement>(null)
 
     // Animate in on mount and set isClient
@@ -106,7 +106,7 @@ export function TailorResumeArtifact({ job, resumeObjectKey, onClose }: TailorRe
                                     const parsed = parse(accumulatedJsonStr)
                                     // Make sure it doesn't return string if JSON happens to be a string
                                     if (parsed && typeof parsed === 'object') {
-                                       setPartialResumeJson(parsed)
+                                        setPartialResumeJson(parsed)
                                     }
                                 } catch (e) {
                                     // Ignore partial parse errors
@@ -204,7 +204,7 @@ export function TailorResumeArtifact({ job, resumeObjectKey, onClose }: TailorRe
 
                 {/* ── Main Content Area ── */}
                 <div className="flex-1 overflow-hidden bg-gray-100 flex flex-row">
-                    
+
                     {/* Sidebar for Template Selection */}
                     {tailorStatus === 'idle' && presignedUrl && (
                         <div className="w-64 bg-white border-r border-gray-200 p-4 shrink-0 overflow-hidden shadow-sm z-10 flex flex-col">
@@ -257,9 +257,9 @@ export function TailorResumeArtifact({ job, resumeObjectKey, onClose }: TailorRe
 
                         {tailorStatus === 'done' && resumeJson && (
                             <div className="absolute inset-0 flex flex-col bg-white overflow-hidden">
-                                 <div className="flex-1 overflow-y-auto">
+                                <div className="flex-1 overflow-y-auto">
                                     <ResumePreview data={resumeJson} ref={previewRef} template={selectedTemplate} />
-                                 </div>
+                                </div>
                             </div>
                         )}
 

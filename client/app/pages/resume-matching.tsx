@@ -1,10 +1,10 @@
-import type { JobSearchResponse } from '~/types/job_search'
+import type { ResumeMatchingResponse } from '~/types/resume_matching'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { JobMatchedCard } from '~/components/job-matched-card'
 import NoJobsFound from '~/components/ui/no-jobs-found'
-import { jobSearch } from '~/lib/api/post'
+import { resumeMatching } from '~/lib/api/post'
 import { toast } from 'sonner'
 import FullScreenLoader from '~/components/full-screen-loader'
 import { getAllResumes, getTaskStatus } from '~/lib/api/get'
@@ -15,13 +15,13 @@ import InlineLoader from '~/components/ui/inline-loader'
 import { PageHeader } from '~/components/ui/page-header'
 
 const ResumeMatchingPage = () => {
-    const [jobSearchTaskID, setJobSearchTaskID] = useState<string>()
+    const [resumeMatchingTaskID, setResumeMatchingTaskID] = useState<string>()
     const [resumeUploadState, setResumeUploadState] = useState<{
         taskID?: string
         objectKey: string | null
     }>({ objectKey: null })
-    const [jobSearchResponse, setJobSearchResponse] = useState<JobSearchResponse>()
-    const [isJobSearchPolling, setIsJobSearchPolling] = useState<boolean>(false)
+    const [resumeMatchingResponse, setResumeMatchingResponse] = useState<ResumeMatchingResponse>()
+    const [isResumeMatchingPolling, setIsResumeMatchingPolling] = useState<boolean>(false)
 
     const {
         data: resumesData,
@@ -32,11 +32,11 @@ const ResumeMatchingPage = () => {
         queryKey: ['resumes', 'all'],
         queryFn: getAllResumes,
     })
-    const jobSearchMutation = useMutation({
-        mutationFn: jobSearch,
+    const resumeMatchingMutation = useMutation({
+        mutationFn: resumeMatching,
         onSuccess: (response) => {
-            setIsJobSearchPolling(true)
-            setJobSearchTaskID(response.job_matching_task_id)
+            setIsResumeMatchingPolling(true)
+            setResumeMatchingTaskID(response.job_matching_task_id)
             if (response.resume_upload_task_id) {
                 setResumeUploadState((prev) => ({ ...prev, taskID: response.resume_upload_task_id }))
             }
@@ -49,10 +49,10 @@ const ResumeMatchingPage = () => {
         },
     })
 
-    const { data: jobSearchStatus } = useQuery({
-        queryKey: ['task_status', jobSearchTaskID],
+    const { data: resumeMatchingStatus } = useQuery({
+        queryKey: ['task_status', resumeMatchingTaskID],
         queryFn: getTaskStatus,
-        enabled: !!jobSearchTaskID,
+        enabled: !!resumeMatchingTaskID,
         refetchInterval: (query) => {
             const status = query.state.data?.status
             return status === 'SUCCESS' || status === 'FAILURE' ? false : 2000
@@ -70,22 +70,21 @@ const ResumeMatchingPage = () => {
     })
 
     useEffect(() => {
-        if (jobSearchStatus?.status === Statuses.SUCCESS) {
-            console.log("jobSearchStatus: ", jobSearchStatus);
+        if (resumeMatchingStatus?.status === Statuses.SUCCESS) {
+            console.log("resumeMatchingStatus: ", resumeMatchingStatus);
             
-            setJobSearchResponse({
-                job_listings: jobSearchStatus.job_listings ?? [],
-                jobs_matched: jobSearchStatus.jobs_matched ?? [],
+            setResumeMatchingResponse({
+                jobs_matched: resumeMatchingStatus.jobs_matched ?? [],
             })
 
-            setIsJobSearchPolling(false)
+            setIsResumeMatchingPolling(false)
         }
 
-        if (jobSearchStatus?.status === Statuses.FAILURE) {
-            setIsJobSearchPolling(false)
+        if (resumeMatchingStatus?.status === Statuses.FAILURE) {
+            setIsResumeMatchingPolling(false)
             toast.error('Job search failed.')
         }
-    }, [jobSearchStatus])
+    }, [resumeMatchingStatus])
 
     useEffect(() => {
         if (resumeUploadStatus?.status === Statuses.SUCCESS) {
@@ -102,21 +101,19 @@ const ResumeMatchingPage = () => {
         }
     }, [resumeUploadStatus, refetchResumes])
 
-    const handleSearchAnother = () => setJobSearchResponse(undefined)
+    const handleSearchAnother = () => setResumeMatchingResponse(undefined)
 
     return (
         <div className="w-full min-h-screen flex flex-col p-10">
             {/* DYNAMIC PAGE TITLE */}
-            {jobSearchResponse &&
-                ((jobSearchResponse.jobs_matched && jobSearchResponse.jobs_matched.length > 0) ||
-                    (jobSearchResponse.job_listings && jobSearchResponse.job_listings.length > 0)) ? (
+            {resumeMatchingResponse && resumeMatchingResponse.jobs_matched && resumeMatchingResponse.jobs_matched.length > 0 ? (
                 <PageHeader
-                    title="Job Results"
+                    title="Match Results"
                     subtitle="Here are the best job matches found based on your resume and search criteria."
                     className="mb-6 shrink-0"
                 />
             ) : (
-                !isJobSearchPolling && (
+                !isResumeMatchingPolling && (
                     <PageHeader
                         title="Resume Job Matching"
                         subtitle="Upload your resume and specify a role — our AI will find the best-matching jobs for your background."
@@ -126,18 +123,16 @@ const ResumeMatchingPage = () => {
             )}
 
             {/* NO JOB LISTING RETRIEVED */}
-            {jobSearchResponse && jobSearchResponse.job_listings.length == 0 && (
+            {resumeMatchingResponse && resumeMatchingResponse.jobs_matched.length == 0 && (
                 <NoJobsFound searchAnotherHandler={handleSearchAnother} />
             )}
 
             {/* JOB SEARCH POLLING LOADER */}
-            {!jobSearchResponse && isJobSearchPolling && (
+            {!resumeMatchingResponse && isResumeMatchingPolling && (
                 <InlineLoader message='Searching may take a few moments...' />
             )}
 
-            {jobSearchResponse &&
-                ((jobSearchResponse.jobs_matched && jobSearchResponse.jobs_matched.length > 0) ||
-                    (jobSearchResponse.job_listings && jobSearchResponse.job_listings.length > 0)) ? (
+            {resumeMatchingResponse && resumeMatchingResponse.jobs_matched && resumeMatchingResponse.jobs_matched.length > 0 ? (
                 <div className="space-y-10 mt-6">
                     {/* SEARCH ANOTHER */}
                     <div className="flex justify-end">
@@ -151,20 +146,20 @@ const ResumeMatchingPage = () => {
                     </div>
 
                     {/* Matched Jobs */}
-                    {jobSearchResponse.jobs_matched && (
+                    {resumeMatchingResponse.jobs_matched && (
                         <JobMatchedCard
-                            jobSearchResponse={jobSearchResponse}
+                            resumeMatchingResponse={resumeMatchingResponse}
                             resumeObjectKey={resumeUploadState.objectKey}
                         />
                     )}
                 </div>
             ) : (
                 // JOB SEARCH FORM
-                !jobSearchResponse &&
-                !isJobSearchPolling && (
+                !resumeMatchingResponse &&
+                !isResumeMatchingPolling && (
                     <JobSearchForm
-                        onSubmitForm={jobSearchMutation.mutate}
-                        isPending={jobSearchMutation.isPending}
+                        onSubmitForm={resumeMatchingMutation.mutate}
+                        isPending={resumeMatchingMutation.isPending}
                         resumesData={resumesData}
                         resumesLoading={resumesLoading}
                         resumesError={resumesError}

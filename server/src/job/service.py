@@ -230,6 +230,7 @@ class JobsService:
           - professional_summary (str | null)
           - work_experience (list of objects)
           - skills (list of strings)
+          - education (list of objects)
 
         Results are cached in Redis keyed by a SHA-256 hash of the resume
         text, so the same resume never triggers a second LLM call.

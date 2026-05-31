@@ -36,7 +36,6 @@ def job_matching(self, job_listings: list, extracted_resume_fields: dict | None 
         response_object = {
             "status": "SUCCESS",
             "progress": 100,
-            "job_listings": job_listings,
             "jobs_matched": jobs_matched,
             "error": None,
         }
@@ -56,7 +55,6 @@ def job_matching(self, job_listings: list, extracted_resume_fields: dict | None 
             {
                 "status": "FAILURE",
                 "progress": 100,
-                "job_listings": None,
                 "jobs_matched": None,
                 "error": str(e),
             },

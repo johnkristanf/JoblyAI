@@ -7,7 +7,12 @@ Return your response in the following JSON structure:
 {{
 "job_title": "Software Engineer - Cloud",
 "job_description": "We're building the company which will de-risk the largest infrastructure build-out in history.",
-"match_reasoning": "This role leverages your cloud infrastructure expertise and your 2 years of experience with distributed systems directly aligns with their core requirements. Your background resulted in an 85/100 match because your hands-on experience with AWS and Kubernetes fulfills their primary requirements, though you are slightly under their preferred 3-year mark.",
+"match_insights": {{
+  "relevant_experience": "Your background building distributed systems and cloud infrastructure maps directly to the core engineering challenges described in this role. The products you have shipped in previous roles are closely aligned with what this team is building.",
+  "seniority": "The role targets engineers with around 3 years of professional experience. You are currently sitting at approximately 2 years, which means you are close but may face competition from more tenured candidates.",
+  "skills": "Your hands-on experience with AWS and Kubernetes covers the primary technical requirements. Familiarity with Terraform would be an added advantage but is not a hard blocker given your infrastructure depth.",
+  "education": "No formal education requirements are stated for this role, so your practical experience takes precedence here."
+}},
 "job_employment_type": "Full-time",
 "job_apply_link": "https://jobs.ashbyhq.com/sfcompute/6fd69951...",
 "job_apply_is_direct": true,
@@ -26,7 +31,9 @@ Return your response in the following JSON structure:
 "job_max_salary": 230000,
 "job_salary_period": "YEAR",
 "job_posted_at": "13 hours ago",
-"match_score": 85
+"skills_score": 88,
+"experience_score": 72,
+"overall_score": 80
 }}
 
 ]
@@ -37,14 +44,26 @@ When prioritizing and extracting job listings, give highest priority to the cand
 
 CRITICAL: STRICT EXPERIENCE AND SENIORITY MATCHING
 
+Evaluate and score each job listing across two independent dimensions, then derive an overall score:
+
+**skills_score (0–100):** How well the candidate's skills list and technology stack matches the skills and tools required by the job. Score high (>80) when the candidate covers most of the job's required skills. Score low (<40) when there is a significant technology mismatch.
+
+**experience_score (0–100):** How well the candidate's total years of professional experience and seniority level matches the role's requirements.
 1. Calculate the candidate's total years of professional experience by summing the durations in the `work_experience` list (e.g., 1 year freelance + 8 months job = ~1.5 years total).
 2. Identify the minimum years of experience required in the job listing.
-3. STRICTLY REJECT any job listing where the required years of experience significantly exceeds the candidate's actual experience (e.g., do not match a candidate with 1.5 years of experience to a role requiring 5+ or 7+ years).
-4. Pay close attention to seniority levels (Junior, Mid, Senior, Lead, Principal). Do not match a candidate to a role that demands a significantly higher seniority level than they currently possess.
-5. Provide a "match_score" (0-100) based on how well the candidate's background aligns with the job requirements. Give a very low score (e.g., <20) if the role requires senior experience and the candidate is junior. Ensure jobs that perfectly fit the candidate's skills, experience level, and desired title score high (e.g., >85).
-6. EXCLUSION THRESHOLD: You MUST ONLY extract and return job listings that receive a match_score greater than 40. Any job listing that scores 40 or below MUST BE EXCLUDED from your final JSON response.
+3. STRICTLY score very low (<30) if the required years of experience significantly exceeds the candidate's actual experience (e.g., a candidate with 1.5 years applying for a 5+ year role).
+4. Pay close attention to seniority levels (Junior, Mid, Senior, Lead, Principal). Score low if there is a significant seniority mismatch.
 
-For the "match_reasoning" field, craft a concise, information-rich explanation that speaks directly to the candidate in the second person (e.g., "This role leverages your AI/ML expertise..."). Do not use third-person descriptions like "aligning with the candidate's skills." Speak directly to them about why this role fits their specific background. Connect the candidate's calculated years of experience and specific skills to the job's core requirements to explain exactly why the score is what it is (e.g., "Your background resulted in an 85/100 match because your 1.5 years of React experience fulfills their core requirement, though you are slightly under their preferred 2-year mark").
+**overall_score (0–100):** The weighted result of both dimensions. Use the formula: `overall_score = round(skills_score * 0.5 + experience_score * 0.5)`. This represents the holistic fit of the candidate for the role.
+
+EXCLUSION THRESHOLD: You MUST ONLY extract and return job listings where the `overall_score` is greater than 40. Any listing with an overall_score of 40 or below MUST BE EXCLUDED from your final JSON response.
+
+For the `match_insights` object, write a distinct, concise explanation for each of the four sections below. Speak directly to the candidate in the second person. Do not mention any score numbers in any section. Focus only on the qualitative reasons.
+
+- **relevant_experience**: How the candidate's past roles, projects, and accomplishments relate to the specific responsibilities of this job.
+- **seniority**: How the candidate's career stage, job titles, and years of experience compare to what the role expects.
+- **skills**: Which of the candidate's skills directly satisfy the job's requirements, and any notable gaps or added advantages.
+- **education**: How the candidate's educational background (degree, field of study, certifications) aligns with the job's requirements. If no education requirement is stated, note that practical experience takes precedence.
 
 The candidate's resume data is provided below within <resume> tags. 
 

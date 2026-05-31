@@ -30,12 +30,18 @@ export type JobMatch = {
 
     job_posted_at: string
     extraction_note: string
-    match_score: number
-    match_reasoning?: string | null
+    skills_score: number
+    experience_score: number
+    overall_score: number
+    match_insights?: {
+        relevant_experience: string | null
+        seniority: string | null
+        skills: string | null
+        education: string | null
+    } | null
 }
 
-export type JobSearchResponse = {
-    job_listings: JobMatch[]
+export type ResumeMatchingResponse = {
     jobs_matched: JobMatch[]
     resume_upload_task_id?: string
 }

@@ -1,7 +1,7 @@
-import React from 'react'
 import { Upload, FileText, Check } from 'lucide-react'
 import type { ResumeData, SelectedResume } from '~/types/resume'
 import { formatDate } from '~/lib/utils'
+import { ResumePdfViewerDrawer } from './resume-pdf-viewer-drawer'
 
 interface ResumeSectionProps {
     isPending: boolean
@@ -136,12 +136,12 @@ export function ResumeSection({
                         </span>
                     </div>
                     {resumeName && (
-                        <div className="mt-4 flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-md">
-                            <FileText className="w-5 h-5 text-blue-600" />
-                            <span className="text-gray-700 text-sm font-medium truncate max-w-xs">
+                        <div className="mt-4 flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-md max-w-full">
+                            <FileText className="w-5 h-5 text-blue-600 shrink-0" />
+                            <span className="text-gray-700 text-sm font-medium truncate">
                                 {resumeName}
                             </span>
-                            <Check className="w-5 h-5 text-green-600" />
+                            <Check className="w-5 h-5 text-green-600 shrink-0" />
                         </div>
                     )}
                 </div>
@@ -185,54 +185,62 @@ export function ResumeSection({
                             Failed to load resumes. Please try again.
                         </div>
                     ) : resumesData && resumesData.length > 0 ? (
-                        <div className="space-y-2">
-                            <p className="text-sm text-gray-600 mb-3">
+                        <div className="flex flex-col min-h-0">
+                            <p className="text-sm text-gray-600 mb-3 shrink-0">
                                 Select from your previously uploaded resumes:
                             </p>
-                            {resumesData.map((resume) => (
-                                <div
-                                    key={resume.id}
-                                    onClick={
-                                        isPending
-                                            ? undefined
-                                            : () =>
-                                                handleExistingResumeSelect(
-                                                    resume.id,
-                                                    resume.objectKey,
-                                                )
-                                    }
-                                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${selectedExistingResume?.resume_id ===
-                                        resume.id
-                                        ? 'bg-blue-100 border-2 border-blue-500'
-                                        : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-sm'
-                                        } ${isPending ? 'pointer-events-none opacity-70' : ''}`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <FileText
-                                            className={`w-5 h-5 ${selectedExistingResume?.resume_id ===
-                                                resume.id
-                                                ? 'text-blue-600'
-                                                : 'text-gray-400'
-                                                }`}
-                                        />
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-800">
-                                                {resume.name}
-                                            </p>
-                                            <p className="text-xs text-gray-500">
-                                                Uploaded:{' '}
-                                                {resume.upload_date
-                                                    ? formatDate(resume.upload_date)
-                                                    : 'Unknown'}
-                                            </p>
+                            <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                                {resumesData.map((resume) => (
+                                    <div
+                                        key={resume.id}
+                                        onClick={
+                                            isPending
+                                                ? undefined
+                                                : () =>
+                                                    handleExistingResumeSelect(
+                                                        resume.id,
+                                                        resume.objectKey,
+                                                    )
+                                        }
+                                        className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${selectedExistingResume?.resume_id ===
+                                            resume.id
+                                            ? 'bg-blue-100 border-2 border-blue-500'
+                                            : 'bg-white border border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                                            } ${isPending ? 'pointer-events-none opacity-70' : ''}`}
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0 pr-3">
+                                            <FileText
+                                                className={`w-5 h-5 shrink-0 ${selectedExistingResume?.resume_id ===
+                                                    resume.id
+                                                    ? 'text-blue-600'
+                                                    : 'text-gray-400'
+                                                    }`}
+                                            />
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-medium text-gray-800 truncate" title={resume.name}>
+                                                    {resume.name}
+                                                </p>
+                                                <p className="text-xs text-gray-500 truncate">
+                                                    Uploaded:{' '}
+                                                    {resume.upload_date
+                                                        ? formatDate(resume.upload_date)
+                                                        : 'Unknown'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            {selectedExistingResume?.resume_id ===
+                                                resume.id && (
+                                                    <Check className="w-5 h-5 text-blue-600 shrink-0" />
+                                                )}
+                                            <ResumePdfViewerDrawer
+                                                objectKey={resume.objectKey}
+                                                resumeName={resume.name}
+                                            />
                                         </div>
                                     </div>
-                                    {selectedExistingResume?.resume_id ===
-                                        resume.id && (
-                                            <Check className="w-5 h-5 text-blue-600" />
-                                        )}
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     ) : (
                         <div className="text-center py-8">

@@ -1,13 +1,13 @@
 import axios from 'axios'
-import type { JobMatch } from '~/types/job_search'
+import type { JobMatch } from '~/types/resume_matching'
 import { getAccessToken } from '../supabase/client'
 import type { RemoveResumeData, ResumeFile } from '~/types/resume'
 
-export const jobSearch = async (formData: FormData) => {
+export const resumeMatching = async (formData: FormData) => {
     const accessToken = await getAccessToken()
 
     const response = await axios.post(
-        `${import.meta.env.VITE_API_V1_BASE_URL}/job/search`,
+        `${import.meta.env.VITE_API_V1_BASE_URL}/job/match-resume`,
         formData,
         {
             headers: {
@@ -103,7 +103,6 @@ export const generateEmployerInsights = async (
         throw new Error(error.response?.data?.message || 'Failed to generate employer insights')
     }
 }
-
 
 export interface TailorResumePayload {
     object_key: string
