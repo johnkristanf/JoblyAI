@@ -6,9 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi import UploadFile, File
 from fastapi.responses import StreamingResponse
 from fastapi.concurrency import run_in_threadpool
+from redis.client import Redis
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from src.resume.dependencies import get_resume_service
 from src.resume.service import ResumeService
+from src.job.dependencies import get_jobs_service
+from src.job.service import JobsService
 from src.config.runtime import params
 from src.resume.schema import RemoveResumeIn, TailorResumeIn
 from src.auth.dependencies import verify_user_from_token
@@ -175,18 +178,26 @@ async def remove_resume(
 @resume_router.post("/tailor")
 async def tailor_resume(
     payload: TailorResumeIn,
+
+    # Dependencies
     resume_service: ResumeService = Depends(get_resume_service),
+    jobs_service: JobsService = Depends(get_jobs_service),
+    redis_client: Redis = Depends(Database.get_redis_client),
     user: dict = Depends(verify_user_from_token),
 ) -> StreamingResponse:
+    logger.info(f"TAILORING START")
 
     async def generate():
         try:
-            # 1. Fetch PDF and extract text
+            # 1. Fetch PDF, extract text, then extract structured resume fields
             pdf_bytes = resume_service.get_object_from_s3(
                 params["AWS_S3_BUCKET_NAME"],
                 payload.object_key
             )
             resume_text = read_return_pdf_content_stream(pdf_bytes)
+            extracted_resume = await jobs_service.extract_resume_fields(resume_text, redis_client)
+
+            logger.info(f"extracted_resume: {extracted_resume}")
 
             # 2. Setup LLM stream
             client = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
@@ -194,7 +205,7 @@ async def tailor_resume(
             
             messages = [
                 prompt_mgr.load_system_prompt(
-                    resume_text=resume_text,
+                    extracted_resume=extracted_resume,
                     job_title=payload.job_title,
                     job_description=payload.job_description,
                     employer_name=payload.employer_name,

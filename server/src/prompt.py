@@ -44,12 +44,13 @@ class TailorResumePrompt:
         "src/prompts/tailor_resume.md"
     )
 
-    def load_system_prompt(self, resume_text: str, job_title: str, job_description: str, employer_name: str | None):
+    def load_system_prompt(self, extracted_resume: dict, job_title: str, job_description: str, employer_name: str | None):
+        import json as _json
         with open(self.PROMPT_PATH, "r", encoding="utf-8") as f:
             template = f.read()
 
         content = template.format(
-            resume_text=resume_text,
+            extracted_resume=_json.dumps(extracted_resume, indent=2),
             job_title=job_title,
             job_description=job_description,
             employer_name=employer_name or "Unknown"
@@ -79,8 +80,8 @@ class ResumeExtractionPrompt:
         return {
             "role": "user",
             "content": (
-                "Please extract the professional summary, work experience, and skills "
-                "from the resume above. Output only the raw JSON object — no markdown, "
-                "no explanation."
+                "Please extract the contact details, professional summary, work experience, "
+                "skills, and education from the resume above. "
+                "Output only the raw JSON object — no markdown, no explanation."
             ),
         }

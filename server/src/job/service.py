@@ -261,7 +261,6 @@ class JobsService:
 
         response_text = clean_markdown_json(response.output_text)
         extracted = json_decode(response_text)
-        logger.info("EXTRACTED RESUME DATA %s", extracted)
 
         if redis_client is not None:
             await redis_client.setex(cache_key, cache_ttl, json.dumps(extracted))

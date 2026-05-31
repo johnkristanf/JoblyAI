@@ -102,6 +102,8 @@ export function TailorResumeArtifact({ job, resumeObjectKey, onClose }: TailorRe
                             const data = JSON.parse(dataStr)
                             if (data.type === 'token') {
                                 accumulatedJsonStr += data.content
+                                console.log("accumulatedJsonStr: ", accumulatedJsonStr);
+                                
                                 try {
                                     const parsed = parse(accumulatedJsonStr)
                                     // Make sure it doesn't return string if JSON happens to be a string
