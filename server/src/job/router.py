@@ -66,10 +66,13 @@ async def job_search(
     raw_job_listings = job_search_results.get("data", [])
     job_listings = jobs_service.truncate_job_listing_properties(raw_job_listings)
 
-    # Process llm job in the background
-    task = job_matching.delay(job_listings, resume_text)
-    print(f"task LLM: {task}")
-    
+    # Extract structured resume fields inline before handing off to the worker
+    extracted_resume_fields = await jobs_service.extract_resume_fields(resume_text, redis_client)
+
+    # Dispatch job matching to background with both raw text and extracted fields
+    task = job_matching.delay(job_listings, extracted_resume_fields)
+    print(f"task LLM job_matching: {task}")
+
     return {
         "message": "Job matching task submitted successfully",
         "job_matching_task_id": task.id,

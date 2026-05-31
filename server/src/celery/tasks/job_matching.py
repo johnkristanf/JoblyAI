@@ -10,7 +10,7 @@ logger = logging.getLogger("tasks.job_matching")
 
 
 @celery.task(bind=True)
-def job_matching(self, job_listings: list, resume_text: str):
+def job_matching(self, job_listings: list, extracted_resume_fields: dict | None = None):
     task_id = self.request.id
 
     logger.info(f"Task {task_id} started: matching jobs with resume.")
@@ -24,8 +24,10 @@ def job_matching(self, job_listings: list, resume_text: str):
         jobs_matched = asyncio.run(
             extract_data_from_batch_tasks(
                 job_listings,
-                awaitable=jobs_service.llm_job_extraction,
-                params={"resume_text": resume_text},
+                awaitable=jobs_service.job_matching,
+                params={
+                    "extracted_resume_fields": extracted_resume_fields,
+                },
             )
         )
 

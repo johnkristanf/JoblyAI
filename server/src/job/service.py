@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import httpx
 import json
@@ -6,7 +7,7 @@ from redis.client import Redis
 
 from src.config.runtime import params
 from src.utils import json_decode, clean_markdown_json
-from src.prompt import JobSeachPrompt, EmployerInsightsPrompt
+from src.prompt import JobSeachPrompt, EmployerInsightsPrompt, ResumeExtractionPrompt
 from firecrawl import AsyncFirecrawlApp
 
 COUNTRY_CODE_TO_NAME = {
@@ -202,13 +203,13 @@ class JobsService:
         return normalized
 
 
-    async def llm_job_extraction(self, job_listings, job_params: dict):
+    async def job_matching(self, job_listings, job_params: dict):
 
         client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
 
         job_seach_prompt = JobSeachPrompt()
         system_prompt = job_seach_prompt.load_system_prompt(
-            job_params.get("resume_text"),
+            job_params.get("extracted_resume_fields") or {},
         )
         user_prompt = job_seach_prompt.load_user_prompt(job_listings)
 
@@ -221,6 +222,51 @@ class JobsService:
         response_text = clean_markdown_json(response.output_text)
         jobs_matched = json_decode(response_text)
         return jobs_matched
+
+
+    async def extract_resume_fields(self, resume_text: str, redis_client: Redis | None = None) -> dict:
+        """
+        Reads the raw resume text and extracts structured fields:
+          - professional_summary (str | null)
+          - work_experience (list of objects)
+          - skills (list of strings)
+
+        Results are cached in Redis keyed by a SHA-256 hash of the resume
+        text, so the same resume never triggers a second LLM call.
+        TTL: 24 hours.
+        """
+        
+        cache_ttl = 60 * 60 * 24  # 24 hours
+        resume_hash = hashlib.sha256(resume_text.encode()).hexdigest()
+        cache_key = f"resume_extraction:{resume_hash}"
+
+        if redis_client is not None:
+            cached = await redis_client.get(cache_key)
+            if cached is not None:
+                logger.info("Cache HIT for resume extraction (key=%s)", cache_key)
+                return json_decode(cached)
+
+        client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
+
+        prompt = ResumeExtractionPrompt()
+        system_prompt = prompt.load_system_prompt(resume_text)
+        user_prompt = prompt.load_user_prompt()
+
+        response = await client.responses.create(
+            model=params["OPENAI_MODEL"],
+            input=[system_prompt, user_prompt],
+            temperature=0,
+        )
+
+        response_text = clean_markdown_json(response.output_text)
+        extracted = json_decode(response_text)
+        logger.info("EXTRACTED RESUME DATA %s", extracted)
+
+        if redis_client is not None:
+            await redis_client.setex(cache_key, cache_ttl, json.dumps(extracted))
+            logger.info("Cache SET for resume extraction (key=%s, ttl=%ds)", cache_key, cache_ttl)
+
+        return extracted
 
 
     async def search_rapidapi_jobs_jsearch(self, job_title, country, date_posted, page):

@@ -3,11 +3,11 @@ class JobSeachPrompt:
         "src/prompts/job_search.md"
     )
 
-    def load_system_prompt(self, resume_text):
+    def load_system_prompt(self, extracted_resume_fields):
         with open(self.PROMPT_PATH, "r", encoding="utf-8") as f:
             template = f.read()
 
-        content = template.format(resume_text=resume_text)
+        content = template.format(extracted_resume_fields=extracted_resume_fields)
         return {"role": "system", "content": content}
 
     def load_user_prompt(self, job_listings):
@@ -69,4 +69,27 @@ class TailorResumePrompt:
         return {
             "role": "user",
             "content": "Please tailor my resume for this role. Output only the requested JSON.",
+        }
+
+
+class ResumeExtractionPrompt:
+    PROMPT_PATH = (
+        "src/prompts/resume_extraction.md"
+    )
+
+    def load_system_prompt(self, resume_text: str):
+        with open(self.PROMPT_PATH, "r", encoding="utf-8") as f:
+            template = f.read()
+
+        content = template.format(resume_text=resume_text)
+        return {"role": "system", "content": content}
+
+    def load_user_prompt(self):
+        return {
+            "role": "user",
+            "content": (
+                "Please extract the professional summary, work experience, and skills "
+                "from the resume above. Output only the raw JSON object — no markdown, "
+                "no explanation."
+            ),
         }
