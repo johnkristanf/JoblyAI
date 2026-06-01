@@ -4,8 +4,10 @@ import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2, AlertCircle } from 'lucide-react'
 
-// Set up the worker using CDN
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+// Set up the worker using CDN, but only on the client side
+if (typeof window !== 'undefined') {
+    pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+}
 
 export default function PdfViewer({ url }: { url: string }) {
     const [numPages, setNumPages] = useState<number>()
@@ -77,7 +79,7 @@ export default function PdfViewer({ url }: { url: string }) {
                     error={
                         <div className="flex flex-col items-center justify-center gap-2 text-red-500 mt-20">
                             <AlertCircle className="w-6 h-6" />
-                            <p className="text-xs font-medium">Failed to load document. CORS or network error.</p>
+                            <p className="text-xs font-medium">Failed to load document. The file may have been deleted or is inaccessible.</p>
                         </div>
                     }
                     className="flex flex-col items-center shadow-md bg-white"

@@ -21,6 +21,7 @@
     "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "docx-preview": "^0.3.7",
     "html-to-image": "^1.11.13",
     "isbot": "^5.1.31",
     "jspdf": "^4.2.1",

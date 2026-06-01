@@ -53,6 +53,15 @@ export function AppSidebar() {
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>
+                            <SidebarMenuButton asChild isActive={pathname === '/resume'} className="cursor-pointer">
+                                <Link to="/resume">
+                                    <FileUser className="size-4" />{' '}
+                                    <span className="text-xs">Resume</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+
+                        <SidebarMenuItem>
                             <SidebarMenuButton asChild isActive={pathname === '/saved/jobs'} className="cursor-pointer">
                                 <Link to="/saved/jobs">
                                     <BookmarkCheck className="size-4" />{' '}
@@ -61,14 +70,7 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
 
-                        <SidebarMenuItem>
-                            <SidebarMenuButton asChild isActive={pathname === '/resume'} className="cursor-pointer">
-                                <Link to="/resume">
-                                    <FileUser className="size-4" />{' '}
-                                    <span className="text-xs">Resume</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
+                        
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>

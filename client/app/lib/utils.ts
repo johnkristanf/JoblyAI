@@ -42,3 +42,21 @@ export const validateResumeFile = (file: File): { isValid: boolean; error?: stri
     
     return { isValid: true }
 }
+
+export type ResumeFileType = 'pdf' | 'docx' | 'doc' | 'unknown'
+
+/**
+ * Derives the file type from a filename or S3 object key by inspecting its extension.
+ * Returns a discriminated union so callers can switch/branch without raw string comparisons.
+ */
+export const getFileType = (fileNameOrKey: string): ResumeFileType => {
+    const ext = fileNameOrKey.split('.').pop()?.toLowerCase()
+    if (ext === 'pdf') return 'pdf'
+    if (ext === 'docx') return 'docx'
+    if (ext === 'doc') return 'doc'
+    return 'unknown'
+}
+
+/** Convenience helpers built on top of getFileType */
+export const isDocxFile = (fileNameOrKey: string) => getFileType(fileNameOrKey) === 'docx'
+export const isPdfFile  = (fileNameOrKey: string) => getFileType(fileNameOrKey) === 'pdf'

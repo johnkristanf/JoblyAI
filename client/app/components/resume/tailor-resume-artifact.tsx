@@ -4,6 +4,7 @@ import { X, FileText, Loader2, AlertCircle, ExternalLink, Wand2, Sparkles, Downl
 import type { JobMatch } from '~/types/resume_matching'
 import { getResumePresignedUrl } from '~/lib/api/get'
 import { tailorResume } from '~/lib/api/post'
+import { isDocxFile } from '~/lib/utils'
 
 import { parse } from 'partial-json'
 import { ResumePreview } from './resume-preview'
@@ -12,6 +13,7 @@ import { ResumeDownloadBtn } from './resume-download-btn'
 import { TemplateSelector } from './template-selector'
 
 const PdfViewer = lazy(() => import('../pdf-viewer'))
+const DocxViewer = lazy(() => import('../docx-viewer'))
 
 interface TailorResumeArtifactProps {
     job: JobMatch
@@ -232,16 +234,21 @@ export function TailorResumeArtifact({ job, resumeObjectKey, onClose }: TailorRe
                             </div>
                         )}
 
-                        {tailorStatus === 'idle' && presignedUrl && isClient && (
-                            <Suspense fallback={
-                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-gray-500">
-                                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                                    <p className="text-sm font-medium">Loading PDF viewer…</p>
-                                </div>
-                            }>
-                                <PdfViewer url={presignedUrl} />
-                            </Suspense>
-                        )}
+                        {tailorStatus === 'idle' && presignedUrl && isClient && (() => {
+                            return (
+                                <Suspense fallback={
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-gray-500">
+                                        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                                        <p className="text-sm font-medium">Loading document…</p>
+                                    </div>
+                                }>
+                                    {isDocxFile(resumeObjectKey)
+                                        ? <DocxViewer url={presignedUrl} />
+                                        : <PdfViewer url={presignedUrl} />
+                                    }
+                                </Suspense>
+                            )
+                        })()}
 
                         {tailorStatus === 'streaming' && (
                             <div className="absolute inset-0 flex flex-col bg-white overflow-hidden">

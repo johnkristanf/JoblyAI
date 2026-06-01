@@ -5,7 +5,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { removeResume } from '~/lib/api/post'
 import FullScreenLoader from '../full-screen-loader'
+import { ResumeViewerDrawer } from './resume-viewer-drawer'
 import * as React from 'react'
+import { Suspense, lazy } from 'react'
+
+const ResumeThumbnail = lazy(() => import('./resume-thumbnail').then(m => ({ default: m.ResumeThumbnail })))
 
 // Shadcn components for dialog confirmation
 import {
@@ -21,10 +25,8 @@ import {
 
 export function ResumeCard({
     resume,
-    onPreview,
 }: {
     resume: ResumeData
-    onPreview: (previewUrl: string, name: string) => void
 }) {
     const queryClient = useQueryClient()
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
@@ -47,28 +49,37 @@ export function ResumeCard({
     }
 
     return (
-        <div className="relative border border-gray-200 rounded-lg p-6 shadow-sm bg-white hover:shadow-md transition-shadow flex flex-col h-full">
-            <div className="flex-1 flex flex-col items-center justify-center mb-4">
-                <div className="w-20 h-20 bg-linear-to-br from-blue-50 to-indigo-100 rounded-full flex items-center justify-center mb-4">
-                    <span className="text-4xl">{getFileIcon(resume.name)}</span>
+        <div className="relative border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white hover:shadow-md transition-shadow flex flex-col h-full group">
+            {/* Glimpse / Thumbnail */}
+            <Suspense fallback={
+                <div className="w-full h-64 bg-gray-100 flex flex-col items-center justify-center border-b border-gray-200 animate-pulse">
+                    <span className="text-xs text-gray-400">Loading preview...</span>
                 </div>
-                <h2 className="text-base font-semibold text-gray-800 text-center line-clamp-2 mb-2">
+            }>
+                <ResumeThumbnail url={resume.url} fileName={resume.name} />
+            </Suspense>
+            
+            {/* Card Content */}
+            <div className="flex-1 flex flex-col p-5">
+                <h2 className="text-base font-semibold text-gray-800 line-clamp-2 mb-2 group-hover:text-blue-700 transition-colors">
                     {resume.name}
                 </h2>
                 {resume.upload_date && (
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Calendar className="w-3 h-3" />
-                        <span>{formatDate(resume.upload_date)}</span>
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mb-4">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Uploaded {formatDate(resume.upload_date)}</span>
                     </div>
                 )}
             </div>
-            <div className="flex gap-2 mt-auto">
-                <button
-                    className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
-                    onClick={() => onPreview(resume.url, resume.name)}
-                >
-                    Preview
-                </button>
+            
+            <div className="flex gap-2 mt-auto px-5 pb-5">
+                <ResumeViewerDrawer objectKey={resume.objectKey} resumeName={resume.name}>
+                    <button
+                        className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors cursor-pointer"
+                    >
+                        Preview
+                    </button>
+                </ResumeViewerDrawer>
                 {/* Delete confirmation using shadcn dialog */}
                 <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                     <DialogTrigger asChild>

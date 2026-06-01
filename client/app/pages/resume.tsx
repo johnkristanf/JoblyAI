@@ -11,8 +11,6 @@ import type { ResumeData, ResumeFile } from '~/types/resume'
 import { PageHeader } from '~/components/ui/page-header'
 
 export default function ResumeCardsPage() {
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-    const [previewName, setPreviewName] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const queryClient = useQueryClient()
 
@@ -66,16 +64,6 @@ export default function ResumeCardsPage() {
         if (fileInputRef.current) fileInputRef.current.value = ''
     }
 
-    const handlePreview = (url: string, name: string) => {
-        setPreviewUrl(url)
-        setPreviewName(name)
-    }
-
-    const handleClosePreview = () => {
-        setPreviewUrl(null)
-        setPreviewName(null)
-    }
-
     const triggerFileInput = () => {
         if (fileInputRef.current) fileInputRef.current.click()
     }
@@ -110,11 +98,11 @@ export default function ResumeCardsPage() {
                 className="mb-10 shrink-0"
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
                 {/* Render resume cards */}
                 {resumes &&
                     resumes.map((resume) => (
-                        <ResumeCard key={resume.id} resume={resume} onPreview={handlePreview} />
+                        <ResumeCard key={resume.id} resume={resume} />
                     ))}
 
                 {/* Upload card - always visible */}
@@ -136,46 +124,6 @@ export default function ResumeCardsPage() {
 
             {/* Loading state during upload */}
             {mutation.isPending && <FullScreenLoader message="Uploading resume(s)..." />}
-
-            {/* Preview Modal */}
-            {previewUrl && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-                    onClick={handleClosePreview}
-                >
-                    <div
-                        className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                            <h2 className="text-lg font-semibold text-gray-800 truncate">
-                                {previewName}
-                            </h2>
-                            <button
-                                className="bg-red-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-700 transition-colors"
-                                onClick={handleClosePreview}
-                            >
-                                Close
-                            </button>
-                        </div>
-                        <div className="flex-1 overflow-auto p-4 bg-gray-50">
-                            {previewUrl.toLowerCase().endsWith('.pdf') ? (
-                                <iframe
-                                    src={previewUrl}
-                                    title={previewName ?? 'Resume preview'}
-                                    className="w-full h-full min-h-[600px] border-0 rounded-lg bg-white"
-                                />
-                            ) : (
-                                <iframe
-                                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewUrl)}&embedded=true`}
-                                    title={previewName ?? 'Resume preview'}
-                                    className="w-full h-full min-h-[600px] border-0 rounded-lg bg-white"
-                                />
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     )
 }
