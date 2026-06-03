@@ -16,4 +16,6 @@ export default [
         route('resume', './pages/resume.tsx'),
         route('profile', './pages/profile.tsx'),
     ]),
+
+    route('job/location', './pages/job-location.tsx'),
 ] satisfies RouteConfig

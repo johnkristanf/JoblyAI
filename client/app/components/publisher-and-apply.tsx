@@ -49,6 +49,8 @@ export function JobPublisherAndApply({
                         <JobLocationTooltip
                             job_latitude={job.job_latitude}
                             job_longitude={job.job_longitude}
+                            job_title={job.job_title}
+                            employer_name={job.employer_name}
                         />
                     )}
 

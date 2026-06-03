@@ -60,3 +60,19 @@ export const getFileType = (fileNameOrKey: string): ResumeFileType => {
 /** Convenience helpers built on top of getFileType */
 export const isDocxFile = (fileNameOrKey: string) => getFileType(fileNameOrKey) === 'docx'
 export const isPdfFile  = (fileNameOrKey: string) => getFileType(fileNameOrKey) === 'pdf'
+
+/**
+ * Haversine formula – returns the great-circle distance in **metres**
+ * between two lat/lng coordinates.
+ */
+export function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+    const R = 6_371_000
+    const dLat = (b.lat - a.lat) * (Math.PI / 180)
+    const dLon = (b.lng - a.lng) * (Math.PI / 180)
+    const x =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(a.lat * (Math.PI / 180)) *
+        Math.cos(b.lat * (Math.PI / 180)) *
+        Math.sin(dLon / 2) ** 2
+    return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x))
+}
