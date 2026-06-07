@@ -581,6 +581,22 @@ wheels = [
 ]
 
 [[package]]
+name = "deepgram-sdk"
+version = "7.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pydantic-core" },
+    { name = "typing-extensions" },
+    { name = "websockets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1e/f4/72418cc556fbf08216a1cdd66b11affb4077bbd749c1d6b0e77043b87fd2/deepgram_sdk-7.3.1.tar.gz", hash = "sha256:eaade4ea4bead9f009490cf20dcec09a0abd184af112e8a5ddb50cc82b7f98b9", size = 208270, upload-time = "2026-06-03T12:53:03.314Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a2/25/12535afe1c5e70988bc385109d2161f35d5e125ef52bef4bff25e018ca56/deepgram_sdk-7.3.1-py3-none-any.whl", hash = "sha256:57b01059240ee8193116773a7b1cec7d36802cee8c26d69939601c2497d1aafa", size = 559927, upload-time = "2026-06-03T12:53:01.712Z" },
+]
+
+[[package]]
 name = "distro"
 version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -608,6 +624,23 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c0/1f/924e3caae75f471eae4b26bd13b698f6af2c44279f67af317439c2f4c46a/ecdsa-0.19.1.tar.gz", hash = "sha256:478cba7b62555866fcb3bb3fe985e06decbdb68ef55713c4e5ab98c57d508e61", size = 201793, upload-time = "2025-03-13T11:52:43.25Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cb/a3/460c57f094a4a165c84a1341c373b0a4f5ec6ac244b998d5021aade89b77/ecdsa-0.19.1-py2.py3-none-any.whl", hash = "sha256:30638e27cf77b7e15c4c4cc1973720149e1033827cfd00661ca5c8cc0cdb24c3", size = 150607, upload-time = "2025-03-13T11:52:41.757Z" },
+]
+
+[[package]]
+name = "elevenlabs"
+version = "2.51.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pydantic-core" },
+    { name = "requests" },
+    { name = "typing-extensions" },
+    { name = "websockets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/55/8b/4ead2bb7c63c7e8bc81a47e23ef1e8463db2bd204211d5e45ecaea755b7b/elevenlabs-2.51.0.tar.gz", hash = "sha256:8c7df290cda9e5f76efa68d6e645f68f2f997874ef228492d02c4f9afb232904", size = 627230, upload-time = "2026-06-02T11:36:03.209Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/23/46/919e3a92c8e62ae41d0033257196e017fd7eb2e6b641b7ad6e32da4580b9/elevenlabs-2.51.0-py3-none-any.whl", hash = "sha256:66a419d384bf3a4ee47a203be91af4c10a33622c93088fb5ad691ebae902a49e", size = 1699598, upload-time = "2026-06-02T11:36:01.166Z" },
 ]
 
 [[package]]
@@ -2313,9 +2346,11 @@ dependencies = [
     { name = "click-plugins" },
     { name = "click-repl" },
     { name = "cssselect2" },
+    { name = "deepgram-sdk" },
     { name = "distro" },
     { name = "dnspython" },
     { name = "ecdsa" },
+    { name = "elevenlabs" },
     { name = "email-validator" },
     { name = "fastapi" },
     { name = "fastapi-cli" },
@@ -2436,9 +2471,11 @@ requires-dist = [
     { name = "click-plugins", specifier = "==1.1.1.2" },
     { name = "click-repl", specifier = "==0.3.0" },
     { name = "cssselect2", specifier = "==0.9.0" },
+    { name = "deepgram-sdk", specifier = ">=7.3.1" },
     { name = "distro", specifier = "==1.9.0" },
     { name = "dnspython", specifier = "==2.8.0" },
     { name = "ecdsa", specifier = "==0.19.1" },
+    { name = "elevenlabs", specifier = ">=2.51.0" },
     { name = "email-validator", specifier = "==2.3.0" },
     { name = "fastapi", specifier = "==0.122.0" },
     { name = "fastapi-cli", specifier = "==0.0.16" },

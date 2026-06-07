@@ -18,4 +18,5 @@ export default [
     ]),
 
     route('job/location', './pages/job-location.tsx'),
+    route('job/mock/interview', './pages/interview.tsx'),
 ] satisfies RouteConfig

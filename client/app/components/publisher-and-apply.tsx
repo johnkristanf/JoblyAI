@@ -2,7 +2,8 @@ import type { JobMatch } from '~/types/resume_matching'
 import { SaveJobBtn } from './ui/save-job-btn'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 import { JobLocationTooltip } from './job-location-tooltip'
-import { Wand2 } from 'lucide-react'
+import { Wand2, BrainCircuit } from 'lucide-react'
+import { useNavigate } from 'react-router'
 
 export function JobPublisherAndApply({
     job,
@@ -26,6 +27,9 @@ export function JobPublisherAndApply({
 
                 {/* ACTIONS */}
                 <div className="flex items-center justify-end gap-3">
+                    {/* AI Mock Interview Button */}
+                    <MockInterviewBtn job={job} />
+
                     {/* Tailor Resume Button */}
                     {resumeObjectKey && onTailorResume && (
                         <Tooltip>
@@ -74,5 +78,34 @@ export function JobPublisherAndApply({
             </div>
 
         </>
+    )
+}
+
+// ─── Mock Interview icon button ──────────────────────────────────────────────
+function MockInterviewBtn({ job }: { job: JobMatch }) {
+    const navigate = useNavigate()
+
+    const handleClick = () => {
+        const params = new URLSearchParams()
+        if (job.job_title)    params.set('jobTitle', job.job_title)
+        if (job.employer_name) params.set('employer', job.employer_name)
+        navigate(`/job/mock/interview?${params.toString()}`)
+    }
+
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <button
+                    onClick={handleClick}
+                    className="text-violet-500 hover:cursor-pointer hover:opacity-75 transition-opacity"
+                    aria-label="Start AI mock interview for this job"
+                >
+                    <BrainCircuit className="size-5" />
+                </button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+                <p>AI Mock Interview</p>
+            </TooltipContent>
+        </Tooltip>
     )
 }

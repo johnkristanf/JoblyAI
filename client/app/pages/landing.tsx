@@ -1,10 +1,78 @@
-import { useEffect, useState } from 'react'
-import { MapPin, Briefcase, Users, Zap, Search, CheckCircle } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
+import { MapPin, Briefcase, Users, Zap, Search, CheckCircle, Mic, Square } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import EmailChangeConfirm from '~/components/email-change-confirm'
 
 const LandingPage = () => {
     const [email, setEmail] = useState('')
+
+    const [isRecording, setIsRecording] = useState(false);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<BlobPart[]>([]);
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            const options = { mimeType: 'audio/webm;codecs=opus' };
+            const mediaRecorder = MediaRecorder.isTypeSupported(options.mimeType) 
+                ? new MediaRecorder(stream, options)
+                : new MediaRecorder(stream);
+                
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+            
+            let actualMimeType = '';
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    if (!actualMimeType) {
+                        actualMimeType = event.data.type;
+                    }
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                const finalMimeType = actualMimeType || mediaRecorder.mimeType || 'audio/webm';
+                let extension = 'webm';
+                if (finalMimeType.includes('mp4')) extension = 'mp4';
+                else if (finalMimeType.includes('ogg')) extension = 'ogg';
+                else if (finalMimeType.includes('wav')) extension = 'wav';
+                
+                const audioBlob = new Blob(audioChunksRef.current, { type: finalMimeType });
+                
+                stream.getTracks().forEach(track => track.stop());
+
+                const formData = new FormData();
+                formData.append('file', audioBlob, `landing_recording.${extension}`);
+                
+                try {
+                    await fetch(`${import.meta.env.VITE_API_V1_BASE_URL}/upload-audio`, {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    alert('Audio saved to public directory!');
+                } catch (error) {
+                    console.error('Error uploading audio:', error);
+                    alert('Failed to save audio.');
+                }
+            };
+
+            mediaRecorder.start(500);
+            setIsRecording(true);
+        } catch (error) {
+            console.error('Error accessing microphone:', error);
+            alert('Could not access microphone.');
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        }
+    };
     const handleGetStarted = () => {
         if (email) {
             alert(`Welcome! We'll get in touch at ${email}`)
@@ -275,9 +343,17 @@ const LandingPage = () => {
                                 Contact
                             </a>
                         </div>
-                        <div className="text-sm text-gray-500">
-                            © 2025 JoblyAI. All rights reserved.
+                        <div className="text-sm text-gray-500 flex items-center gap-4">
+                            <span>© {new Date().getFullYear()} JoblyAI. All rights reserved.</span>
+                            <button 
+                                onClick={isRecording ? stopRecording : startRecording}
+                                className={`flex items-center gap-1 px-2 py-1 rounded text-xs text-white transition-colors ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+                            >
+                                {isRecording ? <Square size={12} /> : <Mic size={12} />}
+                                {isRecording ? 'Stop' : 'Record'}
+                            </button>
                         </div>
+                        
                     </div>
                 </div>
             </footer>

@@ -85,3 +85,23 @@ class ResumeExtractionPrompt:
                 "Output only the raw JSON object — no markdown, no explanation."
             ),
         }
+
+
+class MockInterviewPrompt:
+    PROMPT_PATH = "src/prompts/mock_interview.md"
+
+    def load_system_prompt(self, job_title: str, employer_name: str) -> dict:
+        with open(self.PROMPT_PATH, "r", encoding="utf-8") as f:
+            template = f.read()
+
+        content = template.format(
+            job_title=job_title or "the open position",
+            employer_name=employer_name or "our company",
+        )
+        return {"role": "system", "content": content}
+
+    def load_greeting_prompt(self) -> dict:
+        return {
+            "role": "user",
+            "content": "Please start the interview now by greeting the candidate and asking your first question.",
+        }
