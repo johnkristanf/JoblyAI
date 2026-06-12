@@ -59,8 +59,8 @@ async def interview_ws(
     logger.info(f"Interview session started — user={user['id']} job='{job_title}' employer='{employer}'")
 
     try:
-        service = InterviewService()
-        await service.run_session(websocket, job_title, employer)
+        interview_service = InterviewService()
+        await interview_service.run_session(websocket, job_title, employer)
     except WebSocketDisconnect:
         logger.info(f"Interview session ended — user={user['id']}")
     except Exception as e:

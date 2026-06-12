@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "api": {
+      "source": "deepgram/skills",
+      "sourceType": "github",
+      "skillPath": "skills/api/SKILL.md",
+      "computedHash": "c70381c6687bd8627f06fabc173584a4b97edc6d991d7a7a8e174974e449849e"
+    },
+    "docs": {
+      "source": "deepgram/skills",
+      "sourceType": "github",
+      "skillPath": "skills/docs/SKILL.md",
+      "computedHash": "5fb68a79b7d8f66d5fe6fb5641aa88fdcc9e4b66d6a8dc05d12edc9ada860a4d"
+    },
+    "examples": {
+      "source": "deepgram/skills",
+      "sourceType": "github",
+      "skillPath": "skills/examples/SKILL.md",
+      "computedHash": "e2e4208973c25c95df3940a447f82c4f822ad9b902986927ce01be3cf999645b"
+    },
+    "recipes": {
+      "source": "deepgram/skills",
+      "sourceType": "github",
+      "skillPath": "skills/recipes/SKILL.md",
+      "computedHash": "c3e90d8d1ba0d85874e5f489360d3aa1f5e5f9911071c3f56ff78049a088ffc7"
+    },
+    "setup-mcp": {
+      "source": "deepgram/skills",
+      "sourceType": "github",
+      "skillPath": "skills/setup-mcp/SKILL.md",
+      "computedHash": "115e5ae362f7dfb3752e29b08b51adbc4da565b634dc4faad06a8ea4cbbe155a"
+    },
+    "starters": {
+      "source": "deepgram/skills",
+      "sourceType": "github",
+      "skillPath": "skills/starters/SKILL.md",
+      "computedHash": "740fd036346f352a611681e6a5ae6e5c8de727aba8f783f1307b4ffa4d9bbb9f"
+    }
+  }
+}

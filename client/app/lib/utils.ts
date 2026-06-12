@@ -37,9 +37,12 @@ export const validateResumeFile = (file: File): { isValid: boolean; error?: stri
     const extValid = ext ? allowedExtensions.includes(ext) : false
 
     if (!fileTypeValid && !extValid) {
-        return { isValid: false, error: 'Invalid file type. Only PDF and Word (.doc/.docx) files are allowed.' }
+        return {
+            isValid: false,
+            error: 'Invalid file type. Only PDF and Word (.doc/.docx) files are allowed.',
+        }
     }
-    
+
     return { isValid: true }
 }
 
@@ -59,20 +62,55 @@ export const getFileType = (fileNameOrKey: string): ResumeFileType => {
 
 /** Convenience helpers built on top of getFileType */
 export const isDocxFile = (fileNameOrKey: string) => getFileType(fileNameOrKey) === 'docx'
-export const isPdfFile  = (fileNameOrKey: string) => getFileType(fileNameOrKey) === 'pdf'
+export const isPdfFile = (fileNameOrKey: string) => getFileType(fileNameOrKey) === 'pdf'
 
 /**
  * Haversine formula – returns the great-circle distance in **metres**
  * between two lat/lng coordinates.
  */
-export function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+export function distanceMeters(
+    a: { lat: number; lng: number },
+    b: { lat: number; lng: number },
+): number {
     const R = 6_371_000
     const dLat = (b.lat - a.lat) * (Math.PI / 180)
     const dLon = (b.lng - a.lng) * (Math.PI / 180)
     const x =
         Math.sin(dLat / 2) ** 2 +
         Math.cos(a.lat * (Math.PI / 180)) *
-        Math.cos(b.lat * (Math.PI / 180)) *
-        Math.sin(dLon / 2) ** 2
+            Math.cos(b.lat * (Math.PI / 180)) *
+            Math.sin(dLon / 2) ** 2
     return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x))
+}
+
+// ── Audio Processing Utilities ──────────────────────────────────────────────
+
+export function downsampleBuffer(
+    buffer: Float32Array,
+    inputSampleRate: number,
+    outputSampleRate: number,
+): Float32Array {
+    if (inputSampleRate === outputSampleRate) return buffer
+    const ratio = inputSampleRate / outputSampleRate
+    const newLength = Math.round(buffer.length / ratio)
+    const result = new Float32Array(newLength)
+    for (let i = 0; i < newLength; i++) {
+        result[i] = buffer[Math.round(i * ratio)]
+    }
+    return result
+}
+
+export function float32ToInt16Pcm(float32: Float32Array): Int16Array {
+    const int16 = new Int16Array(float32.length)
+    for (let i = 0; i < float32.length; i++) {
+        int16[i] = Math.max(-32768, Math.min(32767, float32[i] * 32768))
+    }
+    return int16
+}
+
+export function encodePcmToBase64(int16: Int16Array): string {
+    const bytes = new Uint8Array(int16.buffer)
+    let binary = ''
+    bytes.forEach((b) => (binary += String.fromCharCode(b)))
+    return btoa(binary)
 }

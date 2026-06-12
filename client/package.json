@@ -16,6 +16,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@react-router/node": "^7.9.2",
     "@react-router/serve": "^7.9.2",
+    "@ricky0123/vad-web": "^0.0.30",
     "@supabase/supabase-js": "^2.86.0",
     "@tanstack/react-query": "^5.90.11",
     "@types/maplibre-gl": "^1.13.2",

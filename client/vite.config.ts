@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
         plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
         server: {
             port: 3000,
-            allowedHosts: ['47a9-110-54-204-193.ngrok-free.app']
+            allowedHosts: ['49ff-110-54-206-6.ngrok-free.app']
         },
 
         define: {

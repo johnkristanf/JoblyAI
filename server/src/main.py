@@ -29,7 +29,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000", 
         "https://jobly-ai-weld.vercel.app", 
-        "https://47a9-110-54-204-193.ngrok-free.app",
+        "https://49ff-110-54-206-6.ngrok-free.app",
         "http://192.168.43.253:3000",
         "http://192.168.43.253"
     ],
