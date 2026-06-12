@@ -43,6 +43,7 @@ params = {
     "SUPABASE_JWT_SECRET": get_env_param(
         "SUPABASE_JWT_SECRET", "/joblyai/prod/SUPABASE_JWT_SECRET"
     ),
+    "SUPABASE_URL": get_env_param("SUPABASE_URL", "/joblyai/prod/SUPABASE_URL"),
     "DATABASE_URL": get_env_param("DATABASE_URL", "/joblyai/prod/DATABASE_URL"),
     "REDIS_URL": get_env_param("REDIS_URL", "/joblyai/prod/REDIS_URL"),
     "RAPID_API_KEY": get_env_param("RAPID_API_KEY", "/joblyai/prod/RAPID_API_KEY"),

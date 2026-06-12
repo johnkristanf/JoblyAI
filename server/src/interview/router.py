@@ -1,9 +1,8 @@
 import logging
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, status
-from fastapi.concurrency import run_in_threadpool
-from jose import jwt, JWTError
+from jose import JWTError
 
-from src.config.runtime import params
+from src.auth.dependencies import decode_supabase_token
 from src.interview.service import InterviewService
 
 logger = logging.getLogger("interview.router")
@@ -11,21 +10,14 @@ logger = logging.getLogger("interview.router")
 interview_router = APIRouter()
 
 
-async def _verify_ws_token(token: str) -> dict:
+async def _verify_ws_token(token: str) -> dict | None:
     """
     Verify the Supabase JWT passed as a query param.
-    Mirrors the logic in src/auth/dependencies.py but works without
-    HTTP Bearer headers (WebSocket connections cannot send custom headers
-    in the browser).
+    Uses the shared JWKS-based helper from auth/dependencies so the
+    HTTP and WebSocket paths stay in sync.
     """
     try:
-        payload = await run_in_threadpool(
-            jwt.decode,
-            token,
-            params["SUPABASE_JWT_SECRET"],
-            algorithms=["HS256"],
-            audience="authenticated",
-        )
+        payload = await decode_supabase_token(token)
         user_id = payload.get("sub")
         if not user_id:
             return None
