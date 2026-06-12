@@ -70,7 +70,7 @@ const SignupPage = () => {
                 setSuccess(true)
                 // Redirect to verification page
                 setTimeout(() => {
-                    navigate('/email/verification')
+                    navigate(`/email/verification?email=${encodeURIComponent(email)}`)
                 }, 2000)
             }
         } catch (err) {
