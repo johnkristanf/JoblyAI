@@ -13,10 +13,11 @@ export default [
         route('job/search/resume-matching', './pages/resume-matching.tsx'),
 
         route('saved/jobs', './pages/saved-jobs.tsx'),
+        route('interviews', './pages/interviews.tsx'),
         route('resume', './pages/resume.tsx'),
         route('profile', './pages/profile.tsx'),
     ]),
 
     route('job/location', './pages/job-location.tsx'),
-    route('job/mock/interview', './pages/interview.tsx'),
+    route('job/mock/interview', './pages/mock-interview.tsx'),
 ] satisfies RouteConfig

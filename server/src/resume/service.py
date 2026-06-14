@@ -162,12 +162,7 @@ class ResumeService:
             object_key = existing_resume_data.get("object_key")
             if object_key:
                 try:
-                    resume_content = self.get_object_from_s3(params["AWS_S3_BUCKET_NAME"], object_key)
-                    ext = get_file_extension(object_key)
-                    if ext in ("doc", "docx"):
-                        resume_text = read_return_docx_content(resume_content)
-                    else:
-                        resume_text = read_return_pdf_content_stream(resume_content)
+                    resume_text = self.get_resume_text_from_s3(params["AWS_S3_BUCKET_NAME"], object_key)
                 except Exception as e:
                     logger.error(f"Error fetching existing resume from S3: {e}", exc_info=True)
                     resume_text = ""
@@ -191,6 +186,14 @@ class ResumeService:
             ContentType=file_content_type,
         )
 
+
+    def get_resume_text_from_s3(self, bucket: str, object_key: str) -> str:
+        resume_content = self.get_object_from_s3(bucket, object_key)
+        ext = get_file_extension(object_key)
+        if ext in ("doc", "docx"):
+            return read_return_docx_content(resume_content)
+        else:
+            return read_return_pdf_content_stream(resume_content)
 
     def get_object_from_s3(self, bucket: str, object_key: str) -> bytes:
         response = s3.get_object(Bucket=bucket, Key=object_key)

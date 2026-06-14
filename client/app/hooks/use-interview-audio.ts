@@ -81,7 +81,7 @@ export function useInterviewAudio({ send, wsRef, close, setStatus }: UseIntervie
             streamRef.current = stream
 
             try {
-                const myvad = await MicVAD.new({
+                const micvad = await MicVAD.new({
                     getStream: async () => stream,
                     onSpeechStart: () => {
                         console.debug('[VAD] Speech started')
@@ -102,8 +102,8 @@ export function useInterviewAudio({ send, wsRef, close, setStatus }: UseIntervie
                         }, 4000)
                     }
                 })
-                vadRef.current = myvad
-                myvad.start()
+                vadRef.current = micvad
+                micvad.start()
             } catch (vadErr) {
                 console.warn('Failed to initialize VAD', vadErr)
             }

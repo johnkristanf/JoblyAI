@@ -56,3 +56,13 @@ export const getResumePresignedUrl = async (objectKey: string): Promise<string> 
     })
     return response.data.url
 }
+
+export const getInterviews = async () => {
+    const accessToken = await getAccessToken()
+    const response = await axios.get(`${import.meta.env.VITE_API_V1_BASE_URL}/interview/all`, {
+        headers: {
+            Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+    })
+    return response.data
+}

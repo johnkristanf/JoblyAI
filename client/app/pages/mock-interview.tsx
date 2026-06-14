@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 
 export const meta = () => [
-    { title: 'AI Mock Interview – JoblyAI' },
+    { title: 'Mock Interview – JoblyAI' },
     { name: 'description', content: "Practice your interview with JoblyAI's AI interviewer." },
 ]
 
@@ -42,12 +42,14 @@ import { Button } from '~/components/ui/button'
 import { statusLabel } from '~/constants/interview'
 
 // ─── Main page ──────────────────────────────────────────────────────────────────
-export default function InterviewPage() {
+export default function MockInterviewPage() {
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
 
-    const jobTitle = searchParams.get('jobTitle') ?? 'Mock Interview'
-    const employer = searchParams.get('employer') ?? ''
+    const jobTitle = searchParams.get('jobTitle') || 'Software Engineer'
+    const employer = searchParams.get('employer') || 'Tech Corp'
+    const interviewId = searchParams.get('interviewId')
+    const interviewType = searchParams.get('interviewType') || 'BEHAVIORAL'
 
     const elapsed = useElapsedTimer()
     const clockTime = useClockTime()
@@ -57,15 +59,14 @@ export default function InterviewPage() {
         getAccessToken().then((t) => setToken(t))
     }, [])
 
-    const [status, setStatus] = useState<InterviewStatus>('connecting')
+    const [status, setStatus] = useState<InterviewStatus>('ended')
     const [transcripts, setTranscripts] = useState<Transcript[]>([])
     const [error, setError] = useState<string | null>(null)
     const transcriptIdRef = useRef(0)
 
     const WS_BASE = import.meta.env.VITE_API_V1_BASE_URL ?? 'ws://localhost:8000'
-    console.log("WS_BASE: ", WS_BASE);
-    const url = token
-        ? `${WS_BASE}/interview/ws?${new URLSearchParams({ job_title: jobTitle, employer, token })}`
+    const url = (token && interviewId)
+        ? `${WS_BASE}/interview/ws?${new URLSearchParams({ job_title: jobTitle, employer, interview_type: interviewType, interview_id: interviewId, token })}`
         : null
 
     // ── WebSocket / AI session ──────────────────────────────────────────────────
@@ -172,8 +173,6 @@ export default function InterviewPage() {
         endSession()
         navigate(-1)
     }
-
-
 
     return (
         <Drawer open={transcriptDrawerOpen} onOpenChange={setTranscriptDrawerOpen}>

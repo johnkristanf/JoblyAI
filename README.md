@@ -112,13 +112,15 @@ pip install -r requirements.txt
 alembic upgrade head
 
 # Start the FastAPI server
-fastapi run src/main.py --port 8000
+cd server
+uv run uvicorn src.main:app --reload --host 0.0.0.0
 ```
 
 **4. Start the Celery Worker**
 *(In a new terminal window within the `/server` directory)*
 ```bash
-celery -A src.celery.worker worker --loglevel=info
+cd server
+uv run celery -A src.celery worker --loglevel=info
 ```
 
 **5. Setup the Frontend Client**

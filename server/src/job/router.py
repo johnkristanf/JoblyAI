@@ -36,7 +36,7 @@ async def match_resume(
     jobs_service: JobsService = Depends(get_jobs_service),
     resume_service: ResumeService = Depends(get_resume_service),
 ):
-    job_list_page_length = "3"
+    job_list_page_length = "10"
     job_search_results = await jobs_service.get_job_search_results(
         redis_client=redis_client,
         job_platform=job_platform,
