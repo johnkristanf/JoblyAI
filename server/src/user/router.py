@@ -34,14 +34,6 @@ async def get_user(
     )
     profile = await session.get(Profile, user["id"])
     if not profile:
-        logger.error(
-            "Profile not found",
-            extra={
-                "endpoint": "/user/profile",
-                "method": "GET",
-                "user": user,
-            },
-        )
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found.")
 
     # Generate a presigned avatar URL if avatar_url is set

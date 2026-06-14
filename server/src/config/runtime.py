@@ -8,11 +8,27 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# Setup logger
+class ExtraFormatter(logging.Formatter):
+    STANDARD_ATTRS = {
+        'name', 'msg', 'args', 'levelname', 'levelno', 'pathname', 'filename', 
+        'module', 'exc_info', 'exc_text', 'stack_info', 'lineno', 'funcName', 
+        'created', 'msecs', 'relativeCreated', 'thread', 'threadName', 
+        'processName', 'process', 'message', 'asctime', 'taskName'
+    }
+
+    def format(self, record):
+        s = super().format(record)
+        extra_dict = {k: v for k, v in record.__dict__.items() if k not in self.STANDARD_ATTRS and not k.startswith('_')}
+        if extra_dict:
+            s += f" - {extra_dict}"
+        return s
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(ExtraFormatter("%(asctime)s - %(levelname)s - %(message)s"))
+
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
+    handlers=[handler],
 )
 logger = logging.getLogger(__name__)
 
