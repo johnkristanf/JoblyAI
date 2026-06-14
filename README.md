@@ -104,15 +104,18 @@ docker-compose up -d
 
 **3. Setup the Backend Server**
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+cd server
+
+# Create virtual environment and install dependencies via uv
+uv sync
+
+# Activate the virtual environment
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Run migrations
 alembic upgrade head
 
 # Start the FastAPI server
-cd server
 uv run uvicorn src.main:app --reload --host 0.0.0.0
 ```
 
@@ -135,8 +138,6 @@ npm run dev
 
 ## 🔮 Future Enhancements
 - [ ] End-to-End Testing pipeline with Playwright or Cypress.
-- [ ] Integration of CI/CD pipelines via GitHub Actions.
-- [ ] Direct job application integrations.
 - [ ] Expanded AI mock-interview voice interactions (Deepgram & ElevenLabs).
 
 ---
