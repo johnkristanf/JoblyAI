@@ -66,8 +66,8 @@ jobs:
             --overwrite
 
           aws ssm put-parameter \
-            --name "/joblyai/prod/SUPABASE_JWT_SECRET" \
-            --value "${{ secrets.SUPABASE_JWT_SECRET }}" \
+            --name "/joblyai/prod/SUPABASE_URL" \
+            --value "${{ secrets.SUPABASE_URL }}" \
             --type SecureString \
             --overwrite
 
@@ -98,5 +98,17 @@ jobs:
           aws ssm put-parameter \
             --name "/joblyai/prod/FIRECRAWL_API_KEY" \
             --value "${{ secrets.FIRECRAWL_API_KEY }}" \
+            --type SecureString \
+            --overwrite
+
+          aws ssm put-parameter \
+            --name "/joblyai/prod/DEEPGRAM_API_KEY" \
+            --value "${{ secrets.DEEPGRAM_API_KEY }}" \
+            --type SecureString \
+            --overwrite
+
+          aws ssm put-parameter \
+            --name "/joblyai/prod/ELEVENLABS_API_KEY" \
+            --value "${{ secrets.ELEVENLABS_API_KEY }}" \
             --type SecureString \
             --overwrite

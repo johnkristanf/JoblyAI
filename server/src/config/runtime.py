@@ -40,31 +40,35 @@ def get_env_param(name, param_store_path):
 
 
 params = {
-    "SUPABASE_JWT_SECRET": get_env_param(
-        "SUPABASE_JWT_SECRET", "/joblyai/prod/SUPABASE_JWT_SECRET"
-    ),
-    "SUPABASE_URL": get_env_param("SUPABASE_URL", "/joblyai/prod/SUPABASE_URL"),
-    "DATABASE_URL": get_env_param("DATABASE_URL", "/joblyai/prod/DATABASE_URL"),
-    "REDIS_URL": get_env_param("REDIS_URL", "/joblyai/prod/REDIS_URL"),
+
     "RAPID_API_KEY": get_env_param("RAPID_API_KEY", "/joblyai/prod/RAPID_API_KEY"),
     "RAPID_API_HOST": get_env_param("RAPID_API_HOST", "/joblyai/prod/RAPID_API_HOST"),
     "LINKEDIN_RAPID_API_HOST": get_env_param("LINKEDIN_RAPID_API_HOST", "/joblyai/prod/LINKEDIN_RAPID_API_HOST"),
+
     "OPENAI_API_KEY": get_env_param("OPENAI_API_KEY", "/joblyai/prod/OPENAI_API_KEY"),
     "OPENAI_MODEL": get_env_param("OPENAI_MODEL", "/joblyai/prod/OPENAI_MODEL"),
 
+    "DATABASE_URL": get_env_param("DATABASE_URL", "/joblyai/prod/DATABASE_URL"),
+    "REDIS_URL": get_env_param("REDIS_URL", "/joblyai/prod/REDIS_URL"),
+
+    "SUPABASE_URL": get_env_param("SUPABASE_URL", "/joblyai/prod/SUPABASE_URL"),
+    
     "AWS_REGION": get_env_param("AWS_REGION", "/joblyai/prod/AWS_REGION"),
     "AWS_S3_BUCKET_NAME": get_env_param(
         "AWS_S3_BUCKET_NAME", "/joblyai/prod/AWS_S3_BUCKET_NAME"
     ),
+
     "CELERY_BROKER_URL": get_env_param(
         "CELERY_BROKER_URL", "/joblyai/prod/CELERY_BROKER_URL"
     ),
     "CELERY_BACKEND_URL": get_env_param(
         "CELERY_BACKEND_URL", "/joblyai/prod/CELERY_BACKEND_URL"
     ),
+
     "FIRECRAWL_API_KEY": get_env_param(
         "FIRECRAWL_API_KEY", "/joblyai/prod/FIRECRAWL_API_KEY"
     ),
+    
     "DEEPGRAM_API_KEY": get_env_param(
         "DEEPGRAM_API_KEY", "/joblyai/prod/DEEPGRAM_API_KEY"
     ),
