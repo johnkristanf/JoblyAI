@@ -111,8 +111,6 @@ export function useInterviewAudio({ send, wsRef, close, setStatus }: UseIntervie
             const ctx = new AudioContext()
             audioCtxRef.current = ctx
 
-            console.log(`AudioContext native sample rate: ${ctx.sampleRate}`)
-
             const source = ctx.createMediaStreamSource(stream)
             sourceRef.current = source
 

@@ -59,8 +59,6 @@ const SignupPage = () => {
             })
 
             if (error) {
-                console.log('SIGNUP ERROR: ', error)
-
                 setError(error.message)
                 setLoading(false)
                 return
@@ -74,8 +72,6 @@ const SignupPage = () => {
                 }, 2000)
             }
         } catch (err) {
-            console.log('SIGNUP ERROR: ', err)
-
             setError('An unexpected error occurred. Please try again.')
             setLoading(false)
         }
