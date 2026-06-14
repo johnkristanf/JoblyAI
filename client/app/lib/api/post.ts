@@ -2,6 +2,7 @@ import axios from 'axios'
 import type { JobMatch } from '~/types/resume_matching'
 import { getAccessToken } from '../supabase/client'
 import type { RemoveResumeData, ResumeFile } from '~/types/resume'
+import type { CreateInterviewPayload } from '~/types/interview'
 
 export const resumeMatching = async (formData: FormData) => {
     const accessToken = await getAccessToken()
@@ -129,3 +130,21 @@ export const tailorResume = async (payload: TailorResumePayload): Promise<Respon
 
     return response
 }
+
+export const createInterview = async (payload: CreateInterviewPayload): Promise<{ interview_id: string }> => {
+    const accessToken = await getAccessToken()
+
+    const response = await axios.post(
+        `${import.meta.env.VITE_API_V1_BASE_URL}/interview/create`,
+        payload,
+        {
+            headers: {
+                Authorization: accessToken ? `Bearer ${accessToken}` : '',
+                'Content-Type': 'application/json',
+            },
+        },
+    )
+
+    return response.data
+}
+

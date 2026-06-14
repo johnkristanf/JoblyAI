@@ -1,4 +1,4 @@
-import { BookmarkCheck, BriefcaseBusiness, FileUser, MapPin } from 'lucide-react'
+import { BookmarkCheck, BrainCircuit, BriefcaseBusiness, FileUser, MapPin } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import {
     Sidebar,
@@ -66,6 +66,15 @@ export function AppSidebar() {
                                 <Link to="/saved/jobs">
                                     <BookmarkCheck className="size-4" />{' '}
                                     <span className="text-xs">Saved Jobs</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild isActive={pathname === '/interviews'} className="cursor-pointer">
+                                <Link to="/interviews">
+                                    <BrainCircuit className="size-4" />{' '}
+                                    <span className="text-xs">Mock Interviews</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

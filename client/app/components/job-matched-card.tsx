@@ -101,11 +101,10 @@ export function JobMatchedCard({ resumeMatchingResponse, resumeObjectKey }: JobM
                                     )}
                                     {job.job_is_remote !== null && (
                                         <span
-                                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                                                job.job_is_remote
+                                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${job.job_is_remote
                                                     ? 'bg-green-100 text-green-700'
                                                     : 'bg-yellow-100 text-yellow-700'
-                                            }`}
+                                                }`}
                                         >
                                             {job.job_is_remote ? 'Remote' : 'On-site'}
                                         </span>
@@ -140,10 +139,10 @@ export function JobMatchedCard({ resumeMatchingResponse, resumeObjectKey }: JobM
                                     </div>
                                 )}
 
-                                <JobPublisherAndApply 
-                                    job={job} 
-                                    resumeObjectKey={resumeObjectKey} 
-                                    onTailorResume={() => setTailorTarget(job)} 
+                                <JobPublisherAndApply
+                                    job={job}
+                                    resumeObjectKey={resumeObjectKey}
+                                    onTailorResume={() => setTailorTarget(job)}
                                 />
                             </div>
                         ))}

@@ -111,8 +111,8 @@ def read_return_docx_content(stream_content: bytes) -> str:
 def clean_markdown_json(json_str: str) -> str:
     """Removes markdown formatting blocks from a JSON string."""
     cleaned = json_str.strip()
-    if cleaned.startswith("```json"):
-        cleaned = cleaned[7:]
-    if cleaned.endswith("```"):
-        cleaned = cleaned[:-3]
+    if "```" in cleaned:
+        cleaned = cleaned.split("```")[1]
+        if cleaned.strip().startswith("json"):
+            cleaned = cleaned.strip()[4:]
     return cleaned.strip()

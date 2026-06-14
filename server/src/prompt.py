@@ -88,10 +88,17 @@ class ResumeExtractionPrompt:
 
 
 class MockInterviewPrompt:
-    PROMPT_PATH = "src/prompts/mock_interview.md"
+    _PROMPT_PATHS: dict[str, str] = {
+        "HR_SCREENING": "src/prompts/interview/hr_screening.md",
+        "TECHNICAL":    "src/prompts/interview/technical.md",
+        "BEHAVIORAL":   "src/prompts/interview/behavioral.md",
+    }
+    # Fallback for unknown types
+    _DEFAULT_TYPE = "BEHAVIORAL"
 
-    def load_system_prompt(self, job_title: str, employer_name: str) -> dict:
-        with open(self.PROMPT_PATH, "r", encoding="utf-8") as f:
+    def load_system_prompt(self, job_title: str, employer_name: str, interview_type: str = "BEHAVIORAL") -> dict:
+        path = self._PROMPT_PATHS.get(interview_type.upper(), self._PROMPT_PATHS[self._DEFAULT_TYPE])
+        with open(path, "r", encoding="utf-8") as f:
             template = f.read()
 
         content = template.format(
@@ -105,3 +112,32 @@ class MockInterviewPrompt:
             "role": "user",
             "content": "Please start the interview now by greeting the candidate and asking your first question.",
         }
+
+
+class InterviewGraderPrompt:
+    _PROMPT_PATHS: dict[str, str] = {
+        "HR_SCREENING": "src/prompts/grader/hr_screening.md",
+        "TECHNICAL":    "src/prompts/grader/technical.md",
+        "BEHAVIORAL":   "src/prompts/grader/behavioral.md",
+    }
+    _DEFAULT_TYPE = "BEHAVIORAL"
+
+    def load_system_prompt(
+        self,
+        interview_type: str,
+        job_title: str,
+        employer: str,
+        resume_text: str,
+        transcript_text: str,
+    ) -> str:
+        path = self._PROMPT_PATHS.get(interview_type.upper(), self._PROMPT_PATHS[self._DEFAULT_TYPE])
+        with open(path, "r", encoding="utf-8") as f:
+            template = f.read()
+
+        return template.format(
+            job_title=job_title or "Not specified",
+            employer=employer or "Not specified",
+            resume_text=resume_text or "No resume provided.",
+            transcript_text=transcript_text,
+        )
+

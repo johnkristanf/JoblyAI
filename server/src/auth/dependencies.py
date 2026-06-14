@@ -81,8 +81,6 @@ async def verify_user_from_token(
             detail=f"Invalid token: {exc}",
         )
 
-    print(f"payload paparty ko: {payload}")
-
     user_id = payload.get("sub")
     if not user_id:
         raise HTTPException(
