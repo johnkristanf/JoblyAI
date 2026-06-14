@@ -1,7 +1,7 @@
-import base64
+import logging
 import uuid
 
-from fastapi import APIRouter, Depends, Form, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, Form, UploadFile, File, HTTPException, status
 
 from src.config.runtime import params
 from src.resume.dependencies import get_resume_service
@@ -14,6 +14,7 @@ from typing import Optional
 
 user_route = APIRouter()
 
+logger = logging.getLogger("user")
 
 @user_route.get(
     "/profile",
@@ -23,9 +24,25 @@ async def get_user(
     session: AsyncSession = Depends(Database.get_async_session),
     resume_service: ResumeService = Depends(get_resume_service),
 ):
+    logger.info(
+        "Fetching user profile",
+        extra={
+            "endpoint": "/user/profile",
+            "method": "GET",
+            "user": user,
+        },
+    )
     profile = await session.get(Profile, user["id"])
     if not profile:
-        raise HTTPException(status_code=401, detail="Profile not found.")
+        logger.error(
+            "Profile not found",
+            extra={
+                "endpoint": "/user/profile",
+                "method": "GET",
+                "user": user,
+            },
+        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found.")
 
     # Generate a presigned avatar URL if avatar_url is set
     avatar_url = None
@@ -55,7 +72,15 @@ async def update_profile(
 
     profile = await session.get(Profile, user_id)
     if not profile:
-        raise HTTPException(status_code=401, detail="Profile not found.")
+        logger.error(
+            "Profile not found",
+            extra={
+                "endpoint": "/user/profile",
+                "method": "PUT",
+                "user": user,
+            },
+        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found.")
 
     avatar_presigned_url = None
     updated = False
