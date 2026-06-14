@@ -11,6 +11,9 @@ COPY pyproject.toml uv.lock ./
 # Sync dependencies from lock file
 RUN uv sync --frozen --no-dev
 
+# Add virtual environment to PATH
+ENV PATH="/app/.venv/bin:$PATH"
+
 # Copy application code
 COPY . .
 
