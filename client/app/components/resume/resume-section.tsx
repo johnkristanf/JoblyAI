@@ -36,8 +36,6 @@ export function ResumeSection({
     selectedExistingResume,
     handleExistingResumeSelect
 }: ResumeSectionProps) {
-    console.log("resumesData: ", resumesData);
-
     return (
         <div className="flex flex-col">
             <label className="mb-1 text-gray-700 font-medium">Resume</label>

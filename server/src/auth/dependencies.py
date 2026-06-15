@@ -1,4 +1,6 @@
 import httpx
+import logging
+
 from fastapi import Depends, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -11,6 +13,7 @@ security = HTTPBearer()
 # Simple in-memory cache for the JWKS response.
 # Keys rotate rarely, so a single-process cache is sufficient.
 _jwks_cache: dict | None = None
+logger = logging.getLogger("auth")
 
 
 async def get_jwks() -> dict:
@@ -34,6 +37,13 @@ async def decode_supabase_token(token: str) -> dict:
     so the app keeps working during the dashboard migration window.
     """
     jwks = await get_jwks()
+
+    logger.info(
+        "Authentication token",
+        extra={
+            "token": token,
+        },
+    )
 
     print(f"JWKS: {jwks}")
 

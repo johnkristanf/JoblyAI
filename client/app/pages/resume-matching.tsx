@@ -71,8 +71,6 @@ const ResumeMatchingPage = () => {
 
     useEffect(() => {
         if (resumeMatchingStatus?.status === Statuses.SUCCESS) {
-            console.log("resumeMatchingStatus: ", resumeMatchingStatus);
-            
             setResumeMatchingResponse({
                 jobs_matched: resumeMatchingStatus.jobs_matched ?? [],
             })
