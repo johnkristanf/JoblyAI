@@ -8,7 +8,7 @@ from redis.client import Redis
 from src.config.runtime import params
 from src.utils import json_decode, clean_markdown_json
 from src.prompt import JobSeachPrompt, EmployerInsightsPrompt, ResumeExtractionPrompt
-from firecrawl import AsyncFirecrawlApp
+from firecrawl import AsyncFirecrawl
 
 COUNTRY_CODE_TO_NAME = {
     "us": "United States",
@@ -37,6 +37,7 @@ class JobsService:
         # Results already in cache
         cached_results = await redis_client.get(cache_key)
         if cached_results is not None:
+            print("NAA NAY CACHE DATA BOSS")
             return json_decode(cached_results)
 
         if job_platform == "linkedin":
@@ -71,23 +72,44 @@ class JobsService:
             raise ValueError("FIRECRAWL_API_KEY is not configured")
 
         employer_website_context = ""
-        if api_key:
-            try:
-                app = AsyncFirecrawlApp(api_key=api_key)
-                scrape_response = await app.scrape(url=employer_website, params={"formats": ["markdown"]})
-                logger.info(f"SCRAPE RESPONSE for insights: {scrape_response}")
-                if isinstance(scrape_response, dict):
-                    markdown = scrape_response.get("markdown")
+        try:
+            app = AsyncFirecrawl(api_key=api_key)
+            crawl_result = await app.crawl(
+                url=employer_website,
+                limit=5,
+                poll_interval=2,
+                timeout=60,
+                scrape_options={"formats": ["markdown"]},
+            )
+            logger.info(f"CRAWL RESULT for insights: status={getattr(crawl_result, 'status', None)}, pages={getattr(crawl_result, 'total', None)}")
+
+            pages = getattr(crawl_result, "data", None) or []
+            markdown_parts = []
+            for page in pages:
+                if isinstance(page, dict):
+                    md = page.get("markdown") or ""
                 else:
-                    markdown = getattr(scrape_response, "markdown", None)
-                if markdown:
-                    employer_website_context = markdown
-            except Exception as e:
-                logger.error(f"Error scraping employer website with FirecrawlApp: {e}")
-                return "Could not retrieve insights. Failed to scrape the employer website."
-        
+                    md = getattr(page, "markdown", None) or ""
+                if md:
+                    source = ""
+                    if isinstance(page, dict):
+                        meta = page.get("metadata") or {}
+                        source = meta.get("source_url") or meta.get("sourceURL") or ""
+                    else:
+                        meta = getattr(page, "metadata", None)
+                        if meta:
+                            source = getattr(meta, "source_url", "") or getattr(meta, "sourceURL", "") or ""
+                    markdown_parts.append(f"--- Page: {source} ---\n{md}")
+
+            if markdown_parts:
+                employer_website_context = "\n\n".join(markdown_parts)
+
+        except Exception as e:
+            logger.error(f"Error crawling employer website with Firecrawl: {e}")
+            return "Could not retrieve insights. Failed to crawl the employer website.", ""
+
         if not employer_website_context:
-            return "Could not retrieve insights from the employer website."
+            return "Could not retrieve insights from the employer website.", ""
 
         client: AsyncOpenAI = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
 

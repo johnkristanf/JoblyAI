@@ -38,15 +38,6 @@ async def decode_supabase_token(token: str) -> dict:
     """
     jwks = await get_jwks()
 
-    logger.info(
-        "Authentication token",
-        extra={
-            "token": token,
-        },
-    )
-
-    print(f"JWKS: {jwks}")
-
     # Determine which algorithms the current JWKS advertises.
     # After dashboard migration the JWKS will contain RSA keys; before
     # migration it returns an empty key set, so we fall back to HS256.

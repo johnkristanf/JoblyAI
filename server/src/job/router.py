@@ -36,7 +36,7 @@ async def match_resume(
     jobs_service: JobsService = Depends(get_jobs_service),
     resume_service: ResumeService = Depends(get_resume_service),
 ):
-    job_list_page_length = "10"
+    job_list_page_length = "5"
     job_search_results = await jobs_service.get_job_search_results(
         redis_client=redis_client,
         job_platform=job_platform,
@@ -45,6 +45,8 @@ async def match_resume(
         date_posted=date_posted,
         job_list_page_length=job_list_page_length,
     )
+
+    print(f"job_search_results: {job_search_results}")
 
     # Process resume text and handle upload if new resume
     resume_text, upload_task_id, existing_resume_object_key = await resume_service.process_resume_for_job_search(
@@ -135,7 +137,6 @@ async def get_employer_insights(
         cached_insights = await redis_client.get(cache_key)
         
         if cached_insights:
-            # Redis get returns bytes for strings in most async clients (like aioredis or redis-py async)
             decoded_insights = cached_insights.decode("utf-8") if isinstance(cached_insights, bytes) else cached_insights
             return {"insights": decoded_insights}
 
