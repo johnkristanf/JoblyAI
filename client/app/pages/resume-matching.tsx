@@ -45,7 +45,13 @@ const ResumeMatchingPage = () => {
             }
         },
         onError: (err: any) => {
-            toast.error('Error in matching job, please try again later')
+            const status = err?.response?.status ?? err?.status
+            const detail = err?.response?.data?.detail ?? err?.data?.detail
+            if (status === 409 && detail) {
+                toast.error(detail)
+            } else {
+                toast.error('Error in matching job, please try again later')
+            }
         },
     })
 

@@ -40,12 +40,23 @@ export default function ResumeCardsPage() {
 
         if (files.length === 0) return
 
-        // Only accept PDFs: validate before proceeding
+        // Only accept PDFs and Word documents: validate before proceeding
+        const allowedTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ]
+        const allowedExtensions = ['.pdf', '.doc', '.docx']
+
         const invalidFiles = files.filter(
-            (file) => file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf'),
+            (file) => {
+                const isAllowedType = allowedTypes.includes(file.type)
+                const isAllowedExtension = allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
+                return !isAllowedType && !isAllowedExtension
+            }
         )
         if (invalidFiles.length > 0) {
-            toast.error('Only PDF files are allowed.')
+            toast.error('Only PDF, DOC, and DOCX files are allowed.')
             if (fileInputRef.current) fileInputRef.current.value = ''
             return
         }
@@ -97,18 +108,18 @@ export default function ResumeCardsPage() {
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-                {/* Render resume cards */}
-                {resumes &&
-                    resumes.map((resume) => (
-                        <ResumeCard key={resume.id} resume={resume} />
-                    ))}
-
-                {/* Upload card - always visible */}
+                {/* Upload card - always visible at the top */}
                 <UploadNewResumeCard
                     onClick={triggerFileInput}
                     inputRef={fileInputRef}
                     onChange={handleFilesUpload}
                 />
+
+                {/* Render resume cards */}
+                {resumes &&
+                    resumes.map((resume) => (
+                        <ResumeCard key={resume.id} resume={resume} />
+                    ))}
             </div>
 
             {/* Empty state when no resumes */}

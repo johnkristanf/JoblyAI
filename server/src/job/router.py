@@ -35,6 +35,7 @@ async def match_resume(
     redis_client: Redis = Depends(Database.get_redis_client),
     jobs_service: JobsService = Depends(get_jobs_service),
     resume_service: ResumeService = Depends(get_resume_service),
+    session: AsyncSession = Depends(Database.get_async_session),
 ):
     job_list_page_length = "5"
     job_search_results = await jobs_service.get_job_search_results(
@@ -46,12 +47,21 @@ async def match_resume(
         job_list_page_length=job_list_page_length,
     )
 
-    # Process resume text and handle upload if new resume
-    resume_text, upload_task_id, existing_resume_object_key = await resume_service.process_resume_for_job_search(
-        new_resume=new_resume,
-        existing_resume=existing_resume,
-        user=user
-    )
+    # Handle new resume upload
+    resume_text = ""
+    upload_task_id = None
+    existing_resume_object_key = None
+
+    if new_resume is not None:
+        resume_text, upload_task_id = await resume_service.handle_new_resume(
+            new_resume=new_resume,
+            user=user,
+            session=session,
+        )
+    elif existing_resume is not None:
+        resume_text, existing_resume_object_key = resume_service.handle_existing_resume(
+            existing_resume=existing_resume,
+        )
 
     # Pre-process job listing before feeding to LLM
     raw_job_listings = job_search_results.get("data", [])

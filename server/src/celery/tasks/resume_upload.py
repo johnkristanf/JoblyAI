@@ -15,8 +15,8 @@ async def _save_resume_to_db(filename: str, object_key: str, user_id: str):
     """Create a DB resume record inside an async session."""
     Database.connect_async_session()
     async with Database.async_session() as session:
-        from src.resume.service import ResumeService
-        resume_service = ResumeService()
+        from src.resume.dependencies import get_resume_service
+        resume_service = get_resume_service()
         await resume_service.create_db_resume(session, filename, object_key, user_id)
 
 
@@ -38,11 +38,11 @@ def upload_resume(
 
     try:
         file_bytes = base64.b64decode(file_bytes_b64)
-        from src.resume.service import ResumeService
-        resume_service = ResumeService()
+        from src.aws.s3_service import get_s3_service
+        s3_service = get_s3_service()
 
         # 1. Upload to S3 (synchronous boto3 — safe in Celery worker)
-        resume_service.put_s3_object(
+        s3_service.put_object(
             params["AWS_S3_BUCKET_NAME"],
             object_key,
             file_bytes,
