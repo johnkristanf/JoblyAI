@@ -5,11 +5,12 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi import UploadFile, File
 from fastapi.responses import StreamingResponse
-from fastapi.concurrency import run_in_threadpool
 from redis.client import Redis
 from sqlalchemy.ext.asyncio.session import AsyncSession
+
 from src.resume.dependencies import get_resume_service
 from src.resume.service import ResumeService
+from src.aws.s3_service import S3Service, get_s3_service
 from src.job.dependencies import get_jobs_service
 from src.job.service import JobsService
 from src.config.runtime import params
@@ -28,6 +29,7 @@ resume_router = APIRouter()
 async def upload_resume(
     resume: list[UploadFile] = File(...),
     resume_service: ResumeService = Depends(get_resume_service),
+    s3_service: S3Service = Depends(get_s3_service),
     session: AsyncSession = Depends(Database.get_async_session),
     user: dict = Depends(verify_user_from_token),
 ):
@@ -42,7 +44,7 @@ async def upload_resume(
         file_content_type = file.content_type
 
         try:
-            resume_service.put_s3_object(
+            s3_service.put_object(
                 params["AWS_S3_BUCKET_NAME"],
                 object_key,
                 file_content,
@@ -77,6 +79,7 @@ async def get_all_resume_urls(
     session: AsyncSession = Depends(Database.get_async_session),
     user: dict = Depends(verify_user_from_token),
     resume_service: ResumeService = Depends(get_resume_service),
+    s3_service: S3Service = Depends(get_s3_service),
 ):
     user_id = user.get("id")
     logger.info(
@@ -102,7 +105,7 @@ async def get_all_resume_urls(
         }
 
         try:
-            resume_dict["url"] = await resume_service.get_presigned_url_safe(
+            resume_dict["url"] = await s3_service.get_presigned_url_safe(
                 params["AWS_S3_BUCKET_NAME"],
                 resume.object_key,
             )
@@ -134,10 +137,10 @@ async def get_all_resume_urls(
 @resume_router.get("/presigned-url")
 async def get_presigned_url(
     object_key: str,
-    resume_service: ResumeService = Depends(get_resume_service),
+    s3_service: S3Service = Depends(get_s3_service),
     user: dict = Depends(verify_user_from_token),
 ):
-    url = resume_service.generate_presigned_url(
+    url = s3_service.generate_presigned_url(
         params["AWS_S3_BUCKET_NAME"],
         object_key,
     )
@@ -148,6 +151,7 @@ async def get_presigned_url(
 async def remove_resume(
     payload: RemoveResumeIn,
     resume_service: ResumeService = Depends(get_resume_service),
+    s3_service: S3Service = Depends(get_s3_service),
     session: AsyncSession = Depends(Database.get_async_session),
     user: dict = Depends(verify_user_from_token),
 ):
@@ -165,10 +169,10 @@ async def remove_resume(
     resume = await resume_service.get_user_resume_by_id(session, resume_id, user_id)
 
     # Remove from S3
-    resume_service.remove_object_from_s3(
+    s3_service.remove_object(
         params["AWS_S3_BUCKET_NAME"], resume.object_key, user_id
     )
-    
+
     await session.delete(resume)
     await session.commit()
 
@@ -180,7 +184,7 @@ async def tailor_resume(
     payload: TailorResumeIn,
 
     # Dependencies
-    resume_service: ResumeService = Depends(get_resume_service),
+    s3_service: S3Service = Depends(get_s3_service),
     jobs_service: JobsService = Depends(get_jobs_service),
     redis_client: Redis = Depends(Database.get_redis_client),
     user: dict = Depends(verify_user_from_token),
@@ -190,7 +194,7 @@ async def tailor_resume(
     async def generate():
         try:
             # 1. Fetch PDF, extract text, then extract structured resume fields
-            pdf_bytes = resume_service.get_object_from_s3(
+            pdf_bytes = s3_service.get_object(
                 params["AWS_S3_BUCKET_NAME"],
                 payload.object_key
             )
@@ -202,7 +206,7 @@ async def tailor_resume(
             # 2. Setup LLM stream
             client = AsyncOpenAI(api_key=params["OPENAI_API_KEY"])
             prompt_mgr = TailorResumePrompt()
-            
+
             messages = [
                 prompt_mgr.load_system_prompt(
                     extracted_resume=extracted_resume,
@@ -225,8 +229,8 @@ async def tailor_resume(
                 if chunk.choices and chunk.choices[0].delta.content is not None:
                     content = chunk.choices[0].delta.content
                     accumulated_json += content
-                    
-                    data = json.dumps({"type" : "token", "content": content})
+
+                    data = json.dumps({"type": "token", "content": content})
                     yield f"data: {data}\n\n"
 
             # 3. Finalize JSON and emit
@@ -235,7 +239,7 @@ async def tailor_resume(
                 resume_json = json.loads(accumulated_json.strip())
                 data = json.dumps({"type": "done", "resume_json": resume_json})
                 yield f"data: {data}\n\n"
-                
+
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse JSON from LLM: {e}")
                 data = json.dumps({"type": "error", "message": "Failed to generate valid resume data."})

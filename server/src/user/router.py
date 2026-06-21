@@ -4,8 +4,7 @@ import uuid
 from fastapi import APIRouter, Depends, Form, UploadFile, File, HTTPException, status
 
 from src.config.runtime import params
-from src.resume.dependencies import get_resume_service
-from src.resume.service import ResumeService
+from src.aws.s3_service import S3Service, get_s3_service
 from src.auth.dependencies import verify_user_from_token
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import Database
@@ -22,7 +21,7 @@ logger = logging.getLogger("user")
 async def get_user(
     user: dict = Depends(verify_user_from_token),
     session: AsyncSession = Depends(Database.get_async_session),
-    resume_service: ResumeService = Depends(get_resume_service),
+    s3_service: S3Service = Depends(get_s3_service),
 ):
     logger.info(
         "Fetching user profile",
@@ -47,7 +46,7 @@ async def get_user(
     # Generate a presigned avatar URL if avatar_url is set
     avatar_url = None
     if profile.avatar_url:
-        avatar_url = await resume_service.get_presigned_url_safe(
+        avatar_url = await s3_service.get_presigned_url_safe(
             params["AWS_S3_BUCKET_NAME"], profile.avatar_url
         )
 
@@ -64,7 +63,7 @@ async def update_profile(
     full_name: Optional[str] = Form(None),
     avatar: Optional[UploadFile] = File(None),
     user: dict = Depends(verify_user_from_token),
-    resume_service: ResumeService = Depends(get_resume_service),
+    s3_service: S3Service = Depends(get_s3_service),
     session: AsyncSession = Depends(Database.get_async_session),
 ):
     user_id = user.get("id")
@@ -88,7 +87,7 @@ async def update_profile(
         profile.full_name = full_name.strip()
 
         # For realtime avatar state update in the FE
-        avatar_presigned_url = await resume_service.get_presigned_url_safe(
+        avatar_presigned_url = await s3_service.get_presigned_url_safe(
             bucket, profile.avatar_url
         )
         updated = True
@@ -100,14 +99,14 @@ async def update_profile(
         file_content_type = avatar.content_type
 
         if profile.avatar_url:
-            resume_service.remove_object_from_s3(bucket, profile.avatar_url, user_id)
+            s3_service.remove_object(bucket, profile.avatar_url, user_id)
 
-        resume_service.put_s3_object(
+        s3_service.put_object(
             bucket, object_key, file_content, file_content_type
         )
 
         # For realtime avatar state update in the FE
-        avatar_presigned_url = await resume_service.get_presigned_url_safe(
+        avatar_presigned_url = await s3_service.get_presigned_url_safe(
             bucket, object_key
         )
 
