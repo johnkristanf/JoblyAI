@@ -37,7 +37,6 @@ class JobsService:
         # Results already in cache
         cached_results = await redis_client.get(cache_key)
         if cached_results is not None:
-            print("NAA NAY CACHE DATA BOSS")
             return json_decode(cached_results)
 
         if job_platform == "linkedin":

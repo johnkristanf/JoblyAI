@@ -1,16 +1,22 @@
 version: "3"
 services:
   app:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
     image: johnkristan/joblyai:latest
     container_name: joblyai
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       - redis-server
     command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
     restart: always
 
   celery:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
     image: johnkristan/joblyai:latest
     container_name: joblyai-celery
     depends_on:

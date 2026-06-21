@@ -1,0 +1,41 @@
+prometheus.exporter.self "alloy_metrics" { }
+
+prometheus.scrape "self" {
+  targets    = prometheus.exporter.self.alloy_metrics.targets
+  forward_to = []
+}
+
+// Scrape local server logs
+local.file_match "joblyai_server_logs" {
+  path_targets = [
+    {
+      __address__ = "localhost",
+      __path__    = "/var/log/joblyai/app.log", // Path inside the Alloy container
+      job         = "joblyai-server",
+      env         = "development",
+    },
+  ]
+}
+
+// Tail the logs and forward them to loki.write
+loki.source.file "joblyai_log_scraper" {
+  targets    = local.file_match.joblyai_server_logs.targets
+  forward_to = [loki.write.local_loki.receiver]
+}
+
+// Push logs to Loki.
+loki.write "local_loki" {
+  endpoint {
+
+    // You can use the Docker service name 'loki' 
+    // since both loki and alloy are within the same Docker Network
+    url = "http://loki:3100/loki/api/v1/push" 
+
+    // For Grafana Cloud:
+    // url = "https://<your-loki-url>/loki/api/v1/push"
+    // basic_auth {
+    //   username = "<username>"
+    //   password = "<password-or-token>"
+    // }
+  }
+}

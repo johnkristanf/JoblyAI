@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -10,8 +10,6 @@ from src.celery.router import celery_router
 from src.interview.router import interview_router
 from src.utils import group
 from src.database import Database
-import os
-import time
 
 
 @asynccontextmanager
@@ -67,14 +65,3 @@ app.include_router(api_v1_router)
 @app.get("/health")
 def check_server_health():
     return {"message": "Server is Healthy"}
-
-
-@app.post("/api/v1/upload-audio")
-async def upload_audio(file: UploadFile = File(...)):
-    public_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../client/public"))
-    os.makedirs(public_dir, exist_ok=True)
-    filename = f"recording_{int(time.time())}_{file.filename}"
-    file_path = os.path.join(public_dir, filename)
-    with open(file_path, "wb") as f:
-        f.write(await file.read())
-    return {"message": "File saved", "path": filename}
