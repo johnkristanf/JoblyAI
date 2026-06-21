@@ -51,15 +51,38 @@ jobs:
           # Add the SSH key from the GitHub secret
           echo "${{ secrets.EC2_SSH_KEY }}" | ssh-add - >/dev/null
 
-          # Copy docker-compose.yml to EC2
-          scp -o StrictHostKeyChecking=no server/docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/docker-compose.yml
-
+          # Copy docker-compose configurations and observability configs to EC2
+          scp -o StrictHostKeyChecking=no -r server/compose ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/
+         
           # Connect via SSH and deploy
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             cd /home/${{ secrets.EC2_USER }}
-            docker compose down
-            docker compose pull
-            docker compose up -d --remove-orphans
+            
+            # Fetch secrets from SSM to create .env.observability
+            GRAFANA_USER=$(aws ssm get-parameter --name "/joblyai/prod/GRAFANA_ADMIN_USER" --with-decryption --query "Parameter.Value" --output text --region ap-southeast-1)
+            GRAFANA_PASSWORD=$(aws ssm get-parameter --name "/joblyai/prod/GRAFANA_ADMIN_PASSWORD" --with-decryption --query "Parameter.Value" --output text --region ap-southeast-1)
+            GF_SERVER_DOMAIN=$(aws ssm get-parameter --name "/joblyai/prod/GF_SERVER_DOMAIN" --with-decryption --query "Parameter.Value" --output text --region ap-southeast-1)
+            GF_SERVER_ROOT_URL=$(aws ssm get-parameter --name "/joblyai/prod/GF_SERVER_ROOT_URL" --with-decryption --query "Parameter.Value" --output text --region ap-southeast-1)
+            GF_SERVER_SERVE_FROM_SUB_PATH=$(aws ssm get-parameter --name "/joblyai/prod/GF_SERVER_SERVE_FROM_SUB_PATH" --with-decryption --query "Parameter.Value" --output text --region ap-southeast-1)
+           
+            echo "GF_SECURITY_ADMIN_USER=$GRAFANA_USER" > compose/observability/.env.observability
+            echo "GF_SECURITY_ADMIN_PASSWORD=$GRAFANA_PASSWORD" >> compose/observability/.env.observability
+            echo "GF_SERVER_DOMAIN=$GF_SERVER_DOMAIN" >> compose/observability/.env.observability
+            echo "GF_SERVER_ROOT_URL=$GF_SERVER_ROOT_URL" >> compose/observability/.env.observability
+            echo "GF_SERVER_SERVE_FROM_SUB_PATH=$GF_SERVER_SERVE_FROM_SUB_PATH" >> compose/observability/.env.observability
+
+            docker compose -f compose/app/docker-compose.yml down
+            docker compose -f compose/app/docker-compose.yml pull
+            docker compose -f compose/app/docker-compose.yml up -d --remove-orphans
+
+            docker compose -f compose/observability/docker-compose.yml down
+            docker compose -f compose/observability/docker-compose.yml pull
+            docker compose -f compose/observability/docker-compose.yml up -d --remove-orphans
+
+            docker compose -f compose/proxy/docker-compose.yml down
+            docker compose -f compose/proxy/docker-compose.yml pull
+            docker compose -f compose/proxy/docker-compose.yml up -d --remove-orphans
+
             docker image prune -f
           EOF
 

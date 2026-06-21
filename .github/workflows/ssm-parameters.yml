@@ -112,3 +112,33 @@ jobs:
             --value "${{ secrets.ELEVENLABS_API_KEY }}" \
             --type SecureString \
             --overwrite
+
+          aws ssm put-parameter \
+            --name "/joblyai/prod/GRAFANA_ADMIN_USER" \
+            --value "${{ secrets.GRAFANA_ADMIN_USER }}" \
+            --type SecureString \
+            --overwrite
+
+          aws ssm put-parameter \
+            --name "/joblyai/prod/GRAFANA_ADMIN_PASSWORD" \
+            --value "${{ secrets.GRAFANA_ADMIN_PASSWORD }}" \
+            --type SecureString \
+            --overwrite
+
+          aws ssm put-parameter \
+            --name "/joblyai/prod/GF_SERVER_DOMAIN" \
+            --value "${{ secrets.GF_SERVER_DOMAIN }}" \
+            --type SecureString \
+            --overwrite
+
+          aws ssm put-parameter \
+            --name "/joblyai/prod/GF_SERVER_ROOT_URL" \
+            --value "${{ secrets.GF_SERVER_ROOT_URL }}" \
+            --type SecureString \
+            --overwrite
+
+          aws ssm put-parameter \
+            --name "/joblyai/prod/GF_SERVER_SERVE_FROM_SUB_PATH" \
+            --value "${{ secrets.GF_SERVER_SERVE_FROM_SUB_PATH }}" \
+            --type SecureString \
+            --overwrite

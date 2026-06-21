@@ -1,0 +1,51 @@
+version: "3"
+
+services:
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    volumes:
+      # Mount the Alloy config file
+      - ./config.alloy:/etc/alloy/config.alloy
+      # Mount the server log file so Alloy can tail it
+      - ../../app.log:/var/log/joblyai/app.log:ro
+    command: run --server.http.listen-addr=0.0.0.0:12345 /etc/alloy/config.alloy
+    depends_on:
+      - loki
+    restart: unless-stopped
+    networks:
+      - observability
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    env_file:
+      - .env.observability
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+    command: -config.file=/etc/loki/loki-config.yaml
+    restart: unless-stopped
+    networks:
+      - observability
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "127.0.0.1:8080:3000"
+    env_file:
+      - .env.observability
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - loki
+    restart: unless-stopped
+    networks:
+      - observability
+
+volumes:
+  grafana-data:
+
+networks:
+  observability:
+    driver: bridge

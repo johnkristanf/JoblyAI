@@ -46,8 +46,6 @@ async def match_resume(
         job_list_page_length=job_list_page_length,
     )
 
-    print(f"job_search_results: {job_search_results}")
-
     # Process resume text and handle upload if new resume
     resume_text, upload_task_id, existing_resume_object_key = await resume_service.process_resume_for_job_search(
         new_resume=new_resume,
@@ -121,7 +119,6 @@ async def delete_saved_job_by_id(
     await session.delete(job)
     await session.commit()
     return {"message": "Saved job deleted successfully"}
-
 
 
 
