@@ -27,3 +27,21 @@ variable "bucket_name" {
   type        = string
   default     = "joblyai-production-bucket"
 }
+
+variable "db_name" {
+  description = "Name of the PostgreSQL database"
+  type        = string
+  default     = "joblyai-database-production"
+}
+
+variable "db_username" {
+  description = "Master username for RDS"
+  type        = string
+  sensitive   = true
+}
+
+variable "db_password" {
+  description = "Master password for RDS"
+  type        = string
+  sensitive   = true
+}

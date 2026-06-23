@@ -9,3 +9,9 @@ variable "primary_availability_zone" {
   type        = string
   default     = "ap-southeast-1a"
 }
+
+variable "secondary_availability_zone" {
+  description = "Secondary AZ for high availability (e.g., RDS subnet group)"
+  type        = string
+  default     = "ap-southeast-1b"
+}

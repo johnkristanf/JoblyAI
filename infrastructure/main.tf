@@ -61,7 +61,20 @@ module "compute" {
 # Integration: API Gateway → EC2 (direct HTTP proxy)
 # ─────────────────────────────────────────────
 module "integration" {
-  source          = "./modules/integration"
-  environment     = var.environment
-  ec2_public_dns  = module.compute.ec2_public_dns
+  source         = "./modules/integration"
+  environment    = var.environment
+  ec2_public_dns = module.compute.ec2_public_dns
+}
+
+# ─────────────────────────────────────────────
+# Database: RDS PostgreSQL (private, burstable)
+# ─────────────────────────────────────────────
+module "database" {
+  source               = "./modules/database"
+  environment          = var.environment
+  db_name              = var.db_name
+  db_username          = var.db_username 
+  db_password          = var.db_password 
+  db_subnet_group_name = module.network.db_subnet_group_name
+  rds_sg_id            = module.security.rds_sg_id
 }
