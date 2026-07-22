@@ -49,6 +49,14 @@ export function AppSidebar() {
                                         </Link>
                                     </SidebarMenuSubButton>
                                 </SidebarMenuSubItem>
+
+                                <SidebarMenuSubItem>
+                                    <SidebarMenuSubButton asChild isActive={pathname === '/job/search/query'} className="cursor-pointer">
+                                        <Link to="/job/search/query">
+                                            <span className="text-xs">Query</span>
+                                        </Link>
+                                    </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
                             </SidebarMenuSub>
                         </SidebarMenuItem>
 

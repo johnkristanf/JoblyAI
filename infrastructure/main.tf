@@ -31,40 +31,40 @@ module "security" {
 # ─────────────────────────────────────────────
 # Identity & Compliance: IAM Role + Instance Profile
 # ─────────────────────────────────────────────
-module "identity" {
-  source      = "./modules/identity"
-  bucket_name = var.bucket_name
-}
+# module "identity" {
+#   source      = "./modules/identity"
+#   bucket_name = var.bucket_name
+# }
 
 # ─────────────────────────────────────────────
 # Object Storage: S3 Bucket
 # ─────────────────────────────────────────────
-module "object_storage" {
-  source      = "./modules/object_storage"
-  environment = var.environment
-  bucket_name = var.bucket_name
-}
+# module "object_storage" {
+#   source      = "./modules/object_storage"
+#   environment = var.environment
+#   bucket_name = var.bucket_name
+# }
 
 # ─────────────────────────────────────────────
 # Compute: EC2 (public subnet, public IP)
 # ─────────────────────────────────────────────
-module "compute" {
-  source             = "./modules/compute"
-  environment        = var.environment
-  instance_type      = var.instance_type
-  public_subnet_id   = module.network.public_subnet_id
-  ec2_sg_id          = module.security.ec2_sg_id
-  ec2_profile_name   = module.identity.ec2_profile_name
-}
+# module "compute" {
+#   source             = "./modules/compute"
+#   environment        = var.environment
+#   instance_type      = var.instance_type
+#   public_subnet_id   = module.network.public_subnet_id
+#   ec2_sg_id          = module.security.ec2_sg_id
+#   ec2_profile_name   = module.identity.ec2_profile_name
+# }
 
 # ─────────────────────────────────────────────
 # Integration: API Gateway → EC2 (direct HTTP proxy)
 # ─────────────────────────────────────────────
-module "integration" {
-  source         = "./modules/integration"
-  environment    = var.environment
-  ec2_public_dns = module.compute.ec2_public_dns
-}
+# module "integration" {
+#   source         = "./modules/integration"
+#   environment    = var.environment
+#   ec2_public_dns = module.compute.ec2_public_dns
+# }
 
 # ─────────────────────────────────────────────
 # Database: RDS PostgreSQL (private, burstable)

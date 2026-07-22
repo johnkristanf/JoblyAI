@@ -31,7 +31,7 @@ variable "bucket_name" {
 variable "db_name" {
   description = "Name of the PostgreSQL database"
   type        = string
-  default     = "joblyai-database-production"
+  default     = "joblyai_production"
 }
 
 variable "db_username" {

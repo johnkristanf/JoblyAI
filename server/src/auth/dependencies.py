@@ -38,33 +38,25 @@ async def decode_supabase_token(token: str) -> dict:
     """
     jwks = await get_jwks()
 
-    # Determine which algorithms the current JWKS advertises.
-    # After dashboard migration the JWKS will contain RSA keys; before
-    # migration it returns an empty key set, so we fall back to HS256.
-    has_asymmetric_keys = bool(jwks.get("keys"))
+    print(f"jwks: {jwks}")
 
     try:
-        if has_asymmetric_keys:
-            payload = await run_in_threadpool(
-                jwt.decode,
-                token,
-                jwks,
-                algorithms=["RS256", "ES256"],
-                audience="authenticated",
-            )
-        else:
-            # Legacy path: JWKS not yet enabled, use the shared secret.
-            payload = await run_in_threadpool(
-                jwt.decode,
-                token,
-                params["SUPABASE_JWT_SECRET"],
-                algorithms=["HS256"],
-                audience="authenticated",
-            )
+        payload = await run_in_threadpool(
+            jwt.decode,
+            token,
+            jwks,
+            algorithms=["RS256", "ES256"],
+            audience="authenticated",
+        )
+
+        print(f"payload: {payload}")
+
+        return payload
+
     except JWTError as exc:
+        print(f"JWTError: {exc}")
         raise exc  # let callers convert to HTTP/WS errors
 
-    return payload
 
 
 async def verify_user_from_token(
